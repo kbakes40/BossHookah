@@ -23,9 +23,9 @@ export default function Header() {
       {/* Announcement Bar */}
       <div className="bg-secondary py-2 text-center text-sm border-b-3 border-border">
         <Link href="/">
-          <a className="hover:text-primary transition-colors duration-150">
+          <span className="hover:text-primary transition-colors duration-150 cursor-pointer">
             New Premium Hookahs Available! Check it out →
-          </a>
+          </span>
         </Link>
       </div>
 
@@ -44,12 +44,10 @@ export default function Header() {
                 <Menu className="h-6 w-6" />
               </Button>
               
-              <Link href="/">
-                <a className="flex items-center">
-                  <div className="w-12 h-12 bg-foreground text-background flex items-center justify-center brutalist-border font-display text-xl font-black">
-                    5★
-                  </div>
-                </a>
+              <Link href="/" className="flex items-center">
+                <div className="w-12 h-12 bg-foreground text-background flex items-center justify-center brutalist-border font-display text-xl font-black">
+                  5★
+                </div>
               </Link>
             </div>
 
@@ -87,53 +85,37 @@ export default function Header() {
 
           {/* Navigation Bar */}
           <nav className="hidden lg:flex items-center justify-center gap-8 py-4 border-t-3 border-border">
-            <Link href="/hookahs">
-              <a className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
-                <span className="text-2xl">🫖</span>
-                <span className="text-sm font-semibold">Hookahs</span>
-              </a>
+            <Link href="/hookahs" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
+              <span className="text-2xl">🫖</span>
+              <span className="text-sm font-semibold">Hookahs</span>
             </Link>
-            <Link href="/shisha">
-              <a className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
-                <span className="text-2xl">🍃</span>
-                <span className="text-sm font-semibold">Shisha</span>
-              </a>
+            <Link href="/shisha" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
+              <span className="text-2xl">🍃</span>
+              <span className="text-sm font-semibold">Shisha</span>
             </Link>
-            <Link href="/charcoal">
-              <a className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
-                <span className="text-2xl">⚫</span>
-                <span className="text-sm font-semibold">Charcoal</span>
-              </a>
+            <Link href="/charcoal" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
+              <span className="text-2xl">⚫</span>
+              <span className="text-sm font-semibold">Charcoal</span>
             </Link>
-            <Link href="/accessories">
-              <a className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
-                <span className="text-2xl">🔧</span>
-                <span className="text-sm font-semibold">Accessories</span>
-              </a>
+            <Link href="/accessories" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
+              <span className="text-2xl">🔧</span>
+              <span className="text-sm font-semibold">Accessories</span>
             </Link>
-            <Link href="/bowls">
-              <a className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
-                <span className="text-2xl">🥣</span>
-                <span className="text-sm font-semibold">Hookah Bowls</span>
-              </a>
+            <Link href="/bowls" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
+              <span className="text-2xl">🥣</span>
+              <span className="text-sm font-semibold">Hookah Bowls</span>
             </Link>
-            <Link href="/bundles">
-              <a className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
-                <span className="text-2xl">📦</span>
-                <span className="text-sm font-semibold">Bundles</span>
-              </a>
+            <Link href="/bundles" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
+              <span className="text-2xl">📦</span>
+              <span className="text-sm font-semibold">Bundles</span>
             </Link>
-            <Link href="/deals">
-              <a className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
-                <span className="text-2xl">🏷️</span>
-                <span className="text-sm font-semibold">Deals</span>
-              </a>
+            <Link href="/deals" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
+              <span className="text-2xl">🏷️</span>
+              <span className="text-sm font-semibold">Deals</span>
             </Link>
-            <Link href="/wholesale">
-              <a className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
-                <span className="text-2xl">🚚</span>
-                <span className="text-sm font-semibold">Wholesale</span>
-              </a>
+            <Link href="/wholesale" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
+              <span className="text-2xl">🚚</span>
+              <span className="text-sm font-semibold">Wholesale</span>
             </Link>
           </nav>
         </div>
@@ -152,29 +134,29 @@ export default function Header() {
               ✕
             </Button>
             <nav className="flex flex-col gap-6">
-              <Link href="/hookahs">
-                <a className="text-2xl font-display font-bold hover:text-primary">Hookahs</a>
+              <Link href="/hookahs" className="text-2xl font-display font-bold hover:text-primary">
+                Hookahs
               </Link>
-              <Link href="/shisha">
-                <a className="text-2xl font-display font-bold hover:text-primary">Shisha</a>
+              <Link href="/shisha" className="text-2xl font-display font-bold hover:text-primary">
+                Shisha
               </Link>
-              <Link href="/charcoal">
-                <a className="text-2xl font-display font-bold hover:text-primary">Charcoal</a>
+              <Link href="/charcoal" className="text-2xl font-display font-bold hover:text-primary">
+                Charcoal
               </Link>
-              <Link href="/accessories">
-                <a className="text-2xl font-display font-bold hover:text-primary">Accessories</a>
+              <Link href="/accessories" className="text-2xl font-display font-bold hover:text-primary">
+                Accessories
               </Link>
-              <Link href="/bowls">
-                <a className="text-2xl font-display font-bold hover:text-primary">Hookah Bowls</a>
+              <Link href="/bowls" className="text-2xl font-display font-bold hover:text-primary">
+                Hookah Bowls
               </Link>
-              <Link href="/bundles">
-                <a className="text-2xl font-display font-bold hover:text-primary">Bundles</a>
+              <Link href="/bundles" className="text-2xl font-display font-bold hover:text-primary">
+                Bundles
               </Link>
-              <Link href="/deals">
-                <a className="text-2xl font-display font-bold hover:text-primary">Deals</a>
+              <Link href="/deals" className="text-2xl font-display font-bold hover:text-primary">
+                Deals
               </Link>
-              <Link href="/wholesale">
-                <a className="text-2xl font-display font-bold hover:text-primary">Wholesale</a>
+              <Link href="/wholesale" className="text-2xl font-display font-bold hover:text-primary">
+                Wholesale
               </Link>
             </nav>
           </div>

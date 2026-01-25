@@ -11,9 +11,9 @@ export default function Footer() {
       <div className="bg-secondary border-b-3 border-border py-12">
         <div className="container text-center">
           <h3 className="text-3xl font-display font-black mb-2">NEED THE PERFECT GIFT?</h3>
-          <Link href="/gift-cards">
-            <a className="text-primary hover:underline font-semibold">Send a gift card →</a>
-          </Link>
+            <Link href="/gift-cards" className="text-primary hover:underline font-semibold">
+              Send a gift card →
+            </Link>
         </div>
       </div>
 
@@ -24,14 +24,14 @@ export default function Footer() {
           <div>
             <h4 className="font-display font-bold text-lg mb-4">Links</h4>
             <ul className="space-y-2">
-              <li><Link href="/contact"><a className="hover:text-primary transition-colors">Contact Us</a></Link></li>
-              <li><Link href="/returns"><a className="hover:text-primary transition-colors">Return Policy</a></Link></li>
-              <li><Link href="/account"><a className="hover:text-primary transition-colors">Account</a></Link></li>
-              <li><Link href="/wishlist"><a className="hover:text-primary transition-colors">Wishlist</a></Link></li>
-              <li><Link href="/terms"><a className="hover:text-primary transition-colors">Terms & Conditions</a></Link></li>
-              <li><Link href="/age-verification"><a className="hover:text-primary transition-colors">Age Verification</a></Link></li>
-              <li><Link href="/military"><a className="hover:text-primary transition-colors">Military Discount</a></Link></li>
-              <li><Link href="/about"><a className="hover:text-primary transition-colors">About Us</a></Link></li>
+              <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Us</Link></li>
+              <li><Link href="/returns" className="hover:text-primary transition-colors">Return Policy</Link></li>
+              <li><Link href="/account" className="hover:text-primary transition-colors">Account</Link></li>
+              <li><Link href="/wishlist" className="hover:text-primary transition-colors">Wishlist</Link></li>
+              <li><Link href="/terms" className="hover:text-primary transition-colors">Terms & Conditions</Link></li>
+              <li><Link href="/age-verification" className="hover:text-primary transition-colors">Age Verification</Link></li>
+              <li><Link href="/military" className="hover:text-primary transition-colors">Military Discount</Link></li>
+              <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
             </ul>
           </div>
 

@@ -126,8 +126,8 @@ export default function Home() {
           <div className="container">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-4xl font-display font-black">NEW ARRIVALS</h2>
-              <Link href="/collections/all">
-                <a className="text-primary hover:underline font-bold">Show All →</a>
+              <Link href="/collections/all" className="text-primary hover:underline font-bold">
+                Show All →
               </Link>
             </div>
 
