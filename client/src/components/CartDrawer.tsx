@@ -1,0 +1,157 @@
+// CartDrawer Component - Neo-Brutalism meets Luxury Retail
+// Slide-out cart drawer with product list and checkout
+
+import { useCart } from "@/contexts/CartContext";
+import { Button } from "./ui/button";
+import { X, Minus, Plus, Trash2 } from "lucide-react";
+import { Link } from "wouter";
+
+export default function CartDrawer() {
+  const { items, cartTotal, cartCount, isOpen, closeCart, updateQuantity, removeFromCart } = useCart();
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      {/* Overlay */}
+      <div 
+        className="fixed inset-0 bg-foreground/50 z-50 transition-opacity"
+        onClick={closeCart}
+      />
+
+      {/* Drawer */}
+      <div className="fixed right-0 top-0 h-full w-full max-w-md bg-background border-l-3 border-border z-50 flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b-3 border-border">
+          <h2 className="text-2xl font-display font-black">YOUR CART ({cartCount})</h2>
+          <button 
+            onClick={closeCart}
+            className="w-10 h-10 brutalist-border flex items-center justify-center hover:bg-secondary transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Cart Items */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {items.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-xl font-display font-bold mb-4">Your cart is empty</p>
+              <Button 
+                onClick={closeCart}
+                className="brutalist-border bg-primary text-primary-foreground"
+              >
+                CONTINUE SHOPPING
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {items.map((item) => (
+                <div key={item.id} className="flex gap-4 pb-6 border-b-3 border-border last:border-0">
+                  {/* Product Image */}
+                  <Link href={`/product/${item.id}`}>
+                    <a onClick={closeCart}>
+                      <div className="w-24 h-24 bg-secondary brutalist-border flex-shrink-0">
+                        <img 
+                          src={item.image} 
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </a>
+                  </Link>
+
+                  {/* Product Info */}
+                  <div className="flex-1 min-w-0">
+                    <Link href={`/product/${item.id}`}>
+                      <a onClick={closeCart}>
+                        <h3 className="font-semibold text-sm mb-1 line-clamp-2 hover:text-primary">
+                          {item.name}
+                        </h3>
+                      </a>
+                    </Link>
+                    <p className="text-xs text-muted-foreground mb-3">{item.brand}</p>
+                    
+                    {/* Quantity Controls */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center brutalist-border">
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          className="w-8 h-8 flex items-center justify-center hover:bg-secondary"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="w-10 h-8 flex items-center justify-center border-x-3 border-border text-sm font-bold">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          className="w-8 h-8 flex items-center justify-center hover:bg-secondary"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        className="text-destructive hover:text-destructive/80"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Price */}
+                  <div className="text-right">
+                    <p className="price-tag font-bold">
+                      ${((item.salePrice || item.price) * item.quantity).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        {items.length > 0 && (
+          <div className="border-t-3 border-border p-6 space-y-4">
+            {/* Shipping Notice */}
+            <div className="bg-secondary brutalist-border p-4 text-sm">
+              <p className="font-semibold">
+                {cartTotal >= 100 ? (
+                  <span className="text-primary">✓ You qualify for FREE SHIPPING!</span>
+                ) : (
+                  <>Spend ${(100 - cartTotal).toFixed(2)} more for FREE SHIPPING</>
+                )}
+              </p>
+            </div>
+
+            {/* Subtotal */}
+            <div className="flex items-center justify-between text-lg">
+              <span className="font-display font-bold">SUBTOTAL</span>
+              <span className="price-tag font-black text-2xl">
+                ${cartTotal.toFixed(2)} USD
+              </span>
+            </div>
+
+            {/* Checkout Button */}
+            <Button 
+              className="w-full h-14 brutalist-border brutalist-shadow bg-primary text-primary-foreground hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 text-lg font-black"
+              onClick={() => {
+                closeCart();
+                // Checkout functionality would go here
+              }}
+            >
+              CHECKOUT
+            </Button>
+
+            <p className="text-xs text-center text-muted-foreground">
+              Shipping and taxes calculated at checkout
+            </p>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
