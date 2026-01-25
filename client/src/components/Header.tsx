@@ -44,9 +44,10 @@ export default function Header() {
                 <Menu className="h-6 w-6" />
               </Button>
               
-              <Link href="/" className="flex items-center">
-                <div className="w-12 h-12 bg-foreground text-background flex items-center justify-center brutalist-border font-display text-xl font-black">
-                  5★
+              <Link href="/" className="flex items-center gap-3">
+                <div className="font-display font-black text-2xl tracking-tight">
+                  BOSS HOOKAH
+                  <span className="block text-xs font-bold tracking-wider text-primary">WHOLESALE</span>
                 </div>
               </Link>
             </div>
