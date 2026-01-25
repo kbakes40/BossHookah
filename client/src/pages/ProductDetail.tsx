@@ -57,8 +57,8 @@ export default function ProductDetail() {
         <div className="container">
           {/* Breadcrumb */}
           <div className="mb-6 text-sm">
-            <Link href="/">
-              <a className="hover:text-primary">Home</a>
+            <Link href="/" className="hover:text-primary">
+              Home
             </Link>
             <span className="mx-2">/</span>
             <span>{product.name}</span>
