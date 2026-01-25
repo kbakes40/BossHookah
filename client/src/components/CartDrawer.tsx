@@ -49,26 +49,22 @@ export default function CartDrawer() {
               {items.map((item) => (
                 <div key={item.id} className="flex gap-4 pb-6 border-b-3 border-border last:border-0">
                   {/* Product Image */}
-                  <Link href={`/product/${item.id}`}>
-                    <a onClick={closeCart}>
-                      <div className="w-24 h-24 bg-secondary brutalist-border flex-shrink-0">
-                        <img 
-                          src={item.image} 
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </a>
+                  <Link href={`/product/${item.id}`} onClick={closeCart}>
+                    <div className="w-24 h-24 bg-secondary brutalist-border flex-shrink-0">
+                      <img 
+                        src={item.image} 
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   </Link>
 
                   {/* Product Info */}
                   <div className="flex-1 min-w-0">
-                    <Link href={`/product/${item.id}`}>
-                      <a onClick={closeCart}>
-                        <h3 className="font-semibold text-sm mb-1 line-clamp-2 hover:text-primary">
-                          {item.name}
-                        </h3>
-                      </a>
+                    <Link href={`/product/${item.id}`} onClick={closeCart}>
+                      <h3 className="font-semibold text-sm mb-1 line-clamp-2 hover:text-primary">
+                        {item.name}
+                      </h3>
                     </Link>
                     <p className="text-xs text-muted-foreground mb-3">{item.brand}</p>
                     

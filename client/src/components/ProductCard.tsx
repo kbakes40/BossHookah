@@ -12,8 +12,7 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   return (
     <div className="group relative">
-      <Link href={`/product/${product.id}`}>
-        <a className="block">
+      <Link href={`/product/${product.id}`} className="block">
           {/* Product Image Container */}
           <div className="relative bg-secondary brutalist-border overflow-hidden aspect-square mb-4">
             <img
@@ -75,7 +74,6 @@ export default function ProductCard({ product }: ProductCardProps) {
               )}
             </div>
           </div>
-        </a>
       </Link>
     </div>
   );
