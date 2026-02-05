@@ -139,25 +139,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Age Verification Notice */}
-        <section className="py-12 bg-muted border-y-3 border-border">
-          <div className="container text-center max-w-3xl mx-auto">
-            <h3 className="text-2xl font-display font-black mb-4">AGE VERIFICATION REQUIRED</h3>
-            <p className="text-sm text-muted-foreground mb-6">
-              To access this website, you must be of legal age according to the laws of your jurisdiction. 
-              By proceeding, you confirm that you are of the legal age required to purchase and use tobacco products. 
-              Please note that age verification will be conducted via a third party at checkout.
-            </p>
-            <div className="flex gap-4 justify-center">
-              <Button className="brutalist-border brutalist-shadow bg-primary text-primary-foreground hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150">
-                I AM 21 OR OLDER
-              </Button>
-              <Button variant="outline" className="brutalist-border">
-                EXIT
-              </Button>
-            </div>
-          </div>
-        </section>
+
       </main>
 
       <Footer />

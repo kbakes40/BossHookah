@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CartProvider } from "./contexts/CartContext";
 import CartDrawer from "./components/CartDrawer";
+import AgeVerificationModal from "./components/AgeVerificationModal";
 import Home from "./pages/Home";
 import Collection from "./pages/Collection";
 import ProductDetail from "./pages/ProductDetail";
@@ -53,6 +54,7 @@ function App() {
         <CartProvider>
           <TooltipProvider>
             <Toaster />
+            <AgeVerificationModal />
             <Router />
             <CartDrawer />
           </TooltipProvider>
