@@ -40,3 +40,4 @@
 ## Product Updates
 - [x] Reduce charcoal products to 4 unique options (removed extra green Coco Fuego products)
 - [x] Remove Coco Nara product and reorder charcoal products by price (highest to lowest)
+- [x] Remove quick view modal popup and restore original product card behavior
