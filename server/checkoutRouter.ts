@@ -3,11 +3,11 @@
  */
 
 import { z } from "zod";
-import { protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, router } from "./_core/trpc";
 import { createCheckoutSession } from "./stripe";
 
 export const checkoutRouter = router({
-  createSession: protectedProcedure
+  createSession: publicProcedure
     .input(
       z.object({
         items: z.array(
@@ -18,15 +18,16 @@ export const checkoutRouter = router({
             image: z.string().optional(),
           })
         ),
+        email: z.string().email().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const origin = ctx.req.headers.origin || "http://localhost:3000";
       
       const session = await createCheckoutSession({
-        userId: ctx.user.id,
-        userEmail: ctx.user.email || "",
-        userName: ctx.user.name || "Customer",
+        userId: ctx.user?.id || 0,
+        userEmail: input.email || ctx.user?.email || "",
+        userName: ctx.user?.name || "Guest",
         items: input.items,
         successUrl: `${origin}/checkout/success`,
         cancelUrl: `${origin}/checkout/cancel`,

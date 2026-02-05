@@ -3,6 +3,7 @@
 
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 import { X, Minus, Plus, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -12,6 +13,7 @@ import { useState } from "react";
 export default function CartDrawer() {
   const { items, cartTotal, cartCount, isOpen, closeCart, updateQuantity, removeFromCart, clearCart } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [email, setEmail] = useState("");
   const createCheckoutSession = trpc.checkout.createSession.useMutation();
 
   if (!isOpen) return null;
@@ -136,6 +138,21 @@ export default function CartDrawer() {
               </span>
             </div>
 
+            {/* Email Input for Guest Checkout */}
+            <div>
+              <label htmlFor="checkout-email" className="block text-sm font-bold mb-2">
+                EMAIL ADDRESS
+              </label>
+              <Input
+                id="checkout-email"
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="brutalist-border"
+              />
+            </div>
+
             {/* Checkout Button */}
             <Button 
               className="w-full h-14 brutalist-border brutalist-shadow bg-primary text-primary-foreground hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 text-lg font-black"
@@ -150,8 +167,15 @@ export default function CartDrawer() {
                     image: item.image,
                   }));
 
+                  if (!email || !email.includes('@')) {
+                    toast.error("Please enter a valid email address");
+                    setIsCheckingOut(false);
+                    return;
+                  }
+
                   const session = await createCheckoutSession.mutateAsync({
                     items: checkoutItems,
+                    email: email,
                   });
 
                   if (session.url) {
