@@ -36,3 +36,6 @@
 
 ## UI Updates
 - [x] Remove SALE badge overlays from product card images
+
+## Product Updates
+- [x] Reduce charcoal products to 4 unique options (removed extra green Coco Fuego products)
