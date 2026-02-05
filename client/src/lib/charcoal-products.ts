@@ -1,19 +1,8 @@
 // Charcoal products imported from thehookahshop.com (white background images only)
-// Reduced to 4 unique varieties per user request
+// 3 products ordered by price from highest to lowest
 import { Product } from "./products";
 
 export const charcoalProducts: Product[] = [
-  {
-    id: 'char-1',
-    name: 'Coco Fuego Hexagon',
-    brand: 'Coco Fuego',
-    price: 17.99,
-    salePrice: 14.99,
-    category: 'charcoal',
-    image: '/images/charcoal/coco-fuego-hexagon.webp',
-    badge: 'SALE',
-    inStock: true,
-  },
   {
     id: 'char-7',
     name: 'Large Starbuzz Charcoal 40mm',
@@ -26,6 +15,17 @@ export const charcoalProducts: Product[] = [
     inStock: true,
   },
   {
+    id: 'char-1',
+    name: 'Coco Fuego Hexagon',
+    brand: 'Coco Fuego',
+    price: 17.99,
+    salePrice: 14.99,
+    category: 'charcoal',
+    image: '/images/charcoal/coco-fuego-hexagon.webp',
+    badge: 'SALE',
+    inStock: true,
+  },
+  {
     id: 'char-9',
     name: 'Titanium Cubettes',
     brand: 'Titanium',
@@ -33,17 +33,6 @@ export const charcoalProducts: Product[] = [
     salePrice: 13.99,
     category: 'charcoal',
     image: '/images/charcoal/titanium-cubettes.webp',
-    badge: 'SALE',
-    inStock: true,
-  },
-  {
-    id: 'char-11',
-    name: 'Coco Nara Coconut Shell Charcoal',
-    brand: 'Coco Nara',
-    price: 14.99,
-    salePrice: 12.99,
-    category: 'charcoal',
-    image: '/images/charcoal/coco-nara-coconut-shell-charcoal.webp',
     badge: 'SALE',
     inStock: true,
   },
