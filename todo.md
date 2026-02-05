@@ -33,3 +33,6 @@
 - [x] Scrape charcoal products from thehookahshop.com
 - [x] Filter and import only products with white background images (11 products)
 - [x] Update charcoal collection with imported products
+
+## UI Updates
+- [x] Remove SALE badge overlays from product card images

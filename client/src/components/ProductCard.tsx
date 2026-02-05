@@ -26,12 +26,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
             
-            {/* Badge */}
-            {product.badge && (
-              <div className="absolute top-4 left-4 bg-foreground text-background px-3 py-1 text-xs font-bold">
-                {product.badge}
-              </div>
-            )}
+            {/* Badge - Removed per user request */}
 
             {/* Out of Stock Overlay */}
             {!product.inStock && (
