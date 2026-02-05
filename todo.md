@@ -26,3 +26,10 @@
 - [x] Convert Member Perks to modal popup instead of separate page
 - [x] Update hero slider buttons to navigate to collections (SHOP NOW -> Shisha, EXPLORE -> Hookahs)
 - [x] Fix Premium Tobacco SHOP NOW button routing to Shisha collection
+
+## New Features
+- [x] Implement product quick view modal component
+- [x] Integrate quick view with all product cards
+- [x] Scrape charcoal products from thehookahshop.com
+- [x] Filter and import only products with white background images (11 products)
+- [x] Update charcoal collection with imported products

@@ -1,5 +1,6 @@
 // Product data structure for the e-commerce site
 // Design Philosophy: Neo-Brutalism meets Luxury Retail
+import { charcoalProducts } from './charcoal-products';
 
 export interface Product {
   id: string;
@@ -38,11 +39,11 @@ export const products: Product[] = [
   { id: '9', name: 'Traditional Brass Hookah', brand: 'Heritage', price: 399.99, category: 'hookahs', image: '/images/osJ2wAX3W81I.jpg', inStock: true, featured: true },
   { id: '10', name: 'Designer Hookah Premium', brand: 'Elite', price: 651.99, category: 'hookahs', image: '/images/5Ws20RGhEkJh.jpg', inStock: true, featured: true },
   
-  // Accessories & Charcoal
+  // Accessories
   { id: '11', name: 'Premium Charcoal Holder', brand: 'Essential', price: 29.99, category: 'accessories', image: '/images/WDVKxXHEP5m8.jpg', inStock: true },
-  { id: '12', name: 'Charcoal Basket Set', brand: 'Pro', price: 34.99, category: 'charcoal', image: '/images/xQtcVd0OqFDD.jpg', inStock: true },
-  { id: '13', name: 'Natural Coconut Charcoal', brand: 'Eco', price: 24.99, category: 'charcoal', image: '/images/xQtcVd0OqFDD.jpg', inStock: true },
-  { id: '14', name: 'Quick Light Charcoal', brand: 'Fast', price: 19.99, category: 'charcoal', image: '/images/WDVKxXHEP5m8.jpg', inStock: true },
+  
+  // Charcoal products imported from charcoal-products.ts
+  ...charcoalProducts,
   
   // Bowls
   { id: '15', name: 'Ceramic Bowl Premium', brand: 'Artisan', price: 49.99, category: 'bowls', image: '/images/osJ2wAX3W81I.jpg', inStock: true },

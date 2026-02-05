@@ -4,13 +4,18 @@
 import { Product } from "@/lib/products";
 import { Link } from "wouter";
 import { Button } from "./ui/button";
+import { useState } from "react";
+import ProductQuickView from "./ProductQuickView";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const [showQuickView, setShowQuickView] = useState(false);
+
   return (
+    <>
     <div className="group relative">
       <Link href={`/product/${product.id}`} className="block">
           {/* Product Image Container */}
@@ -43,7 +48,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 className="w-full brutalist-border bg-background text-foreground hover:bg-primary hover:text-primary-foreground"
                 onClick={(e) => {
                   e.preventDefault();
-                  // Quick view functionality would go here
+                  setShowQuickView(true);
                 }}
               >
                 QUICK VIEW
@@ -76,5 +81,11 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
       </Link>
     </div>
+    <ProductQuickView 
+      product={product}
+      open={showQuickView}
+      onClose={() => setShowQuickView(false)}
+    />
+    </>
   );
 }
