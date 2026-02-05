@@ -6,3 +6,11 @@
 - [x] Create My Account dashboard page
 - [x] Create Order History page with mock orders
 - [x] Update Header navigation to link to new pages
+
+## Member Perks Feature
+- [x] Create Member Perks/Rewards page with Stars program
+- [x] Add Ways to Earn section with icons
+- [x] Add Ways to Redeem section
+- [x] Add Referrals section with coupon benefits
+- [x] Replace BACK TO TOP button with floating bag-with-heart icon
+- [x] Make floating icon open Member Perks page

@@ -16,6 +16,8 @@ import SignIn from "./pages/SignIn";
 import CreateAccount from "./pages/CreateAccount";
 import MyAccount from "./pages/MyAccount";
 import OrderHistory from "./pages/OrderHistory";
+import MemberPerks from "./pages/MemberPerks";
+import FloatingRewardsButton from "./components/FloatingRewardsButton";
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
@@ -29,6 +31,7 @@ function Router() {
       <Route path={"/create-account"} component={CreateAccount} />
       <Route path={"/account"} component={MyAccount} />
       <Route path={"/orders"} component={OrderHistory} />
+      <Route path={"/rewards"} component={MemberPerks} />
       <Route path={"/hookahs"}>
         {() => <Collection />}
       </Route>
@@ -69,6 +72,7 @@ function App() {
             <AgeVerificationModal />
             <Router />
             <CartDrawer />
+            <FloatingRewardsButton />
           </TooltipProvider>
         </CartProvider>
       </ThemeProvider>
