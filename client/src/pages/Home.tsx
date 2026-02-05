@@ -21,6 +21,7 @@ export default function Home() {
       subtitle: "NOW AVAILABLE",
       description: "Experience bold new flavors crafted for enthusiasts",
       cta: "SHOP NOW",
+      link: "/collections/shisha",
       bg: "linear-gradient(135deg, #10B981 0%, #059669 100%)"
     },
     {
@@ -28,6 +29,7 @@ export default function Home() {
       subtitle: "NEW COLLECTION",
       description: "Discover our curated selection of premium pieces",
       cta: "EXPLORE",
+      link: "/collections/hookahs",
       bg: "linear-gradient(135deg, #0A0A0A 0%, #1F2937 100%)"
     }
   ];
@@ -57,12 +59,14 @@ export default function Home() {
                     {slide.title}
                   </h1>
                   <p className="text-xl mb-8 font-medium">{slide.description}</p>
-                  <Button 
-                    size="lg" 
-                    className="bg-white text-foreground hover:bg-secondary brutalist-border brutalist-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 font-bold text-lg px-8"
-                  >
-                    {slide.cta}
-                  </Button>
+                  <Link href={slide.link}>
+                    <Button 
+                      size="lg" 
+                      className="bg-white text-foreground hover:bg-secondary brutalist-border brutalist-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 font-bold text-lg px-8"
+                    >
+                      {slide.cta}
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>
