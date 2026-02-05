@@ -1,7 +1,7 @@
 // Header Component - Neo-Brutalism meets Luxury Retail
 // Features: Sticky header, navigation, search, cart icon
 
-import { ShoppingCart, Search, Menu, User } from "lucide-react";
+import { ShoppingCart, Search, Menu, User, X, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -124,43 +124,117 @@ export default function Header() {
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 bg-background z-40 lg:hidden overflow-y-auto">
-          <div className="container py-8">
+        <div className="fixed inset-0 bg-background z-[60] lg:hidden">
+          {/* Header */}
+          <div className="border-b-3 border-border p-4 flex items-center justify-between">
+            <h2 className="text-2xl font-display font-black">Menu</h2>
             <Button
               variant="ghost"
               size="icon"
-              className="mb-8"
               onClick={() => setMobileMenuOpen(false)}
             >
-              ✕
+              <X className="h-6 w-6" />
             </Button>
-            <nav className="flex flex-col gap-6">
-              <Link href="/hookahs" className="text-2xl font-display font-bold hover:text-primary">
-                Hookahs
-              </Link>
-              <Link href="/shisha" className="text-2xl font-display font-bold hover:text-primary">
-                Shisha
-              </Link>
-              <Link href="/charcoal" className="text-2xl font-display font-bold hover:text-primary">
-                Charcoal
-              </Link>
-              <Link href="/accessories" className="text-2xl font-display font-bold hover:text-primary">
-                Accessories
-              </Link>
-              <Link href="/bowls" className="text-2xl font-display font-bold hover:text-primary">
-                Hookah Bowls
-              </Link>
-              <Link href="/bundles" className="text-2xl font-display font-bold hover:text-primary">
-                Bundles
-              </Link>
-              <Link href="/deals" className="text-2xl font-display font-bold hover:text-primary">
-                Deals
-              </Link>
-              <Link href="/wholesale" className="text-2xl font-display font-bold hover:text-primary">
-                Wholesale
-              </Link>
-            </nav>
           </div>
+          
+          {/* Menu Items */}
+          <nav className="overflow-y-auto h-[calc(100vh-80px)]">
+            <Link 
+              href="/hookahs" 
+              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
+                <span className="text-3xl">🫖</span>
+              </div>
+              <span className="text-xl font-display font-bold flex-1">Hookahs</span>
+              <ChevronRight className="h-6 w-6" />
+            </Link>
+            
+            <Link 
+              href="/shisha" 
+              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
+                <span className="text-3xl">🍃</span>
+              </div>
+              <span className="text-xl font-display font-bold flex-1">Shisha</span>
+              <ChevronRight className="h-6 w-6" />
+            </Link>
+            
+            <Link 
+              href="/charcoal" 
+              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
+                <span className="text-3xl">⚫</span>
+              </div>
+              <span className="text-xl font-display font-bold flex-1">Charcoal</span>
+              <ChevronRight className="h-6 w-6" />
+            </Link>
+            
+            <Link 
+              href="/accessories" 
+              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
+                <span className="text-3xl">🔧</span>
+              </div>
+              <span className="text-xl font-display font-bold flex-1">Accessories</span>
+              <ChevronRight className="h-6 w-6" />
+            </Link>
+            
+            <Link 
+              href="/bowls" 
+              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
+                <span className="text-3xl">🥣</span>
+              </div>
+              <span className="text-xl font-display font-bold flex-1">Hookah Bowls</span>
+              <ChevronRight className="h-6 w-6" />
+            </Link>
+            
+            <Link 
+              href="/bundles" 
+              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
+                <span className="text-3xl">📦</span>
+              </div>
+              <span className="text-xl font-display font-bold flex-1">Bundles</span>
+              <ChevronRight className="h-6 w-6" />
+            </Link>
+            
+            <Link 
+              href="/deals" 
+              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
+                <span className="text-3xl">🏷️</span>
+              </div>
+              <span className="text-xl font-display font-bold flex-1">Deals</span>
+              <ChevronRight className="h-6 w-6" />
+            </Link>
+            
+            <Link 
+              href="/wholesale" 
+              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
+                <span className="text-3xl">🚚</span>
+              </div>
+              <span className="text-xl font-display font-bold flex-1">Wholesale</span>
+              <ChevronRight className="h-6 w-6" />
+            </Link>
+          </nav>
         </div>
       )}
     </>
