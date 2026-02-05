@@ -92,14 +92,14 @@ export default function Header() {
                 {userMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-background border-3 border-border brutalist-shadow z-50">
                     <Link 
-                      href="/login" 
+                      href="/sign-in" 
                       className="block px-4 py-3 hover:bg-secondary border-b-3 border-border font-semibold"
                       onClick={() => setUserMenuOpen(false)}
                     >
                       Sign In
                     </Link>
                     <Link 
-                      href="/register" 
+                      href="/create-account" 
                       className="block px-4 py-3 hover:bg-secondary border-b-3 border-border font-semibold"
                       onClick={() => setUserMenuOpen(false)}
                     >

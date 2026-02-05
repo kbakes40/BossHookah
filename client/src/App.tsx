@@ -12,6 +12,10 @@ import Collection from "./pages/Collection";
 import ProductDetail from "./pages/ProductDetail";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutCancel from "./pages/CheckoutCancel";
+import SignIn from "./pages/SignIn";
+import CreateAccount from "./pages/CreateAccount";
+import MyAccount from "./pages/MyAccount";
+import OrderHistory from "./pages/OrderHistory";
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
@@ -21,6 +25,10 @@ function Router() {
       <Route path={"/product/:id"} component={ProductDetail} />
       <Route path={"/checkout/success"} component={CheckoutSuccess} />
       <Route path={"/checkout/cancel"} component={CheckoutCancel} />
+      <Route path={"/sign-in"} component={SignIn} />
+      <Route path={"/create-account"} component={CreateAccount} />
+      <Route path={"/account"} component={MyAccount} />
+      <Route path={"/orders"} component={OrderHistory} />
       <Route path={"/hookahs"}>
         {() => <Collection />}
       </Route>
