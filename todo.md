@@ -25,3 +25,4 @@
 ## Feature Updates
 - [x] Convert Member Perks to modal popup instead of separate page
 - [x] Update hero slider buttons to navigate to collections (SHOP NOW -> Shisha, EXPLORE -> Hookahs)
+- [x] Fix Premium Tobacco SHOP NOW button routing to Shisha collection

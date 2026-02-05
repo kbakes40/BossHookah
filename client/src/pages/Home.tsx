@@ -48,7 +48,7 @@ export default function Home() {
             <div
               key={index}
               className={`absolute inset-0 transition-opacity duration-500 ${
-                index === currentSlide ? "opacity-100" : "opacity-0"
+                index === currentSlide ? "opacity-100 z-10" : "opacity-0 pointer-events-none"
               }`}
               style={{ background: slide.bg }}
             >
@@ -59,13 +59,11 @@ export default function Home() {
                     {slide.title}
                   </h1>
                   <p className="text-xl mb-8 font-medium">{slide.description}</p>
-                  <Link href={slide.link}>
-                    <Button 
-                      size="lg" 
-                      className="bg-white text-foreground hover:bg-secondary brutalist-border brutalist-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 font-bold text-lg px-8"
-                    >
-                      {slide.cta}
-                    </Button>
+                  <Link 
+                    href={slide.link}
+                    className="inline-block bg-white text-foreground hover:bg-secondary brutalist-border brutalist-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 font-bold text-lg px-8 py-3"
+                  >
+                    {slide.cta}
                   </Link>
                 </div>
               </div>
@@ -75,19 +73,19 @@ export default function Home() {
           {/* Slider Controls */}
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white brutalist-border flex items-center justify-center hover:bg-primary hover:text-white transition-colors duration-150"
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white brutalist-border flex items-center justify-center hover:bg-primary hover:text-white transition-colors duration-150 z-20"
           >
             <ChevronLeft className="h-6 w-6" />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white brutalist-border flex items-center justify-center hover:bg-primary hover:text-white transition-colors duration-150"
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white brutalist-border flex items-center justify-center hover:bg-primary hover:text-white transition-colors duration-150 z-20"
           >
             <ChevronRight className="h-6 w-6" />
           </button>
 
           {/* Slide Indicators */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-20">
             {heroSlides.map((_, index) => (
               <button
                 key={index}
