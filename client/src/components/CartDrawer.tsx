@@ -5,9 +5,14 @@ import { useCart } from "@/contexts/CartContext";
 import { Button } from "./ui/button";
 import { X, Minus, Plus, Trash2 } from "lucide-react";
 import { Link } from "wouter";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
+import { useState } from "react";
 
 export default function CartDrawer() {
-  const { items, cartTotal, cartCount, isOpen, closeCart, updateQuantity, removeFromCart } = useCart();
+  const { items, cartTotal, cartCount, isOpen, closeCart, updateQuantity, removeFromCart, clearCart } = useCart();
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const createCheckoutSession = trpc.checkout.createSession.useMutation();
 
   if (!isOpen) return null;
 
@@ -134,12 +139,38 @@ export default function CartDrawer() {
             {/* Checkout Button */}
             <Button 
               className="w-full h-14 brutalist-border brutalist-shadow bg-primary text-primary-foreground hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 text-lg font-black"
-              onClick={() => {
-                closeCart();
-                // Checkout functionality would go here
+              disabled={isCheckingOut}
+              onClick={async () => {
+                setIsCheckingOut(true);
+                try {
+                  const checkoutItems = items.map(item => ({
+                    name: `${item.brand} - ${item.name}`,
+                    priceInCents: Math.round((item.salePrice || item.price) * 100),
+                    quantity: item.quantity,
+                    image: item.image,
+                  }));
+
+                  const session = await createCheckoutSession.mutateAsync({
+                    items: checkoutItems,
+                  });
+
+                  if (session.url) {
+                    toast.success("Redirecting to checkout...");
+                    window.open(session.url, "_blank");
+                    closeCart();
+                  }
+                } catch (error: any) {
+                  if (error.message?.includes("login")) {
+                    toast.error("Please log in to checkout");
+                  } else {
+                    toast.error("Failed to create checkout session");
+                  }
+                } finally {
+                  setIsCheckingOut(false);
+                }
               }}
             >
-              CHECKOUT
+              {isCheckingOut ? "PROCESSING..." : "CHECKOUT"}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">

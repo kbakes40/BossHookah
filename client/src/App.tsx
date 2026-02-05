@@ -10,13 +10,17 @@ import AgeVerificationModal from "./components/AgeVerificationModal";
 import Home from "./pages/Home";
 import Collection from "./pages/Collection";
 import ProductDetail from "./pages/ProductDetail";
-
+import CheckoutSuccess from "./pages/CheckoutSuccess";
+import CheckoutCancel from "./pages/CheckoutCancel";
 function Router() {
+  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/collections/:category"} component={Collection} />
       <Route path={"/product/:id"} component={ProductDetail} />
+      <Route path={"/checkout/success"} component={CheckoutSuccess} />
+      <Route path={"/checkout/cancel"} component={CheckoutCancel} />
       <Route path={"/hookahs"}>
         {() => <Collection />}
       </Route>
