@@ -21,3 +21,6 @@
 
 ## Bug Fixes
 - [x] Fix mobile menu scrolling to allow access to Wholesale tab at bottom
+
+## Feature Updates
+- [x] Convert Member Perks to modal popup instead of separate page
