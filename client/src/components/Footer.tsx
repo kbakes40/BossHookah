@@ -1,10 +1,15 @@
 // Footer Component - Neo-Brutalism meets Luxury Retail
-// Features: Three-column layout, store info, social links
+// Features: Collapsible dropdown menus for Links, Store Location, and Social
 
 import { Link } from "wouter";
-import { Instagram, Facebook, Twitter } from "lucide-react";
+import { Instagram, Facebook, Twitter, ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 
 export default function Footer() {
+  const [linksOpen, setLinksOpen] = useState(false);
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [socialOpen, setSocialOpen] = useState(false);
+
   return (
     <footer className="bg-background border-t-3 border-border mt-20">
       {/* Gift Card Banner */}
@@ -17,28 +22,42 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Main Footer Content */}
-      <div className="container py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-          {/* Column 1: Links */}
-          <div>
-            <h4 className="font-display font-bold text-lg mb-4">Links</h4>
-            <ul className="space-y-2">
-              <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Us</Link></li>
-              <li><Link href="/returns" className="hover:text-primary transition-colors">Return Policy</Link></li>
-              <li><Link href="/account" className="hover:text-primary transition-colors">Account</Link></li>
-              <li><Link href="/wishlist" className="hover:text-primary transition-colors">Wishlist</Link></li>
-              <li><Link href="/terms" className="hover:text-primary transition-colors">Terms & Conditions</Link></li>
-              <li><Link href="/age-verification" className="hover:text-primary transition-colors">Age Verification</Link></li>
-              <li><Link href="/military" className="hover:text-primary transition-colors">Military Discount</Link></li>
-              <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
-            </ul>
-          </div>
+      {/* Main Footer Content - Dropdown Menus */}
+      <div className="container py-8">
+        {/* Links Dropdown */}
+        <div className="border-b-3 border-border">
+          <button
+            onClick={() => setLinksOpen(!linksOpen)}
+            className="w-full flex items-center justify-between py-4 font-display font-bold text-lg hover:text-primary transition-colors"
+          >
+            <span>Links</span>
+            {linksOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+          </button>
+          {linksOpen && (
+            <div className="pb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Link href="/contact" className="hover:text-primary transition-colors py-1">Contact Us</Link>
+              <Link href="/returns" className="hover:text-primary transition-colors py-1">Return Policy</Link>
+              <Link href="/account" className="hover:text-primary transition-colors py-1">Account</Link>
+              <Link href="/wishlist" className="hover:text-primary transition-colors py-1">Wishlist</Link>
+              <Link href="/terms" className="hover:text-primary transition-colors py-1">Terms & Conditions</Link>
+              <Link href="/age-verification" className="hover:text-primary transition-colors py-1">Age Verification</Link>
+              <Link href="/military" className="hover:text-primary transition-colors py-1">Military Discount</Link>
+              <Link href="/about" className="hover:text-primary transition-colors py-1">About Us</Link>
+            </div>
+          )}
+        </div>
 
-          {/* Column 2: Store Location & Hours */}
-          <div>
-            <h4 className="font-display font-bold text-lg mb-4">Store Location & Hours</h4>
-            <div className="space-y-4">
+        {/* Store Location Dropdown */}
+        <div className="border-b-3 border-border">
+          <button
+            onClick={() => setLocationOpen(!locationOpen)}
+            className="w-full flex items-center justify-between py-4 font-display font-bold text-lg hover:text-primary transition-colors"
+          >
+            <span>Store Location & Hours</span>
+            {locationOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+          </button>
+          {locationOpen && (
+            <div className="pb-6 space-y-4">
               <div>
                 <p className="font-semibold">123 Main Street</p>
                 <p>City, State 12345</p>
@@ -54,12 +73,20 @@ export default function Footer() {
                 <p>Monday - Friday 10AM - 5PM PST</p>
               </div>
             </div>
-          </div>
+          )}
+        </div>
 
-          {/* Column 3: Social */}
-          <div>
-            <h4 className="font-display font-bold text-lg mb-4">Social</h4>
-            <div className="flex gap-4">
+        {/* Social Dropdown */}
+        <div className="border-b-3 border-border">
+          <button
+            onClick={() => setSocialOpen(!socialOpen)}
+            className="w-full flex items-center justify-between py-4 font-display font-bold text-lg hover:text-primary transition-colors"
+          >
+            <span>Social</span>
+            {socialOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+          </button>
+          {socialOpen && (
+            <div className="pb-6 flex gap-4">
               <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" 
                  className="w-12 h-12 bg-foreground text-background flex items-center justify-center brutalist-border hover:bg-primary hover:border-primary transition-colors duration-150">
                 <Instagram className="h-5 w-5" />
@@ -73,7 +100,7 @@ export default function Footer() {
                 <Twitter className="h-5 w-5" />
               </a>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -97,14 +124,14 @@ export default function Footer() {
             </div>
           </div>
 
-          <p className="text-sm">© 2026, Premium Hookah Shop</p>
+          <p className="text-sm">© 2026, Boss Hookah Wholesale</p>
         </div>
       </div>
 
       {/* Back to Top Button */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className="fixed bottom-8 right-8 bg-primary text-primary-foreground px-6 py-3 brutalist-border brutalist-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 font-bold text-sm"
+        className="fixed bottom-8 right-8 bg-primary text-primary-foreground px-6 py-3 brutalist-border brutalist-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 font-bold text-sm z-40"
       >
         BACK TO TOP
       </button>

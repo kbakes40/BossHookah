@@ -7,6 +7,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState } from "react";
 import { useCart } from "@/contexts/CartContext";
+import PromoBar from "./PromoBar";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -17,6 +18,9 @@ export default function Header() {
 
   return (
     <>
+      {/* Promotional Banner */}
+      <PromoBar />
+      
       {/* Warning Banner */}
       <div className="bg-foreground text-background py-2 text-center text-sm font-medium">
         <span className="text-primary">WARNING:</span> THIS PRODUCT CONTAINS NICOTINE. NICOTINE IS AN ADDICTIVE CHEMICAL.
