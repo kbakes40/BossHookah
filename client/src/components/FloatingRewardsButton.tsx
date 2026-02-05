@@ -7,7 +7,7 @@ export default function FloatingRewardsButton() {
   return (
     <button
       onClick={() => setLocation("/rewards")}
-      className="fixed bottom-6 right-6 w-16 h-16 bg-primary text-white brutalist-border brutalist-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 flex items-center justify-center z-50 group"
+      className="fixed bottom-6 right-6 w-16 h-16 bg-white text-foreground brutalist-border brutalist-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 flex items-center justify-center z-50 group"
       aria-label="Member Rewards"
     >
       <div className="relative">

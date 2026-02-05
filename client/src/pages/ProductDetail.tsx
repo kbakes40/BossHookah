@@ -46,6 +46,11 @@ export default function ProductDetail() {
     if (product) {
       addToCart(product, quantity);
       toast.success(`Added ${quantity} × ${product.name} to cart`);
+      
+      // Haptic vibration feedback
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50); // 50ms vibration
+      }
     }
   };
 

@@ -14,3 +14,7 @@
 - [x] Add Referrals section with coupon benefits
 - [x] Replace BACK TO TOP button with floating bag-with-heart icon
 - [x] Make floating icon open Member Perks page
+
+## UX Improvements
+- [x] Add haptic vibration feedback when adding items to cart
+- [x] Change floating rewards button background from green to white
