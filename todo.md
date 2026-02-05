@@ -18,3 +18,6 @@
 ## UX Improvements
 - [x] Add haptic vibration feedback when adding items to cart
 - [x] Change floating rewards button background from green to white
+
+## Bug Fixes
+- [x] Fix mobile menu scrolling to allow access to Wholesale tab at bottom

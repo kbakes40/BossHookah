@@ -187,7 +187,7 @@ export default function Header() {
           </div>
           
           {/* Menu Items */}
-          <nav className="overflow-y-auto h-[calc(100vh-80px)]">
+          <nav className="overflow-y-auto h-[calc(100vh-80px)] pb-20">
             <Link 
               href="/hookahs" 
               className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
