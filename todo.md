@@ -187,3 +187,7 @@
 
 ## Bug Fixes
 - [x] Fix sign-in menu overlay covering Wholesale icon on desktop
+
+## Hero Slider Enhancements
+- [x] Add text glow effect to hero slide titles (inspired by davincidynamics.ai)
+- [x] Add hover pop/scale effect to slide content

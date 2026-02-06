@@ -86,9 +86,9 @@ export default function Home() {
               style={{ background: slide.bg }}
             >
               <div className="container h-full flex items-center">
-                <div className="max-w-2xl text-white">
+                <div className="max-w-2xl text-white transition-transform duration-300 hover:scale-105">
                   <p className="text-sm font-bold mb-2 tracking-widest">{slide.subtitle}</p>
-                  <h1 className="text-7xl font-display font-black mb-6 leading-none">
+                  <h1 className="text-7xl font-display font-black mb-6 leading-none" style={{ textShadow: '0 0 30px rgba(16, 185, 129, 0.6), 0 0 60px rgba(16, 185, 129, 0.3)' }}>
                     {slide.title}
                   </h1>
                   <p className="text-xl mb-8 font-medium">{slide.description}</p>
