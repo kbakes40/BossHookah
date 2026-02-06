@@ -39,6 +39,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, { ...product, quantity }];
     });
+    
+    // Haptic vibration feedback
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50); // 50ms vibration
+    }
+    
     setIsOpen(true);
   };
 
