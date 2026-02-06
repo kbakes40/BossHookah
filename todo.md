@@ -177,3 +177,7 @@
 ## Hero Slider Auto-Cycling
 - [x] Add auto-play to homepage hero slider (cycle every 5 seconds)
 - [x] Auto-play resets on user interaction (interval restarts after manual navigation)
+
+## Hero Slider Enhancements
+- [x] Add 3 new colorful hero slides showcasing different product categories (Snoop Collection - purple, Wholesale Deals - red, Starbuzz Mini - blue)
+- [x] Slow down auto-cycling from 5 seconds to 7 seconds

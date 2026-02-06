@@ -31,17 +31,41 @@ export default function Home() {
       cta: "EXPLORE",
       link: "/collections/hookahs",
       bg: "linear-gradient(135deg, #0A0A0A 0%, #1F2937 100%)"
+    },
+    {
+      title: "SNOOP DOGG COLLECTION",
+      subtitle: "EXCLUSIVE FLAVORS",
+      description: "Limited edition Al Fakher collaboration - 5 unique blends",
+      cta: "GET YOURS",
+      link: "/shisha/al-fakher",
+      bg: "linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)"
+    },
+    {
+      title: "WHOLESALE DEALS",
+      subtitle: "BULK PRICING",
+      description: "Stock up and save big on RoR Tobacco 1kg - 41 flavors",
+      cta: "VIEW DEALS",
+      link: "/wholesale",
+      bg: "linear-gradient(135deg, #DC2626 0%, #991B1B 100%)"
+    },
+    {
+      title: "STARBUZZ MINI",
+      subtitle: "PORTABLE LUXURY",
+      description: "Complete hookah sets in 9 stunning colors - Perfect for travel",
+      cta: "SHOP COLORS",
+      link: "/hookahs",
+      bg: "linear-gradient(135deg, #0EA5E9 0%, #0369A1 100%)"
     }
   ];
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
 
-  // Auto-cycle slides every 5 seconds
+  // Auto-cycle slides every 7 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       nextSlide();
-    }, 5000);
+    }, 7000);
 
     return () => clearInterval(interval);
   }, [currentSlide]);
