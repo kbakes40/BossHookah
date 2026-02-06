@@ -173,3 +173,7 @@
 ## Remove Bundle Products
 - [x] Remove bundle products import from products.ts
 - [x] Delete bundle-products.ts file
+
+## Hero Slider Auto-Cycling
+- [x] Add auto-play to homepage hero slider (cycle every 5 seconds)
+- [x] Auto-play resets on user interaction (interval restarts after manual navigation)

@@ -1,7 +1,7 @@
 // Home Page - Neo-Brutalism meets Luxury Retail
 // Design Philosophy: Bold typography, stark contrasts, emerald green accents, asymmetric layouts
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
@@ -36,6 +36,15 @@ export default function Home() {
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+
+  // Auto-cycle slides every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      nextSlide();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [currentSlide]);
 
   return (
     <div className="min-h-screen flex flex-col">
