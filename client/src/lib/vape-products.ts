@@ -11,7 +11,7 @@ export const vapeProducts: Product[] = [
     price: 26.99,
     salePrice: undefined,
     image: "/images/vapes/breeze-prime-edition-6000.png",
-    category: "Vapes",
+    category: "vapes",
     inStock: true,
 
   },
@@ -22,7 +22,7 @@ export const vapeProducts: Product[] = [
     price: 21.99,
     salePrice: undefined,
     image: "/images/vapes/breeze-smoke-pro-mesh-coil.png",
-    category: "Vapes",
+    category: "vapes",
     inStock: true,
 
   },
@@ -33,7 +33,7 @@ export const vapeProducts: Product[] = [
     price: 16.99,
     salePrice: undefined,
     image: "/images/vapes/foger-switch-pro-pod.jpeg",
-    category: "Vapes",
+    category: "vapes",
     inStock: true,
 
   },
@@ -44,7 +44,7 @@ export const vapeProducts: Product[] = [
     price: 14.99,
     salePrice: undefined,
     image: "/images/vapes/sky-bar.jpeg",
-    category: "Vapes",
+    category: "vapes",
     inStock: true,
 
   },

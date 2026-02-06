@@ -50,3 +50,4 @@
 
 ## Bug Fixes
 - [x] Fix 404 error on /vapes route by adding it to App.tsx router
+- [x] Fix vape products not displaying on Vapes collection page
