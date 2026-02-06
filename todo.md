@@ -181,3 +181,6 @@
 ## Hero Slider Enhancements
 - [x] Add 3 new colorful hero slides showcasing different product categories (Snoop Collection - purple, Wholesale Deals - red, Starbuzz Mini - blue)
 - [x] Slow down auto-cycling from 5 seconds to 7 seconds
+
+## Product Removal
+- [x] Remove Luxury Hookah Set ($299.99) from products.ts

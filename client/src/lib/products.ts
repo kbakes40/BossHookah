@@ -88,7 +88,7 @@ export const products: Product[] = [
       { id: 'ultramarine-blue', name: 'ULTRAMARINE BLUE', image: '/images/starbuzz-mini/ultramarine-blue.png' }
     ]
   },
-  { id: '7', name: 'Luxury Hookah Set', brand: 'Premium', price: 299.99, category: 'hookahs', image: '/images/5Ws20RGhEkJh.jpg', inStock: false, featured: true },
+
   { id: '8', name: 'Modern Glass Hookah', brand: 'Contemporary', price: 549.99, category: 'hookahs', image: '/images/YYJ0jfpn8sr2.jpg', inStock: true, featured: true },
   { id: '9', name: 'Traditional Brass Hookah', brand: 'Heritage', price: 399.99, category: 'hookahs', image: '/images/osJ2wAX3W81I.jpg', inStock: true, featured: true },
   { id: '10', name: 'Designer Hookah Premium', brand: 'Elite', price: 651.99, category: 'hookahs', image: '/images/5Ws20RGhEkJh.jpg', inStock: true, featured: true },
