@@ -1,14 +1,26 @@
 // ProductCard Component - Neo-Brutalism meets Luxury Retail
-// Features: Product image, price display
+// Features: Product image, price display, variant selector
 
 import { Product } from "@/lib/products";
 import { Link } from "wouter";
+import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const [selectedVariant, setSelectedVariant] = useState(
+    product.variants?.[0]?.id || ""
+  );
+
   return (
     <div className="group relative">
       <Link href={`/product/${product.id}`} className="block">
@@ -34,6 +46,24 @@ export default function ProductCard({ product }: ProductCardProps) {
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground uppercase tracking-wide">{product.brand}</p>
             <h3 className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
+            
+            {/* Variant Selector */}
+            {product.variants && product.variants.length > 0 && (
+              <div className="py-2" onClick={(e) => e.preventDefault()}>
+                <Select value={selectedVariant} onValueChange={setSelectedVariant}>
+                  <SelectTrigger className="w-full brutalist-border bg-background">
+                    <SelectValue placeholder="Select flavor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {product.variants.map((variant) => (
+                      <SelectItem key={variant.id} value={variant.id}>
+                        {variant.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             
             {/* Price */}
             <div className="flex items-center gap-2">

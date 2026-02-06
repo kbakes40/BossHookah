@@ -96,3 +96,8 @@
 
 ## SEO Fixes
 - [x] Extend page title from 29 to 30-60 characters (now 59 characters)
+
+## UX Improvements
+- [x] Increase dropdown hover delay so menu doesn't disappear too quickly
+- [x] Consolidate 5 Snoop x Al Fakher products into single product with flavor selector
+- [x] Add flavor variant selector to ProductCard component

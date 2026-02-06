@@ -16,19 +16,29 @@ export default function Header() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [dropdownTimeout, setDropdownTimeout] = useState<NodeJS.Timeout | null>(null);
   const { cartCount, openCart } = useCart();
 
   // Categories with dropdown menus
   const categoriesWithDropdowns = ['shisha', 'vapes', 'charcoal'];
 
   const handleMouseEnter = (category: string) => {
+    // Clear any pending timeout
+    if (dropdownTimeout) {
+      clearTimeout(dropdownTimeout);
+      setDropdownTimeout(null);
+    }
     if (categoriesWithDropdowns.includes(category)) {
       setActiveDropdown(category);
     }
   };
 
   const handleMouseLeave = () => {
-    setActiveDropdown(null);
+    // Add 300ms delay before closing dropdown
+    const timeout = setTimeout(() => {
+      setActiveDropdown(null);
+    }, 300);
+    setDropdownTimeout(timeout);
   };
 
   return (

@@ -4,6 +4,12 @@ import { charcoalProducts } from './charcoal-products';
 import { vapeProducts } from './vape-products';
 import { wholesaleProducts } from './wholesale-products';
 
+export interface ProductVariant {
+  id: string;
+  name: string;
+  description?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -16,6 +22,7 @@ export interface Product {
   inStock: boolean;
   featured?: boolean;
   trending?: boolean;
+  variants?: ProductVariant[];
 }
 
 export const categories = [
@@ -35,11 +42,26 @@ export const products: Product[] = [
   { id: '4', name: 'Signature Tobacco 250g', brand: 'Elite', price: 19.99, category: 'shisha', image: '/images/hWG7feLP4G9A.webp', badge: 'TRENDING', inStock: true, trending: true },
   { id: '5', name: 'Traditional Tobacco 250g', brand: 'Classic', price: 17.99, category: 'shisha', image: '/images/PICmJfphbkW2.jpg', badge: 'TRENDING', inStock: true, trending: true },
   { id: '6', name: 'Light Tobacco 100g', brand: 'Smooth', price: 10.99, salePrice: 9.99, category: 'shisha', image: '/images/5RRmLYAQuT6v.png', badge: 'SALE', inStock: true, trending: true },
-  { id: '50', name: 'Snoop x Al Fakher - Tha G\'z Mix 1kg', brand: 'Al Fakher', price: 64.99, category: 'shisha', image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/vkrqOhGKCSEelOUP.jpg', badge: 'NEW', inStock: true, featured: true },
-  { id: '51', name: 'Snoop x Al Fakher - Cloud 92 1kg', brand: 'Al Fakher', price: 64.99, category: 'shisha', image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/vkrqOhGKCSEelOUP.jpg', badge: 'NEW', inStock: true, featured: true },
-  { id: '52', name: 'Snoop x Al Fakher - Dogg\'s Delight 1kg', brand: 'Al Fakher', price: 64.99, category: 'shisha', image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/vkrqOhGKCSEelOUP.jpg', badge: 'NEW', inStock: true, featured: true },
-  { id: '53', name: 'Snoop x Al Fakher - Midnight Blues 1kg', brand: 'Al Fakher', price: 64.99, category: 'shisha', image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/vkrqOhGKCSEelOUP.jpg', badge: 'NEW', inStock: true, featured: true },
-  { id: '54', name: 'Snoop x Al Fakher - Money Honey 1kg', brand: 'Al Fakher', price: 64.99, category: 'shisha', image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/vkrqOhGKCSEelOUP.jpg', badge: 'NEW', inStock: true, featured: true },
+  
+  // Snoop x Al Fakher - Consolidated with flavor variants
+  { 
+    id: '50', 
+    name: 'Snoop x Al Fakher Shisha Tobacco 1kg', 
+    brand: 'Al Fakher', 
+    price: 64.99, 
+    category: 'shisha', 
+    image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/vkrqOhGKCSEelOUP.jpg', 
+    badge: 'NEW', 
+    inStock: true, 
+    featured: true,
+    variants: [
+      { id: 'thagzmix', name: 'Tha G\'z Mix', description: 'Premium blend with signature flavor' },
+      { id: 'cloud92', name: 'Cloud 92', description: 'Tropical fruits with cooling finish' },
+      { id: 'doggsdelight', name: 'Dogg\'s Delight', description: 'Mango passionfruit with icy twist' },
+      { id: 'midnightblues', name: 'Midnight Blues', description: 'Blueberry blackberry with ice' },
+      { id: 'moneyhoney', name: 'Money Honey', description: 'Honeydew melon with ice' }
+    ]
+  },
   
   // Hookahs
   { id: '7', name: 'Luxury Hookah Set', brand: 'Premium', price: 299.99, category: 'hookahs', image: '/images/5Ws20RGhEkJh.jpg', inStock: false, featured: true },
