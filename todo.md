@@ -108,3 +108,7 @@
 ## Product Detail Page & Bug Fixes
 - [x] Add flavor variant selector to product detail page
 - [x] Fix nested anchor tag error in ProductCard component (already fixed - buttons are outside Link)
+
+## Cart & Product Card Fixes
+- [x] Remove flavor selector from product cards (only show on detail page)
+- [x] Fix cart to track selected flavor variant separately (not group all flavors together)

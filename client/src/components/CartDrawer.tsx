@@ -54,7 +54,7 @@ export default function CartDrawer() {
           ) : (
             <div className="space-y-6">
               {items.map((item) => (
-                <div key={item.id} className="flex gap-4 pb-6 border-b-3 border-border last:border-0">
+                <div key={`${item.id}-${item.selectedVariantId || 'default'}`} className="flex gap-4 pb-6 border-b-3 border-border last:border-0">
                   {/* Product Image */}
                   <Link href={`/product/${item.id}`} onClick={closeCart}>
                     <div className="w-24 h-24 bg-secondary brutalist-border flex-shrink-0">
@@ -71,6 +71,9 @@ export default function CartDrawer() {
                     <Link href={`/product/${item.id}`} onClick={closeCart}>
                       <h3 className="font-semibold text-sm mb-1 line-clamp-2 hover:text-primary">
                         {item.name}
+                        {item.selectedVariantName && (
+                          <span className="text-primary"> - {item.selectedVariantName}</span>
+                        )}
                       </h3>
                     </Link>
                     <p className="text-xs text-muted-foreground mb-3">{item.brand}</p>
@@ -79,7 +82,7 @@ export default function CartDrawer() {
                     <div className="flex items-center gap-4">
                       <div className="flex items-center brutalist-border">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.selectedVariantId)}
                           className="w-8 h-8 flex items-center justify-center hover:bg-secondary"
                         >
                           <Minus className="h-3 w-3" />
@@ -88,7 +91,7 @@ export default function CartDrawer() {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.id, item.quantity + 1, item.selectedVariantId)}
                           className="w-8 h-8 flex items-center justify-center hover:bg-secondary"
                         >
                           <Plus className="h-3 w-3" />
@@ -96,7 +99,7 @@ export default function CartDrawer() {
                       </div>
 
                       <button
-                        onClick={() => removeFromCart(item.id)}
+                        onClick={() => removeFromCart(item.id, item.selectedVariantId)}
                         className="text-destructive hover:text-destructive/80"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -160,12 +163,18 @@ export default function CartDrawer() {
               onClick={async () => {
                 setIsCheckingOut(true);
                 try {
-                  const checkoutItems = items.map(item => ({
-                    name: `${item.brand} - ${item.name}`,
-                    priceInCents: Math.round((item.salePrice || item.price) * 100),
-                    quantity: item.quantity,
-                    image: item.image,
-                  }));
+                  const checkoutItems = items.map(item => {
+                    const itemName = item.selectedVariantName 
+                      ? `${item.brand} - ${item.name} - ${item.selectedVariantName}`
+                      : `${item.brand} - ${item.name}`;
+                    
+                    return {
+                      name: itemName,
+                      priceInCents: Math.round((item.salePrice || item.price) * 100),
+                      quantity: item.quantity,
+                      image: item.image,
+                    };
+                  });
 
                   if (!email || !email.includes('@')) {
                     toast.error("Please enter a valid email address");

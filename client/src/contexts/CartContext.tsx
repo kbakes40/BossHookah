@@ -6,13 +6,15 @@ import { Product } from "@/lib/products";
 
 interface CartItem extends Product {
   quantity: number;
+  selectedVariantId?: string; // Track which variant was selected
+  selectedVariantName?: string; // Display name of the variant
 }
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: Product, quantity: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addToCart: (product: Product, quantity: number, variantId?: string) => void;
+  removeFromCart: (productId: string, variantId?: string) => void;
+  updateQuantity: (productId: string, quantity: number, variantId?: string) => void;
   clearCart: () => void;
   cartTotal: number;
   cartCount: number;
@@ -27,17 +29,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  const addToCart = (product: Product, quantity: number) => {
+  const addToCart = (product: Product, quantity: number, variantId?: string) => {
     setItems((prev) => {
-      const existingItem = prev.find((item) => item.id === product.id);
+      // Create a unique key combining product ID and variant ID
+      const existingItem = prev.find(
+        (item) => item.id === product.id && item.selectedVariantId === variantId
+      );
+      
+      // Get variant name if variant ID is provided
+      const variantName = variantId 
+        ? product.variants?.find(v => v.id === variantId)?.name 
+        : undefined;
+      
       if (existingItem) {
         return prev.map((item) =>
-          item.id === product.id
+          item.id === product.id && item.selectedVariantId === variantId
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      return [...prev, { ...product, quantity }];
+      return [...prev, { 
+        ...product, 
+        quantity,
+        selectedVariantId: variantId,
+        selectedVariantName: variantName
+      }];
     });
     
     // Haptic vibration feedback
@@ -48,18 +64,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setIsOpen(true);
   };
 
-  const removeFromCart = (productId: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== productId));
+  const removeFromCart = (productId: string, variantId?: string) => {
+    setItems((prev) => 
+      prev.filter((item) => 
+        !(item.id === productId && item.selectedVariantId === variantId)
+      )
+    );
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (productId: string, quantity: number, variantId?: string) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(productId, variantId);
       return;
     }
     setItems((prev) =>
       prev.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
+        item.id === productId && item.selectedVariantId === variantId
+          ? { ...item, quantity }
+          : item
       )
     );
   };

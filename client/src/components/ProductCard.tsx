@@ -1,22 +1,14 @@
 // ProductCard Component - Neo-Brutalism meets Luxury Retail
-// Features: Product image, price display, visible variant selector
+// Features: Product image, price display
 
 import { Product } from "@/lib/products";
 import { Link } from "wouter";
-import { useState } from "react";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const [selectedVariant, setSelectedVariant] = useState(
-    product.variants?.[0]?.id || ""
-  );
-
-  // Get selected variant name for display
-  const selectedVariantName = product.variants?.find(v => v.id === selectedVariant)?.name || "";
-
   return (
     <div className="group relative">
       <Link href={`/product/${product.id}`} className="block">
@@ -62,32 +54,6 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
           </div>
       </Link>
-      
-      {/* Variant Selector - Visible buttons outside the link */}
-      {product.variants && product.variants.length > 0 && (
-        <div className="mt-3 space-y-2" onClick={(e) => e.stopPropagation()}>
-          <p className="text-xs font-bold uppercase text-muted-foreground">Select Flavor:</p>
-          <div className="flex flex-wrap gap-1.5">
-            {product.variants.map((variant) => (
-              <button
-                key={variant.id}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setSelectedVariant(variant.id);
-                }}
-                className={`text-xs px-2.5 py-1.5 brutalist-border font-semibold transition-all duration-150 hover:translate-x-0.5 hover:translate-y-0.5 ${
-                  selectedVariant === variant.id
-                    ? "bg-primary text-primary-foreground brutalist-shadow"
-                    : "bg-background hover:bg-secondary"
-                }`}
-                title={variant.description}
-              >
-                {variant.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

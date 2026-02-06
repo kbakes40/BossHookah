@@ -47,8 +47,18 @@ export default function ProductDetail() {
 
   const handleAddToCart = () => {
     if (product) {
-      addToCart(product, quantity);
-      toast.success(`Added ${quantity} × ${product.name} to cart`);
+      // Pass selected variant ID to cart
+      addToCart(product, quantity, selectedVariant || undefined);
+      
+      // Build toast message with variant name if applicable
+      const variantName = selectedVariant 
+        ? product.variants?.find(v => v.id === selectedVariant)?.name 
+        : null;
+      const itemName = variantName 
+        ? `${product.name} - ${variantName}` 
+        : product.name;
+      
+      toast.success(`Added ${quantity} × ${itemName} to cart`);
       
       // Haptic vibration feedback
       if ('vibrate' in navigator) {
