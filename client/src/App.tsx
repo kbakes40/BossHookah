@@ -41,6 +41,9 @@ function Router() {
       <Route path={"/charcoal"}>
         {() => <Collection />}
       </Route>
+      <Route path={"/vapes"}>
+        {() => <Collection />}
+      </Route>
       <Route path={"/accessories"}>
         {() => <Collection />}
       </Route>

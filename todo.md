@@ -47,3 +47,6 @@
 - [x] Generate vape icon matching site theme
 - [x] Add Vapes category to navigation menu
 - [x] Create vape products data file and integrate with main products
+
+## Bug Fixes
+- [x] Fix 404 error on /vapes route by adding it to App.tsx router
