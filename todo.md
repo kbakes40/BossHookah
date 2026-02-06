@@ -155,3 +155,6 @@
 ## Starbuzz Mini Color Mapping Fix
 - [x] Identify correct color for each downloaded image file
 - [x] Remap images to correct color variants (fixed: bright-pink was cyan, gunmetal was pink, antique-bronze was red, marsala-red was bronze)
+
+## Starbuzz Mini Lime Green Image Update
+- [x] Replace lime-green.png with user-provided lime green hookah image
