@@ -191,3 +191,7 @@
 ## Hero Slider Enhancements
 - [x] Add text glow effect to hero slide titles (inspired by davincidynamics.ai)
 - [x] Add hover pop/scale effect to slide content
+
+## Hero Slider Improvements
+- [x] Change text shadow from emerald green to white
+- [x] Make entire slide clickable (not just button)

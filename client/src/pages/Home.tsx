@@ -78,9 +78,10 @@ export default function Home() {
         {/* Hero Slider */}
         <section className="relative h-[600px] overflow-hidden">
           {heroSlides.map((slide, index) => (
-            <div
+            <Link
               key={index}
-              className={`absolute inset-0 transition-opacity duration-500 ${
+              href={slide.link}
+              className={`absolute inset-0 transition-opacity duration-500 cursor-pointer ${
                 index === currentSlide ? "opacity-100 z-10" : "opacity-0 pointer-events-none"
               }`}
               style={{ background: slide.bg }}
@@ -88,19 +89,16 @@ export default function Home() {
               <div className="container h-full flex items-center">
                 <div className="max-w-2xl text-white transition-transform duration-300 hover:scale-105">
                   <p className="text-sm font-bold mb-2 tracking-widest">{slide.subtitle}</p>
-                  <h1 className="text-7xl font-display font-black mb-6 leading-none" style={{ textShadow: '0 0 30px rgba(16, 185, 129, 0.6), 0 0 60px rgba(16, 185, 129, 0.3)' }}>
+                  <h1 className="text-7xl font-display font-black mb-6 leading-none" style={{ textShadow: '0 0 30px rgba(255, 255, 255, 0.6), 0 0 60px rgba(255, 255, 255, 0.3)' }}>
                     {slide.title}
                   </h1>
                   <p className="text-xl mb-8 font-medium">{slide.description}</p>
-                  <Link 
-                    href={slide.link}
-                    className="inline-block bg-white text-foreground hover:bg-secondary brutalist-border brutalist-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 font-bold text-lg px-8 py-3"
-                  >
+                  <span className="inline-block bg-white text-foreground hover:bg-secondary brutalist-border brutalist-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 font-bold text-lg px-8 py-3">
                     {slide.cta}
-                  </Link>
+                  </span>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
 
           {/* Slider Controls */}
