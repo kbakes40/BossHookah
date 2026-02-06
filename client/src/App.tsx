@@ -19,6 +19,7 @@ import MyAccount from "./pages/MyAccount";
 import OrderHistory from "./pages/OrderHistory";
 import MemberPerks from "./pages/MemberPerks";
 import BrandCollection from "./pages/BrandCollection";
+import Terms from "./pages/Terms";
 import FloatingRewardsButton from "./components/FloatingRewardsButton";
 function Router() {
   const [location] = useLocation();
@@ -77,6 +78,7 @@ function Router() {
       <Route path={"/wholesale"}>
         {() => <Collection />}
       </Route>
+      <Route path={"/terms"} component={Terms} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

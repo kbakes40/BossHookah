@@ -126,3 +126,7 @@
 - [x] Extract flavor-specific images from 5starhookah.com RoR product page (31 images found, will use main logo for unmapped flavors)
 - [x] Update RoR product variants with individual flavor images
 - [x] Update ProductDetail page to switch main image when flavor is selected
+
+## Legal Compliance Updates
+- [x] Update Terms and Conditions with Google Analytics disclosure
+- [x] Add privacy policy information for GDPR/CCPA compliance
