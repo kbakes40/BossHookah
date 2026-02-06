@@ -7,4 +7,4 @@ Disallow: /orders
 Disallow: /sign-in
 Disallow: /create-account
 
-Sitemap: https://5star-hookah-clone.manus.space/sitemap.xml
+Sitemap: https://www.bosshookah.site/sitemap.xml
