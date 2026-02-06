@@ -66,3 +66,7 @@
 
 ## Bug Fixes
 - [x] Fix mobile scroll issue - product pages should start at top, not bottom
+
+## SEO Improvements
+- [x] Reduce meta keywords from 10 to 6 focused terms
+- [x] Update page title to 48 characters (within 30-60 range)
