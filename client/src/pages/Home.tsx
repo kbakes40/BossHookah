@@ -15,6 +15,11 @@ export default function Home() {
   const trendingProducts = getTrendingProducts();
   const featuredProducts = getFeaturedProducts();
 
+  // Set page title for SEO (30-60 characters)
+  useEffect(() => {
+    document.title = "Boss Hookah Wholesale - Premium Shisha & Vapes";
+  }, []);
+
   const heroSlides = [
     {
       title: "PREMIUM TOBACCO",
