@@ -34,7 +34,11 @@ export const products: Product[] = [
   { id: '4', name: 'Signature Tobacco 250g', brand: 'Elite', price: 19.99, category: 'shisha', image: '/images/hWG7feLP4G9A.webp', badge: 'TRENDING', inStock: true, trending: true },
   { id: '5', name: 'Traditional Tobacco 250g', brand: 'Classic', price: 17.99, category: 'shisha', image: '/images/PICmJfphbkW2.jpg', badge: 'TRENDING', inStock: true, trending: true },
   { id: '6', name: 'Light Tobacco 100g', brand: 'Smooth', price: 10.99, salePrice: 9.99, category: 'shisha', image: '/images/5RRmLYAQuT6v.png', badge: 'SALE', inStock: true, trending: true },
-  { id: '50', name: 'Snoop x Al Fakher Shisha Tobacco 1kg', brand: 'Al Fakher', price: 64.99, category: 'shisha', image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/vkrqOhGKCSEelOUP.jpg', badge: 'NEW', inStock: true, featured: true },
+  { id: '50', name: 'Snoop x Al Fakher - Tha G\'z Mix 1kg', brand: 'Al Fakher', price: 64.99, category: 'shisha', image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/vkrqOhGKCSEelOUP.jpg', badge: 'NEW', inStock: true, featured: true },
+  { id: '51', name: 'Snoop x Al Fakher - Cloud 92 1kg', brand: 'Al Fakher', price: 64.99, category: 'shisha', image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/vkrqOhGKCSEelOUP.jpg', badge: 'NEW', inStock: true, featured: true },
+  { id: '52', name: 'Snoop x Al Fakher - Dogg\'s Delight 1kg', brand: 'Al Fakher', price: 64.99, category: 'shisha', image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/vkrqOhGKCSEelOUP.jpg', badge: 'NEW', inStock: true, featured: true },
+  { id: '53', name: 'Snoop x Al Fakher - Midnight Blues 1kg', brand: 'Al Fakher', price: 64.99, category: 'shisha', image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/vkrqOhGKCSEelOUP.jpg', badge: 'NEW', inStock: true, featured: true },
+  { id: '54', name: 'Snoop x Al Fakher - Money Honey 1kg', brand: 'Al Fakher', price: 64.99, category: 'shisha', image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/vkrqOhGKCSEelOUP.jpg', badge: 'NEW', inStock: true, featured: true },
   
   // Hookahs
   { id: '7', name: 'Luxury Hookah Set', brand: 'Premium', price: 299.99, category: 'hookahs', image: '/images/5Ws20RGhEkJh.jpg', inStock: false, featured: true },
