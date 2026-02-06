@@ -24,20 +24,20 @@ export default function Terms() {
                 You must be 21 or older to purchase products from our website.
               </p>
               <p className="mb-4">
-                In an effort to combat credit card fraud and to prevent the purchases of our products by minors, bosshookah.com reserves the right to request additional verification before an order is processed and shipped. We only ask for this information to verify the identity of the credit card holder and said information is not shared with outside parties.
+                In an effort to combat credit card fraud and to prevent the purchases of our products by minors, bosshookah.site reserves the right to request additional verification before an order is processed and shipped. We only ask for this information to verify the identity of the credit card holder and said information is not shared with outside parties.
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold mb-4">In General</h2>
               <p className="mb-4">
-                Boss Hookah ("bosshookah.com") owns and operates this Website. This document governs your relationship with bosshookah.com. Access to and use of this Website and the products and services available through this Website (collectively, the "Services") are subject to the following terms, conditions and notices (the "Terms of Service"). By using the Services, you are agreeing to all of the Terms of Service, as may be updated by us from time to time. You should check this page regularly to take notice of any changes we may have made to the Terms of Service.
+                Boss Hookah ("bosshookah.site") owns and operates this Website. This document governs your relationship with bosshookah.site. Access to and use of this Website and the products and services available through this Website (collectively, the "Services") are subject to the following terms, conditions and notices (the "Terms of Service"). By using the Services, you are agreeing to all of the Terms of Service, as may be updated by us from time to time. You should check this page regularly to take notice of any changes we may have made to the Terms of Service.
               </p>
               <p className="mb-4">
                 Access to this Website is permitted on a temporary basis, and we reserve the right to withdraw or amend the Services without notice. We will not be liable if for any reason this Website is unavailable at any time or for any period. From time to time, we may restrict access to some parts or all of this Website.
               </p>
               <p className="mb-4">
-                This Website may contain links to other websites (the "Linked Sites"), which are not operated by bosshookah.com. Boss Hookah has no control over the Linked Sites and accepts no responsibility for them or for any loss or damage that may arise from your use of them. Your use of the Linked Sites will be subject to the terms of use and service contained within each such site.
+                This Website may contain links to other websites (the "Linked Sites"), which are not operated by bosshookah.site. Boss Hookah has no control over the Linked Sites and accepts no responsibility for them or for any loss or damage that may arise from your use of them. Your use of the Linked Sites will be subject to the terms of use and service contained within each such site.
               </p>
             </section>
 
@@ -69,7 +69,7 @@ export default function Terms() {
             <section>
               <h2 className="text-2xl font-bold mb-4">Prohibitions</h2>
               <p className="mb-4">
-                You must not misuse this Website. You will not: commit or encourage a criminal offense; transmit or distribute a virus, trojan, worm, logic bomb or any other material which is malicious, technologically harmful, in breach of confidence or in any way offensive or obscene; hack into any aspect of the Service; corrupt data; cause annoyance to other users; infringe upon the rights of any other person's proprietary rights; send any unsolicited advertising or promotional material, commonly referred to as "spam"; or attempt to affect the performance or functionality of any computer facilities of or accessed through this Website. Breaching this provision would constitute a criminal offense and bosshookah.com will report any such breach to the relevant law enforcement authorities and disclose your identity to them.
+                You must not misuse this Website. You will not: commit or encourage a criminal offense; transmit or distribute a virus, trojan, worm, logic bomb or any other material which is malicious, technologically harmful, in breach of confidence or in any way offensive or obscene; hack into any aspect of the Service; corrupt data; cause annoyance to other users; infringe upon the rights of any other person's proprietary rights; send any unsolicited advertising or promotional material, commonly referred to as "spam"; or attempt to affect the performance or functionality of any computer facilities of or accessed through this Website. Breaching this provision would constitute a criminal offense and bosshookah.site will report any such breach to the relevant law enforcement authorities and disclose your identity to them.
               </p>
               <p className="mb-4">
                 We will not be liable for any loss or damage caused by a distributed denial-of-service attack, viruses or other technologically harmful material that may infect your computer equipment, computer programs, data or other proprietary material due to your use of this Website or to your downloading of any material posted on it, or on any website linked to it.
@@ -79,7 +79,7 @@ export default function Terms() {
             <section>
               <h2 className="text-2xl font-bold mb-4">Intellectual Property, Software and Content</h2>
               <p className="mb-4">
-                The intellectual property rights in all software and content (including photographic images) made available to you on or through this Website remains the property of bosshookah.com or its licensors and are protected by copyright laws and treaties around the world. All such rights are reserved by bosshookah.com and its licensors. You may store, print and display the content supplied solely for your own personal use. You are not permitted to publish, manipulate, distribute or otherwise reproduce, in any format, any of the content or copies of the content supplied to you or which appears on this Website nor may you use any such content in connection with any business or commercial enterprise.
+                The intellectual property rights in all software and content (including photographic images) made available to you on or through this Website remains the property of bosshookah.site or its licensors and are protected by copyright laws and treaties around the world. All such rights are reserved by bosshookah.site and its licensors. You may store, print and display the content supplied solely for your own personal use. You are not permitted to publish, manipulate, distribute or otherwise reproduce, in any format, any of the content or copies of the content supplied to you or which appears on this Website nor may you use any such content in connection with any business or commercial enterprise.
               </p>
             </section>
 
@@ -89,7 +89,7 @@ export default function Terms() {
                 By placing an order you are offering to purchase a product on and subject to the following terms and conditions. All orders are subject to availability and confirmation of the order price. Dispatch times may vary according to availability and subject to any delays resulting from postal delays or force majeure for which we will not be responsible.
               </p>
               <p className="mb-4">
-                In order to contract with bosshookah.com you must be over 21 years of age and possess a valid credit or debit card issued by a bank acceptable to us. Boss Hookah retains the right to refuse any request made by you. If your order is accepted we will inform you by email and we will confirm the identity of the party which you have contracted with. When placing an order you undertake that all details you provide to us are true and accurate, that you are an authorized user of the credit or debit card used to place your order and that there are sufficient funds to cover the cost of the goods. The cost of foreign products and services may fluctuate. All prices advertised are subject to such changes.
+                In order to contract with bosshookah.site you must be over 21 years of age and possess a valid credit or debit card issued by a bank acceptable to us. Boss Hookah retains the right to refuse any request made by you. If your order is accepted we will inform you by email and we will confirm the identity of the party which you have contracted with. When placing an order you undertake that all details you provide to us are true and accurate, that you are an authorized user of the credit or debit card used to place your order and that there are sufficient funds to cover the cost of the goods. The cost of foreign products and services may fluctuate. All prices advertised are subject to such changes.
               </p>
 
               <h3 className="text-xl font-semibold mb-3 mt-6">(a) Our Contract</h3>
@@ -146,7 +146,7 @@ export default function Terms() {
             <section>
               <h2 className="text-2xl font-bold mb-4">Disclaimer of Liability</h2>
               <p className="mb-4">
-                The material displayed on this Website is provided without any guarantees, conditions or warranties as to its accuracy. Unless expressly stated to the contrary to the fullest extent permitted by law bosshookah.com and its suppliers, content providers and advertisers hereby expressly exclude all conditions, warranties and other terms which might otherwise be implied by statute, common law or the law of equity and shall not be liable for any damages whatsoever, including but without limitation to any direct, indirect, special, consequential, punitive or incidental damages, or damages for loss of use, profits, data or other intangibles, damage to goodwill or reputation, or the cost of procurement of substitute goods and services, arising out of or related to the use, inability to use, performance or failures of this Website or the Linked Sites and any materials posted thereon, irrespective of whether such damages were foreseeable or arise in contract, tort, equity, restitution, by statute, at common law or otherwise. This does not affect bosshookah.com's liability for death or personal injury arising from its negligence, fraudulent misrepresentation, misrepresentation as to a fundamental matter or any other liability which cannot be excluded or limited under applicable law.
+                The material displayed on this Website is provided without any guarantees, conditions or warranties as to its accuracy. Unless expressly stated to the contrary to the fullest extent permitted by law bosshookah.site and its suppliers, content providers and advertisers hereby expressly exclude all conditions, warranties and other terms which might otherwise be implied by statute, common law or the law of equity and shall not be liable for any damages whatsoever, including but without limitation to any direct, indirect, special, consequential, punitive or incidental damages, or damages for loss of use, profits, data or other intangibles, damage to goodwill or reputation, or the cost of procurement of substitute goods and services, arising out of or related to the use, inability to use, performance or failures of this Website or the Linked Sites and any materials posted thereon, irrespective of whether such damages were foreseeable or arise in contract, tort, equity, restitution, by statute, at common law or otherwise. This does not affect bosshookah.site's liability for death or personal injury arising from its negligence, fraudulent misrepresentation, misrepresentation as to a fundamental matter or any other liability which cannot be excluded or limited under applicable law.
               </p>
             </section>
 
@@ -160,14 +160,14 @@ export default function Terms() {
             <section>
               <h2 className="text-2xl font-bold mb-4">Disclaimer as to Ownership of Trade Marks, Images and Third Party Copyright</h2>
               <p className="mb-4">
-                Except where expressly stated to the contrary all persons (including their names and images), third party trade marks and content, services and/or locations featured on this Website are in no way associated, linked or affiliated with bosshookah.com and you should not rely on the existence of such a connection or affiliation. Any trade marks/names featured on this Website are owned by the respective trade mark owners. Where a trade mark or brand name is referred to it is used solely to describe or identify the products and services and is in no way an assertion that such products or services are endorsed by or connected to bosshookah.com.
+                Except where expressly stated to the contrary all persons (including their names and images), third party trade marks and content, services and/or locations featured on this Website are in no way associated, linked or affiliated with bosshookah.site and you should not rely on the existence of such a connection or affiliation. Any trade marks/names featured on this Website are owned by the respective trade mark owners. Where a trade mark or brand name is referred to it is used solely to describe or identify the products and services and is in no way an assertion that such products or services are endorsed by or connected to bosshookah.site.
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold mb-4">Indemnity</h2>
               <p className="mb-4">
-                You agree to indemnify, defend and hold harmless bosshookah.com, its directors, officers, employees, consultants, agents, and affiliates, from any and all third party claims, liability, damages and/or costs (including, but not limited to, legal fees) arising from your use this Website or your breach of the Terms of Service.
+                You agree to indemnify, defend and hold harmless bosshookah.site, its directors, officers, employees, consultants, agents, and affiliates, from any and all third party claims, liability, damages and/or costs (including, but not limited to, legal fees) arising from your use this Website or your breach of the Terms of Service.
               </p>
             </section>
 
@@ -202,7 +202,7 @@ export default function Terms() {
             <section>
               <h2 className="text-2xl font-bold mb-4">Entire Agreement</h2>
               <p className="mb-4">
-                The above Terms of Service constitute the entire agreement of the parties and supersede any and all preceding and contemporaneous agreements between you and bosshookah.com. Any waiver of any provision of the Terms of Service will be effective only if in writing and signed by a Director of Boss Hookah.
+                The above Terms of Service constitute the entire agreement of the parties and supersede any and all preceding and contemporaneous agreements between you and bosshookah.site. Any waiver of any provision of the Terms of Service will be effective only if in writing and signed by a Director of Boss Hookah.
               </p>
             </section>
 
@@ -212,7 +212,7 @@ export default function Terms() {
                 If you have questions about these Terms & Conditions or our Privacy Policy, please contact us at:
               </p>
               <div className="bg-secondary p-4 rounded-md mb-4">
-                <p className="mb-2"><strong>Email:</strong> info@bosshookah.com</p>
+                <p className="mb-2"><strong>Email:</strong> info@bosshookah.site</p>
                 <p className="mb-2"><strong>Phone:</strong> (323) 555-0198</p>
                 <p className="mb-2"><strong>Address:</strong></p>
                 <p>Boss Hookah</p>

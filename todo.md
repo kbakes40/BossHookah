@@ -135,3 +135,6 @@
 - [x] Rewrite Terms and Conditions to match reference format from 5starhookah.com
 - [x] Change branding from 5Star Hookah to Boss Hookah
 - [x] Create unique contact address and email (8342 Melrose Avenue, Los Angeles, CA 90069, info@bosshookah.com)
+
+## Domain Update
+- [x] Change bosshookah.com to bosshookah.site in Terms and Conditions (15 replacements)
