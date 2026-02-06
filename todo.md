@@ -195,3 +195,6 @@
 ## Hero Slider Improvements
 - [x] Change text shadow from emerald green to white
 - [x] Make entire slide clickable (not just button)
+
+## Hero Slider Refinements
+- [x] Reduce text glow effect to be very subtle (barely noticeable)
