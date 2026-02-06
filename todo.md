@@ -198,3 +198,4 @@
 
 ## Hero Slider Refinements
 - [x] Reduce text glow effect to be very subtle (barely noticeable)
+- [x] Further reduce text glow to be even more minimal
