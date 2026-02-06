@@ -8,6 +8,7 @@ export interface ProductVariant {
   id: string;
   name: string;
   description?: string;
+  image?: string;
 }
 
 export interface Product {

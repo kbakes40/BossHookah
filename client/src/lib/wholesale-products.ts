@@ -2,6 +2,7 @@
 // All flavors priced at $68.99 ($1 less than retail $69.99)
 
 import { Product } from "./products";
+import { rorFlavorImages, defaultRorImage } from "../data/ror-images";
 
 const rorFlavors = [
   "Blueberry",
@@ -61,7 +62,8 @@ export const wholesaleProducts: Product[] = [
     variants: rorFlavors.map(flavor => ({
       id: flavor.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       name: flavor,
-      description: `ROR ${flavor} flavor`
+      description: `ROR ${flavor} flavor`,
+      image: rorFlavorImages[flavor] || defaultRorImage
     }))
   }
 ];

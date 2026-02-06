@@ -121,3 +121,8 @@
 
 ## Color Scheme Restoration
 - [x] Restore original emerald green color scheme (#10B981)
+
+## RoR Product Image Updates
+- [x] Extract flavor-specific images from 5starhookah.com RoR product page (31 images found, will use main logo for unmapped flavors)
+- [x] Update RoR product variants with individual flavor images
+- [x] Update ProductDetail page to switch main image when flavor is selected

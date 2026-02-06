@@ -43,7 +43,10 @@ export default function ProductDetail() {
     p.category === product.category && p.id !== product.id
   ).slice(0, 4);
 
-  const images = [product.image, product.image]; // Duplicate for demo
+  // Get current variant image or use product default image
+  const currentVariant = product.variants?.find(v => v.id === selectedVariant);
+  const currentImage = currentVariant?.image || product.image;
+  const images = [currentImage]; // Use variant-specific image
 
   const handleAddToCart = () => {
     if (product) {
@@ -87,7 +90,7 @@ export default function ProductDetail() {
             <div>
               <div className="bg-secondary brutalist-border aspect-square mb-4 overflow-hidden">
                 <img 
-                  src={images[selectedImage]} 
+                  src={currentImage} 
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
@@ -157,7 +160,10 @@ export default function ProductDetail() {
                     {product.variants.map((variant) => (
                       <button
                         key={variant.id}
-                        onClick={() => setSelectedVariant(variant.id)}
+                        onClick={() => {
+                          setSelectedVariant(variant.id);
+                          setSelectedImage(0); // Reset to first image when variant changes
+                        }}
                         className={`px-4 py-2.5 brutalist-border font-semibold transition-all duration-150 hover:translate-x-0.5 hover:translate-y-0.5 ${
                           selectedVariant === variant.id
                             ? "bg-primary text-primary-foreground brutalist-shadow"
