@@ -3,7 +3,6 @@
 import { charcoalProducts } from './charcoal-products';
 import { vapeProducts } from './vape-products';
 import { wholesaleProducts } from './wholesale-products';
-import { bundleProducts } from './bundle-products';
 
 export interface ProductVariant {
   id: string;
@@ -108,10 +107,7 @@ export const products: Product[] = [
   { id: '16', name: 'Silicone Bowl Modern', brand: 'Tech', price: 39.99, category: 'bowls', image: '/images/YYJ0jfpn8sr2.jpg', inStock: true },
   
   // Wholesale Products - ROR Tobacco 1kg (all 41 flavors)
-  ...wholesaleProducts,
-
-  // Bundle Products - Complete Starter Kits
-  ...bundleProducts
+  ...wholesaleProducts
 ];
 
 export const getTrendingProducts = () => products.filter(p => p.trending);
