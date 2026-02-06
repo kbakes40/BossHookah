@@ -93,3 +93,6 @@
   - [x] Download and upload RoR Tobacco product image
   - [x] Create wholesale products data file with all 41 flavors
   - [x] Integrate wholesale products into main products array
+
+## SEO Fixes
+- [x] Extend page title from 29 to 30-60 characters (now 59 characters)
