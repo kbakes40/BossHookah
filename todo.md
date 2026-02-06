@@ -184,3 +184,6 @@
 
 ## Product Removal
 - [x] Remove Luxury Hookah Set ($299.99) from products.ts
+
+## Bug Fixes
+- [x] Fix sign-in menu overlay covering Wholesale icon on desktop

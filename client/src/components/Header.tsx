@@ -115,7 +115,7 @@ export default function Header() {
                   <User className="h-5 w-5" />
                 </Button>
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-background border-3 border-border brutalist-shadow">
+                  <div className="absolute right-0 mt-2 w-48 bg-background border-3 border-border brutalist-shadow z-[60]">
                     <Link 
                       href="/sign-in" 
                       className="block px-4 py-3 hover:bg-secondary border-b-3 border-border font-semibold"
