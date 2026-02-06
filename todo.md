@@ -151,3 +151,7 @@
 ## Price Display Standardization
 - [x] Remove salePrice from Starbuzz Mini product (show only $139.99)
 - [x] Ensure consistent price display format across all products
+
+## Starbuzz Mini Color Mapping Fix
+- [x] Identify correct color for each downloaded image file
+- [x] Remap images to correct color variants (fixed: bright-pink was cyan, gunmetal was pink, antique-bronze was red, marsala-red was bronze)
