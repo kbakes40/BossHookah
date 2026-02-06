@@ -65,6 +65,30 @@ export const products: Product[] = [
   },
   
   // Hookahs
+  // Starbuzz Mini - Consolidated with color variants
+  {
+    id: '100',
+    name: 'Starbuzz Mini Complete Set',
+    brand: 'Starbuzz',
+    price: 139.99,
+    salePrice: 139.99,
+    category: 'hookahs',
+    image: 'https://shopstarbuzz.com/cdn/shop/files/BRIGHTPINK.png?v=1705009847',
+    badge: 'SALE',
+    inStock: true,
+    featured: true,
+    variants: [
+      { id: 'antique-bronze', name: 'ANTIQUE BRONZE', image: 'https://shopstarbuzz.com/cdn/shop/files/ANTIQUEBRONZE.png?v=1705009847' },
+      { id: 'bright-pink', name: 'Bright Pink', image: 'https://shopstarbuzz.com/cdn/shop/files/BRIGHTPINK.png?v=1705009847' },
+      { id: 'gunmetal', name: 'Gunmetal', image: 'https://shopstarbuzz.com/cdn/shop/files/GUNMETAL.png?v=1705009847' },
+      { id: 'jet-black', name: 'Jet Black', image: 'https://shopstarbuzz.com/cdn/shop/files/JETBLACK.png?v=1705009847' },
+      { id: 'lime-green', name: 'Lime Green', image: 'https://shopstarbuzz.com/cdn/shop/files/LIMEGREEN.png?v=1705009847' },
+      { id: 'marsala-red', name: 'MARSALA RED', image: 'https://shopstarbuzz.com/cdn/shop/files/MARSALARED.png?v=1705009847' },
+      { id: 'spartan-blue', name: 'Spartan Blue', image: 'https://shopstarbuzz.com/cdn/shop/files/SPARTANBLUE.png?v=1705009847' },
+      { id: 'vibrant-orange', name: 'VIBRANT ORANGE', image: 'https://shopstarbuzz.com/cdn/shop/files/VIBRATORANGE.png?v=1705009847' },
+      { id: 'ultramarine-blue', name: 'ULTRAMARINE BLUE', image: 'https://shopstarbuzz.com/cdn/shop/files/ULTRAMARINEBLUE.png?v=1705009847' }
+    ]
+  },
   { id: '7', name: 'Luxury Hookah Set', brand: 'Premium', price: 299.99, category: 'hookahs', image: '/images/5Ws20RGhEkJh.jpg', inStock: false, featured: true },
   { id: '8', name: 'Modern Glass Hookah', brand: 'Contemporary', price: 549.99, category: 'hookahs', image: '/images/YYJ0jfpn8sr2.jpg', inStock: true, featured: true },
   { id: '9', name: 'Traditional Brass Hookah', brand: 'Heritage', price: 399.99, category: 'hookahs', image: '/images/osJ2wAX3W81I.jpg', inStock: true, featured: true },

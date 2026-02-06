@@ -138,3 +138,8 @@
 
 ## Domain Update
 - [x] Change bosshookah.com to bosshookah.site in Terms and Conditions (15 replacements)
+
+## Starbuzz Mini Hookah Product
+- [x] Extract product details and all color options from shopstarbuzz.com (9 colors found)
+- [x] Create Starbuzz Mini product with color variants (like Snoop/RoR pattern)
+- [x] Add color-specific images for each variant (9 colors with images from shopstarbuzz.com)
