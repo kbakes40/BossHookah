@@ -18,6 +18,7 @@ import CreateAccount from "./pages/CreateAccount";
 import MyAccount from "./pages/MyAccount";
 import OrderHistory from "./pages/OrderHistory";
 import MemberPerks from "./pages/MemberPerks";
+import BrandCollection from "./pages/BrandCollection";
 import FloatingRewardsButton from "./components/FloatingRewardsButton";
 function Router() {
   const [location] = useLocation();
@@ -43,11 +44,20 @@ function Router() {
       <Route path={"/hookahs"}>
         {() => <Collection />}
       </Route>
+      <Route path={"/shisha/:brand"}>
+        {() => <BrandCollection />}
+      </Route>
       <Route path={"/shisha"}>
         {() => <Collection />}
       </Route>
+      <Route path={"/charcoal/:brand"}>
+        {() => <BrandCollection />}
+      </Route>
       <Route path={"/charcoal"}>
         {() => <Collection />}
+      </Route>
+      <Route path={"/vapes/:brand"}>
+        {() => <BrandCollection />}
       </Route>
       <Route path={"/vapes"}>
         {() => <Collection />}

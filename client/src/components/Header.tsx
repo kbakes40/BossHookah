@@ -1,20 +1,35 @@
-// Header Component - Neo-Brutalism meets Luxury Retail
-// Features: Sticky header, navigation, search, cart icon
+// Header Component - Neo-Brutalism Style
+// Features: Sticky header, navigation with brand dropdowns, search, cart icon
 
-import { ShoppingCart, Search, Menu, User, X, ChevronRight } from "lucide-react";
+import { ShoppingCart, Search, Menu, User, X, ChevronRight, ChevronDown } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState } from "react";
 import { useCart } from "@/contexts/CartContext";
 import PromoBar from "./PromoBar";
+import { getBrandsByCategory } from "@/lib/products";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const { cartCount, openCart } = useCart();
+
+  // Categories with dropdown menus
+  const categoriesWithDropdowns = ['shisha', 'vapes', 'charcoal'];
+
+  const handleMouseEnter = (category: string) => {
+    if (categoriesWithDropdowns.includes(category)) {
+      setActiveDropdown(category);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setActiveDropdown(null);
+  };
 
   return (
     <>
@@ -90,7 +105,7 @@ export default function Header() {
                   <User className="h-5 w-5" />
                 </Button>
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-background border-3 border-border brutalist-shadow z-50">
+                  <div className="absolute right-0 mt-2 w-48 bg-background border-3 border-border brutalist-shadow">
                     <Link 
                       href="/sign-in" 
                       className="block px-4 py-3 hover:bg-secondary border-b-3 border-border font-semibold"
@@ -133,24 +148,106 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Navigation Bar */}
-          <nav className="hidden lg:flex items-center justify-center gap-8 py-4 border-t-3 border-border">
+          {/* Navigation Bar with Dropdowns */}
+          <nav className="hidden lg:flex items-center justify-center gap-8 py-4 border-t-3 border-border relative">
             <Link href="/hookahs" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
               <span className="text-2xl">🫖</span>
               <span className="text-sm font-semibold">Hookahs</span>
             </Link>
-            <Link href="/shisha" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
-              <span className="text-2xl">🍃</span>
-              <span className="text-sm font-semibold">Shisha</span>
-            </Link>
-            <Link href="/charcoal" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
-              <span className="text-2xl">⚫</span>
-              <span className="text-sm font-semibold">Charcoal</span>
-            </Link>
-            <Link href="/vapes" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
-              <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/qJSjGkxwWkslwyqT.png" alt="Vapes" className="w-6 h-6" />
-              <span className="text-sm font-semibold">Vapes</span>
-            </Link>
+            
+            {/* Shisha with Dropdown */}
+            <div 
+              className="relative"
+              onMouseEnter={() => handleMouseEnter('shisha')}
+              onMouseLeave={handleMouseLeave}
+            >
+              <Link href="/shisha" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
+                <span className="text-2xl">🍃</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-semibold">Shisha</span>
+                  <ChevronDown className="h-3 w-3" />
+                </div>
+              </Link>
+              {activeDropdown === 'shisha' && (
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-background border-3 border-border brutalist-shadow z-50">
+                  <div className="p-4">
+                    <div className="font-bold text-sm mb-2 text-primary">SHOP BY BRAND</div>
+                    {getBrandsByCategory('shisha').map((brand) => (
+                      <Link
+                        key={brand}
+                        href={`/shisha/${brand.toLowerCase().replace(/\s+/g, '-')}`}
+                        className="block py-2 px-3 hover:bg-secondary transition-colors duration-150 font-medium text-sm"
+                      >
+                        {brand}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Charcoal with Dropdown */}
+            <div 
+              className="relative"
+              onMouseEnter={() => handleMouseEnter('charcoal')}
+              onMouseLeave={handleMouseLeave}
+            >
+              <Link href="/charcoal" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
+                <span className="text-2xl">⚫</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-semibold">Charcoal</span>
+                  <ChevronDown className="h-3 w-3" />
+                </div>
+              </Link>
+              {activeDropdown === 'charcoal' && (
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-background border-3 border-border brutalist-shadow z-50">
+                  <div className="p-4">
+                    <div className="font-bold text-sm mb-2 text-primary">SHOP BY BRAND</div>
+                    {getBrandsByCategory('charcoal').map((brand) => (
+                      <Link
+                        key={brand}
+                        href={`/charcoal/${brand.toLowerCase().replace(/\s+/g, '-')}`}
+                        className="block py-2 px-3 hover:bg-secondary transition-colors duration-150 font-medium text-sm"
+                      >
+                        {brand}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Vapes with Dropdown */}
+            <div 
+              className="relative"
+              onMouseEnter={() => handleMouseEnter('vapes')}
+              onMouseLeave={handleMouseLeave}
+            >
+              <Link href="/vapes" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
+                <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/qJSjGkxwWkslwyqT.png" alt="Vapes" className="w-6 h-6" />
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-semibold">Vapes</span>
+                  <ChevronDown className="h-3 w-3" />
+                </div>
+              </Link>
+              {activeDropdown === 'vapes' && (
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-background border-3 border-border brutalist-shadow z-50">
+                  <div className="p-4">
+                    <div className="font-bold text-sm mb-2 text-primary">SHOP BY BRAND</div>
+                    {getBrandsByCategory('vapes').map((brand) => (
+                      <Link
+                        key={brand}
+                        href={`/vapes/${brand.toLowerCase().replace(/\s+/g, '-')}`}
+                        className="block py-2 px-3 hover:bg-secondary transition-colors duration-150 font-medium text-sm"
+                      >
+                        {brand}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <Link href="/accessories" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
               <span className="text-2xl">🔧</span>
               <span className="text-sm font-semibold">Accessories</span>
@@ -178,190 +275,71 @@ export default function Header() {
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 bg-background z-[60] lg:hidden">
-          {/* Header */}
-          <div className="border-b-3 border-border p-4 flex items-center justify-between">
-            <h2 className="text-2xl font-display font-black">Menu</h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <X className="h-6 w-6" />
-            </Button>
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between p-4 border-b-3 border-border">
+              <span className="font-display font-black text-xl">MENU</span>
+              <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)}>
+                <X className="h-6 w-6" />
+              </Button>
+            </div>
+            <nav className="flex-1 overflow-y-auto p-4">
+              <Link href="/hookahs" className="flex items-center gap-3 py-4 border-b-3 border-border hover:text-primary transition-colors duration-150" onClick={() => setMobileMenuOpen(false)}>
+                <span className="text-2xl">🫖</span>
+                <span className="font-semibold">Hookahs</span>
+              </Link>
+              <Link href="/shisha" className="flex items-center gap-3 py-4 border-b-3 border-border hover:text-primary transition-colors duration-150" onClick={() => setMobileMenuOpen(false)}>
+                <span className="text-2xl">🍃</span>
+                <span className="font-semibold">Shisha</span>
+              </Link>
+              <Link href="/charcoal" className="flex items-center gap-3 py-4 border-b-3 border-border hover:text-primary transition-colors duration-150" onClick={() => setMobileMenuOpen(false)}>
+                <span className="text-2xl">⚫</span>
+                <span className="font-semibold">Charcoal</span>
+              </Link>
+              <Link href="/vapes" className="flex items-center gap-3 py-4 border-b-3 border-border hover:text-primary transition-colors duration-150" onClick={() => setMobileMenuOpen(false)}>
+                <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/qJSjGkxwWkslwyqT.png" alt="Vapes" className="w-6 h-6" />
+                <span className="font-semibold">Vapes</span>
+              </Link>
+              <Link href="/accessories" className="flex items-center gap-3 py-4 border-b-3 border-border hover:text-primary transition-colors duration-150" onClick={() => setMobileMenuOpen(false)}>
+                <span className="text-2xl">🔧</span>
+                <span className="font-semibold">Accessories</span>
+              </Link>
+              <Link href="/bowls" className="flex items-center gap-3 py-4 border-b-3 border-border hover:text-primary transition-colors duration-150" onClick={() => setMobileMenuOpen(false)}>
+                <span className="text-2xl">🥣</span>
+                <span className="font-semibold">Hookah Bowls</span>
+              </Link>
+              <Link href="/bundles" className="flex items-center gap-3 py-4 border-b-3 border-border hover:text-primary transition-colors duration-150" onClick={() => setMobileMenuOpen(false)}>
+                <span className="text-2xl">📦</span>
+                <span className="font-semibold">Bundles</span>
+              </Link>
+              <Link href="/deals" className="flex items-center gap-3 py-4 border-b-3 border-border hover:text-primary transition-colors duration-150" onClick={() => setMobileMenuOpen(false)}>
+                <span className="text-2xl">🏷️</span>
+                <span className="font-semibold">Deals</span>
+              </Link>
+              <Link href="/wholesale" className="flex items-center gap-3 py-4 hover:text-primary transition-colors duration-150" onClick={() => setMobileMenuOpen(false)}>
+                <span className="text-2xl">🚚</span>
+                <span className="font-semibold">Wholesale</span>
+              </Link>
+            </nav>
           </div>
-          
-          {/* Menu Items */}
-          <nav className="overflow-y-auto h-[calc(100vh-80px)] pb-20">
-            <Link 
-              href="/hookahs" 
-              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
-                <span className="text-3xl">🫖</span>
-              </div>
-              <span className="text-xl font-display font-bold flex-1">Hookahs</span>
-              <ChevronRight className="h-6 w-6" />
-            </Link>
-            
-            <Link 
-              href="/shisha" 
-              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
-                <span className="text-3xl">🍃</span>
-              </div>
-              <span className="text-xl font-display font-bold flex-1">Shisha</span>
-              <ChevronRight className="h-6 w-6" />
-            </Link>
-            
-            <Link 
-              href="/charcoal" 
-              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
-                <span className="text-3xl">⚫</span>
-              </div>
-              <span className="text-xl font-display font-bold flex-1">Charcoal</span>
-              <ChevronRight className="h-6 w-6" />
-            </Link>
-            
-            <Link 
-              href="/vapes" 
-              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
-                <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/qJSjGkxwWkslwyqT.png" alt="Vapes" className="w-10 h-10" />
-              </div>
-              <span className="text-xl font-display font-bold flex-1">Vapes</span>
-              <ChevronRight className="h-6 w-6" />
-            </Link>
-            
-            <Link 
-              href="/accessories" 
-              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
-                <span className="text-3xl">🔧</span>
-              </div>
-              <span className="text-xl font-display font-bold flex-1">Accessories</span>
-              <ChevronRight className="h-6 w-6" />
-            </Link>
-            
-            <Link 
-              href="/bowls" 
-              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
-                <span className="text-3xl">🥣</span>
-              </div>
-              <span className="text-xl font-display font-bold flex-1">Hookah Bowls</span>
-              <ChevronRight className="h-6 w-6" />
-            </Link>
-            
-            <Link 
-              href="/bundles" 
-              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
-                <span className="text-3xl">📦</span>
-              </div>
-              <span className="text-xl font-display font-bold flex-1">Bundles</span>
-              <ChevronRight className="h-6 w-6" />
-            </Link>
-            
-            <Link 
-              href="/deals" 
-              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
-                <span className="text-3xl">🏷️</span>
-              </div>
-              <span className="text-xl font-display font-bold flex-1">Deals</span>
-              <ChevronRight className="h-6 w-6" />
-            </Link>
-            
-            <Link 
-              href="/wholesale" 
-              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
-                <span className="text-3xl">🚚</span>
-              </div>
-              <span className="text-xl font-display font-bold flex-1">Wholesale</span>
-              <ChevronRight className="h-6 w-6" />
-            </Link>
-          </nav>
         </div>
       )}
 
-      {/* Search Modal */}
+      {/* Mobile Search Overlay */}
       {searchOpen && (
-        <div className="fixed inset-0 bg-background/95 z-[70] flex items-start justify-center pt-20">
-          <div className="w-full max-w-2xl mx-4">
-            <div className="bg-background border-3 border-border brutalist-shadow">
-              {/* Search Header */}
-              <div className="border-b-3 border-border p-4 flex items-center justify-between">
-                <h2 className="text-xl font-display font-black">Search Products</h2>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    setSearchOpen(false);
-                    setSearchQuery("");
-                  }}
-                >
-                  <X className="h-6 w-6" />
-                </Button>
-              </div>
-              
-              {/* Search Input */}
-              <div className="p-6">
-                <div className="relative">
-                  <Input
-                    type="search"
-                    placeholder="Search for hookahs, shisha, accessories..."
-                    className="w-full brutalist-border pr-10 text-lg py-6"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    autoFocus
-                  />
-                  <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
-                </div>
-              </div>
-
-              {/* Search Results or Suggestions */}
-              <div className="border-t-3 border-border p-6">
-                {searchQuery.length === 0 ? (
-                  <div>
-                    <h3 className="font-display font-bold mb-4">Popular Searches</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {['Hookahs', 'Shisha', 'Charcoal', 'Bowls', 'Hoses', 'Accessories'].map((term) => (
-                        <button
-                          key={term}
-                          onClick={() => setSearchQuery(term)}
-                          className="px-4 py-2 brutalist-border bg-secondary hover:bg-primary hover:text-primary-foreground transition-colors duration-150 font-semibold"
-                        >
-                          {term}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-muted-foreground">Searching for "{searchQuery}"...</p>
-                    <p className="text-sm text-muted-foreground mt-2">Press Enter to view all results</p>
-                  </div>
-                )}
-              </div>
+        <div className="fixed inset-0 bg-background z-[60] md:hidden">
+          <div className="flex flex-col h-full">
+            <div className="flex items-center gap-4 p-4 border-b-3 border-border">
+              <Button variant="ghost" size="icon" onClick={() => setSearchOpen(false)}>
+                <X className="h-6 w-6" />
+              </Button>
+              <Input
+                type="search"
+                placeholder="Search products..."
+                className="flex-1 brutalist-border"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+              />
             </div>
           </div>
         </div>

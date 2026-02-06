@@ -73,3 +73,14 @@
 
 ## Product Additions
 - [x] Add remaining 4 Snoop x Al Fakher flavor variants (Cloud 92, Dogg's Delight, Midnight Blues, Money Honey)
+
+## Wholesale Products
+- [ ] Add RoR Tobacco 1kg products with all flavors to Wholesale collection ($1 less than retail)
+
+## Navigation Redesign
+- [x] Implement dropdown mega-menu for main navigation categories
+- [x] Group Shisha products by brand (Al Fakher, ROR, etc.) in dropdown
+- [x] Group Vapes products by brand (Breeze, Foger, Sky Bar) in dropdown
+- [x] Group Charcoal products by brand (Coco Fuego, Starbuzz, Titanium) in dropdown
+- [x] Create brand filtering pages (/shisha/brand-name, /vapes/brand-name, /charcoal/brand-name)
+- [x] Add brand field to all product data (already exists)

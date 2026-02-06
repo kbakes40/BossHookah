@@ -64,3 +64,10 @@ export const getTrendingProducts = () => products.filter(p => p.trending);
 export const getFeaturedProducts = () => products.filter(p => p.featured);
 export const getProductsByCategory = (category: string) => products.filter(p => p.category === category);
 export const getProductById = (id: string) => products.find(p => p.id === id);
+export const getBrandsByCategory = (category: string) => {
+  const categoryProducts = products.filter(p => p.category === category);
+  const brands = Array.from(new Set(categoryProducts.map(p => p.brand)));
+  return brands.sort();
+};
+export const getProductsByCategoryAndBrand = (category: string, brand: string) => 
+  products.filter(p => p.category === category && p.brand === brand);
