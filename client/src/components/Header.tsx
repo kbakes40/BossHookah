@@ -224,7 +224,7 @@ export default function Header() {
               onMouseLeave={handleMouseLeave}
             >
               <Link href="/vapes" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
-                <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/qJSjGkxwWkslwyqT.png" alt="Vapes" className="w-6 h-6" />
+                <img src="https://private-us-east-1.manuscdn.com/sessionFile/hfG05ypp2E1GAEHQs4D301/sandbox/jwvHeIOnRLDODqpz72e5Tu-img-1_1770348870000_na1fn_dmFwZS1pY29uLXYy.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvaGZHMDV5cHAyRTFHQUVIUXM0RDMwMS9zYW5kYm94L2p3dkhlSU9uUkxET0RxcHo3MmU1VHUtaW1nLTFfMTc3MDM0ODg3MDAwMF9uYTFmbl9kbUZ3WlMxcFkyOXVMWFl5LnBuZz94LW9zcy1wcm9jZXNzPWltYWdlL3Jlc2l6ZSx3XzE5MjAsaF8xOTIwL2Zvcm1hdCx3ZWJwL3F1YWxpdHkscV84MCIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc5ODc2MTYwMH19fV19&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=RRTXjHbZ8EFMT7b2I9Ngu4Adadh84CRAHLVf6EIeyJz~FTgJNP-sjJVW1mdOTVqMBJjsdKAF~6FMKvd9IfpLEv6zoH56bPeFg3HndFvYKsCQ1Qg96CYJNCGwIoDAnf59cGjY4rkVDDu1wwQGZhx6fuz22oLqBtSVyRDieaSrWAj5IMyhnBzk0uZp-naokjMBuWmM1DIMYVovi311HgasZMo~636wY2nYq-hcVwT5DZzPtNAduBSN7wQB05SeR5Z-qfVMEGvC7XMRpi9FABQdkFnjZvm7~XSK3lQtURAmAT7ngFBd6ONafgKGvcl3H7joPP9EDu8YiyE6GvSbNV2rLA__" alt="Vapes" className="w-6 h-6" />
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-semibold">Vapes</span>
                   <ChevronDown className="h-3 w-3" />
@@ -296,7 +296,7 @@ export default function Header() {
                 <span className="font-semibold">Charcoal</span>
               </Link>
               <Link href="/vapes" className="flex items-center gap-3 py-4 border-b-3 border-border hover:text-primary transition-colors duration-150" onClick={() => setMobileMenuOpen(false)}>
-                <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/qJSjGkxwWkslwyqT.png" alt="Vapes" className="w-6 h-6" />
+                <img src="https://private-us-east-1.manuscdn.com/sessionFile/hfG05ypp2E1GAEHQs4D301/sandbox/jwvHeIOnRLDODqpz72e5Tu-img-1_1770348870000_na1fn_dmFwZS1pY29uLXYy.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvaGZHMDV5cHAyRTFHQUVIUXM0RDMwMS9zYW5kYm94L2p3dkhlSU9uUkxET0RxcHo3MmU1VHUtaW1nLTFfMTc3MDM0ODg3MDAwMF9uYTFmbl9kbUZ3WlMxcFkyOXVMWFl5LnBuZz94LW9zcy1wcm9jZXNzPWltYWdlL3Jlc2l6ZSx3XzE5MjAsaF8xOTIwL2Zvcm1hdCx3ZWJwL3F1YWxpdHkscV84MCIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc5ODc2MTYwMH19fV19&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=RRTXjHbZ8EFMT7b2I9Ngu4Adadh84CRAHLVf6EIeyJz~FTgJNP-sjJVW1mdOTVqMBJjsdKAF~6FMKvd9IfpLEv6zoH56bPeFg3HndFvYKsCQ1Qg96CYJNCGwIoDAnf59cGjY4rkVDDu1wwQGZhx6fuz22oLqBtSVyRDieaSrWAj5IMyhnBzk0uZp-naokjMBuWmM1DIMYVovi311HgasZMo~636wY2nYq-hcVwT5DZzPtNAduBSN7wQB05SeR5Z-qfVMEGvC7XMRpi9FABQdkFnjZvm7~XSK3lQtURAmAT7ngFBd6ONafgKGvcl3H7joPP9EDu8YiyE6GvSbNV2rLA__" alt="Vapes" className="w-6 h-6" />
                 <span className="font-semibold">Vapes</span>
               </Link>
               <Link href="/accessories" className="flex items-center gap-3 py-4 border-b-3 border-border hover:text-primary transition-colors duration-150" onClick={() => setMobileMenuOpen(false)}>

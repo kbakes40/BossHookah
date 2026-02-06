@@ -84,3 +84,6 @@
 - [x] Group Charcoal products by brand (Coco Fuego, Starbuzz, Titanium) in dropdown
 - [x] Create brand filtering pages (/shisha/brand-name, /vapes/brand-name, /charcoal/brand-name)
 - [x] Add brand field to all product data (already exists)
+
+## Design Updates
+- [x] Create better vape icon matching neo-brutalism theme (more bold and graphic)
