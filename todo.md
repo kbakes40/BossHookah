@@ -87,3 +87,9 @@
 
 ## Design Updates
 - [x] Create better vape icon matching neo-brutalism theme (more bold and graphic)
+
+## Wholesale Products
+- [x] Add all 41 RoR Tobacco 1kg flavors to Wholesale collection at $68.99 each
+  - [x] Download and upload RoR Tobacco product image
+  - [x] Create wholesale products data file with all 41 flavors
+  - [x] Integrate wholesale products into main products array
