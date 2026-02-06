@@ -79,12 +79,12 @@ export const products: Product[] = [
     variants: [
       { id: 'antique-bronze', name: 'ANTIQUE BRONZE', image: '/images/starbuzz-mini/antique-bronze.png' },
       { id: 'bright-pink', name: 'Bright Pink', image: '/images/starbuzz-mini/bright-pink.png' },
-      { id: 'gunmetal', name: 'Gunmetal', image: '/images/starbuzz-mini/gunmetal.png' },
+      { id: 'gunmetal', name: 'Gunmetal', image: '/images/starbuzz-mini/vibrant-orange.png' },
       { id: 'jet-black', name: 'Jet Black', image: '/images/starbuzz-mini/jet-black.png' },
       { id: 'lime-green', name: 'Lime Green', image: '/images/starbuzz-mini/lime-green.png' },
       { id: 'marsala-red', name: 'MARSALA RED', image: '/images/starbuzz-mini/marsala-red.png' },
       { id: 'spartan-blue', name: 'Spartan Blue', image: '/images/starbuzz-mini/spartan-blue.png' },
-      { id: 'vibrant-orange', name: 'VIBRANT ORANGE', image: '/images/starbuzz-mini/vibrant-orange.png' },
+      { id: 'vibrant-orange', name: 'VIBRANT ORANGE', image: '/images/starbuzz-mini/gunmetal.png' },
       { id: 'ultramarine-blue', name: 'ULTRAMARINE BLUE', image: '/images/starbuzz-mini/ultramarine-blue.png' }
     ]
   },
