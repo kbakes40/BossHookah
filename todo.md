@@ -55,3 +55,8 @@
 
 ## Analytics Integration
 - [x] Add Google Analytics tracking code (G-NSDJ4NSEDH) to site
+
+## SEO Optimization
+- [x] Add meta keywords to homepage
+- [x] Extend page title to 30-60 characters (now 79 chars)
+- [x] Add meta description (50-160 characters - now 154 chars)
