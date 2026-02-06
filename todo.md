@@ -147,3 +147,7 @@
 ## Starbuzz Mini Image Fix
 - [x] Fix Starbuzz Mini product images not displaying (downloaded and hosted locally)
 - [x] Verify all 9 color variant images load correctly
+
+## Price Display Standardization
+- [x] Remove salePrice from Starbuzz Mini product (show only $139.99)
+- [x] Ensure consistent price display format across all products

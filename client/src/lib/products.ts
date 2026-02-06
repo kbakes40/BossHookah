@@ -71,10 +71,9 @@ export const products: Product[] = [
     name: 'Starbuzz Mini Complete Set',
     brand: 'Starbuzz',
     price: 139.99,
-    salePrice: 139.99,
     category: 'hookahs',
     image: '/images/starbuzz-mini/bright-pink.png',
-    badge: 'SALE',
+    badge: 'NEW',
     inStock: true,
     featured: true,
     variants: [
