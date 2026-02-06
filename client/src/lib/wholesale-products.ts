@@ -1,4 +1,4 @@
-// Wholesale RoR Tobacco Products - 1kg packages at wholesale pricing
+// ROR Tobacco 1kg Wholesale - Consolidated with flavor variants
 // All flavors priced at $68.99 ($1 less than retail $69.99)
 
 import { Product } from "./products";
@@ -47,14 +47,21 @@ const rorFlavors = [
   "Yummy Gummy"
 ];
 
-export const wholesaleProducts: Product[] = rorFlavors.map((flavor, index) => ({
-  id: `ror-${flavor.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-  name: `ROR Tobacco 1kg - ${flavor}`,
-  price: 68.99,
-  image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/nltwSZTGdVdVTHiX.jpg",
-  category: "wholesale",
-  brand: "ROR",
-  inStock: true,
-  isNew: false,
-  isFeatured: false
-}));
+// Consolidated ROR product with all 41 flavors as variants
+export const wholesaleProducts: Product[] = [
+  {
+    id: 'ror-tobacco-1kg',
+    name: 'ROR Tobacco 1kg',
+    price: 68.99,
+    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/nltwSZTGdVdVTHiX.jpg",
+    category: "wholesale",
+    brand: "ROR",
+    inStock: true,
+    badge: 'WHOLESALE',
+    variants: rorFlavors.map(flavor => ({
+      id: flavor.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      name: flavor,
+      description: `ROR ${flavor} flavor`
+    }))
+  }
+];

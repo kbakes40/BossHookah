@@ -112,3 +112,9 @@
 ## Cart & Product Card Fixes
 - [x] Remove flavor selector from product cards (only show on detail page)
 - [x] Fix cart to track selected flavor variant separately (not group all flavors together)
+
+## RoR Product Consolidation & Color Scheme Update
+- [x] Research 5starhookah.com color scheme (primary, secondary, accent colors)
+- [x] Consolidate 41 RoR Tobacco wholesale products into single product with flavor variants
+- [x] Update global color scheme in index.css to match 5starhookah.com
+- [x] Update component colors to match new scheme (automatic via CSS variables)
