@@ -1,16 +1,9 @@
 // ProductCard Component - Neo-Brutalism meets Luxury Retail
-// Features: Product image, price display, variant selector
+// Features: Product image, price display, visible variant selector
 
 import { Product } from "@/lib/products";
 import { Link } from "wouter";
 import { useState } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface ProductCardProps {
   product: Product;
@@ -20,6 +13,9 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [selectedVariant, setSelectedVariant] = useState(
     product.variants?.[0]?.id || ""
   );
+
+  // Get selected variant name for display
+  const selectedVariantName = product.variants?.find(v => v.id === selectedVariant)?.name || "";
 
   return (
     <div className="group relative">
@@ -47,24 +43,6 @@ export default function ProductCard({ product }: ProductCardProps) {
             <p className="text-xs text-muted-foreground uppercase tracking-wide">{product.brand}</p>
             <h3 className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
             
-            {/* Variant Selector */}
-            {product.variants && product.variants.length > 0 && (
-              <div className="py-2" onClick={(e) => e.preventDefault()}>
-                <Select value={selectedVariant} onValueChange={setSelectedVariant}>
-                  <SelectTrigger className="w-full brutalist-border bg-background">
-                    <SelectValue placeholder="Select flavor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {product.variants.map((variant) => (
-                      <SelectItem key={variant.id} value={variant.id}>
-                        {variant.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            
             {/* Price */}
             <div className="flex items-center gap-2">
               {product.salePrice ? (
@@ -84,6 +62,32 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
           </div>
       </Link>
+      
+      {/* Variant Selector - Visible buttons outside the link */}
+      {product.variants && product.variants.length > 0 && (
+        <div className="mt-3 space-y-2" onClick={(e) => e.stopPropagation()}>
+          <p className="text-xs font-bold uppercase text-muted-foreground">Select Flavor:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {product.variants.map((variant) => (
+              <button
+                key={variant.id}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSelectedVariant(variant.id);
+                }}
+                className={`text-xs px-2.5 py-1.5 brutalist-border font-semibold transition-all duration-150 hover:translate-x-0.5 hover:translate-y-0.5 ${
+                  selectedVariant === variant.id
+                    ? "bg-primary text-primary-foreground brutalist-shadow"
+                    : "bg-background hover:bg-secondary"
+                }`}
+                title={variant.description}
+              >
+                {variant.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

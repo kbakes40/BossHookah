@@ -101,3 +101,6 @@
 - [x] Increase dropdown hover delay so menu doesn't disappear too quickly
 - [x] Consolidate 5 Snoop x Al Fakher products into single product with flavor selector
 - [x] Add flavor variant selector to ProductCard component
+
+## Product Card Improvements
+- [x] Replace dropdown flavor selector with visible flavor buttons showing all options at once
