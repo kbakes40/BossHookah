@@ -202,3 +202,6 @@
 
 ## Starbuzz Mini Color Fixes
 - [x] Swap Vibrant Orange and Gunmetal images (colors are mismatched)
+
+## Product Detail UX Improvements
+- [x] Add auto-scroll to top when color variant is selected (show selected color image)
