@@ -158,3 +158,9 @@
 
 ## Starbuzz Mini Lime Green Image Update
 - [x] Replace lime-green.png with user-provided lime green hookah image
+
+## SEO Improvements
+- [ ] Fix homepage title length (currently 29 chars, needs 30-60 chars)
+
+## Starbuzz Mini Ultramarine Blue Image Update
+- [x] Replace ultramarine-blue.png with user-provided ultramarine blue hookah image
