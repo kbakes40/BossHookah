@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /checkout/
+Disallow: /account
+Disallow: /orders
+Disallow: /sign-in
+Disallow: /create-account
+
+Sitemap: https://5star-hookah-clone.manus.space/sitemap.xml

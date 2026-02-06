@@ -209,3 +209,6 @@
 
 ## SEO Improvements
 - [x] Fix homepage title to be 30-60 characters (now 46 characters)
+- [x] Create robots.txt to allow search engine crawling
+- [x] Create XML sitemap for search engines
+- [ ] Submit site to Google Search Console for indexing (requires manual action)
