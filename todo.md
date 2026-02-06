@@ -118,3 +118,6 @@
 - [x] Consolidate 41 RoR Tobacco wholesale products into single product with flavor variants
 - [x] Update global color scheme in index.css to match 5starhookah.com
 - [x] Update component colors to match new scheme (automatic via CSS variables)
+
+## Color Scheme Restoration
+- [x] Restore original emerald green color scheme (#10B981)
