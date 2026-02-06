@@ -1,7 +1,8 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
+import { useEffect } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CartProvider } from "./contexts/CartContext";
@@ -19,6 +20,13 @@ import OrderHistory from "./pages/OrderHistory";
 import MemberPerks from "./pages/MemberPerks";
 import FloatingRewardsButton from "./components/FloatingRewardsButton";
 function Router() {
+  const [location] = useLocation();
+  
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+  
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>

@@ -63,3 +63,6 @@
 
 ## Product Additions
 - [x] Add Snoop x Al Fakher Shisha Tobacco 1kg to Shisha collection
+
+## Bug Fixes
+- [x] Fix mobile scroll issue - product pages should start at top, not bottom
