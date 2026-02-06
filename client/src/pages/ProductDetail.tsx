@@ -163,8 +163,10 @@ export default function ProductDetail() {
                         onClick={() => {
                           setSelectedVariant(variant.id);
                           setSelectedImage(0); // Reset to first image when variant changes
-                          // Scroll to top to show the selected color
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          // Only scroll to top for hookahs (color variants), not for shisha (flavor variants)
+                          if (product.category === 'hookahs') {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }
                         }}
                         className={`px-4 py-2.5 brutalist-border font-semibold transition-all duration-150 hover:translate-x-0.5 hover:translate-y-0.5 ${
                           selectedVariant === variant.id

@@ -205,3 +205,4 @@
 
 ## Product Detail UX Improvements
 - [x] Add auto-scroll to top when color variant is selected (show selected color image)
+- [x] Disable auto-scroll for shisha tobacco flavor selection (keep scroll only for hookah colors)
