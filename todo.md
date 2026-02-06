@@ -164,3 +164,8 @@
 
 ## Starbuzz Mini Ultramarine Blue Image Update
 - [x] Replace ultramarine-blue.png with user-provided ultramarine blue hookah image
+
+## Product Bundle Deals
+- [x] Update Starbuzz Mini hookah price from $139.99 to $149.99
+- [x] Create Complete Starter Kit bundles (Hookah + Tobacco + Charcoal) - 3 tiers: Classic ($179.99), Premium ($199.99), Deluxe ($229.99)
+- [x] Add bundle products to Bundles collection
