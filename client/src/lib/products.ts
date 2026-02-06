@@ -1,6 +1,7 @@
 // Product data structure for the e-commerce site
 // Design Philosophy: Neo-Brutalism meets Luxury Retail
 import { charcoalProducts } from './charcoal-products';
+import { vapeProducts } from './vape-products';
 
 export interface Product {
   id: string;
@@ -20,6 +21,7 @@ export const categories = [
   { id: 'hookahs', name: 'Hookahs', icon: '🫖' },
   { id: 'shisha', name: 'Shisha', icon: '🍃' },
   { id: 'charcoal', name: 'Charcoal', icon: '⚫' },
+  { id: 'vapes', name: 'Vapes', icon: '/images/icons/vape-icon.png' },
   { id: 'accessories', name: 'Accessories', icon: '🔧' },
   { id: 'bowls', name: 'Hookah Bowls', icon: '🥣' },
 ];
@@ -44,6 +46,9 @@ export const products: Product[] = [
   
   // Charcoal products imported from charcoal-products.ts
   ...charcoalProducts,
+  
+  // Vape products imported from vape-products.ts
+  ...vapeProducts,
   
   // Bowls
   { id: '15', name: 'Ceramic Bowl Premium', brand: 'Artisan', price: 49.99, category: 'bowls', image: '/images/osJ2wAX3W81I.jpg', inStock: true },

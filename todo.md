@@ -41,3 +41,9 @@
 - [x] Reduce charcoal products to 4 unique options (removed extra green Coco Fuego products)
 - [x] Remove Coco Nara product and reorder charcoal products by price (highest to lowest)
 - [x] Remove quick view modal popup and restore original product card behavior
+
+## Vapes Category Addition
+- [x] Scrape 4 vape products with white backgrounds from thehookahshop.com (ordered by price highest to lowest)
+- [x] Generate vape icon matching site theme
+- [x] Add Vapes category to navigation menu
+- [x] Create vape products data file and integrate with main products

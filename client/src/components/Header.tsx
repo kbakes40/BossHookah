@@ -147,6 +147,10 @@ export default function Header() {
               <span className="text-2xl">⚫</span>
               <span className="text-sm font-semibold">Charcoal</span>
             </Link>
+            <Link href="/vapes" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
+              <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/qJSjGkxwWkslwyqT.png" alt="Vapes" className="w-6 h-6" />
+              <span className="text-sm font-semibold">Vapes</span>
+            </Link>
             <Link href="/accessories" className="flex flex-col items-center gap-1 hover:text-primary transition-colors duration-150">
               <span className="text-2xl">🔧</span>
               <span className="text-sm font-semibold">Accessories</span>
@@ -221,6 +225,18 @@ export default function Header() {
                 <span className="text-3xl">⚫</span>
               </div>
               <span className="text-xl font-display font-bold flex-1">Charcoal</span>
+              <ChevronRight className="h-6 w-6" />
+            </Link>
+            
+            <Link 
+              href="/vapes" 
+              className="flex items-center gap-4 p-6 border-b-3 border-border hover:bg-secondary transition-colors duration-150"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="w-16 h-16 bg-primary/10 brutalist-border flex items-center justify-center">
+                <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/qJSjGkxwWkslwyqT.png" alt="Vapes" className="w-10 h-10" />
+              </div>
+              <span className="text-xl font-display font-bold flex-1">Vapes</span>
               <ChevronRight className="h-6 w-6" />
             </Link>
             
