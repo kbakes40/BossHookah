@@ -17,6 +17,9 @@ export default function ProductDetail() {
   const product = getProductById(params?.id || "");
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedVariant, setSelectedVariant] = useState(
+    product?.variants?.[0]?.id || ""
+  );
   const { addToCart } = useCart();
 
   if (!product) {
@@ -135,6 +138,29 @@ export default function ProductDetail() {
                   </div>
                 )}
               </div>
+
+              {/* Flavor Variant Selector */}
+              {product.variants && product.variants.length > 0 && (
+                <div className="mb-6">
+                  <label className="block font-semibold mb-3">Select Flavor</label>
+                  <div className="flex flex-wrap gap-2">
+                    {product.variants.map((variant) => (
+                      <button
+                        key={variant.id}
+                        onClick={() => setSelectedVariant(variant.id)}
+                        className={`px-4 py-2.5 brutalist-border font-semibold transition-all duration-150 hover:translate-x-0.5 hover:translate-y-0.5 ${
+                          selectedVariant === variant.id
+                            ? "bg-primary text-primary-foreground brutalist-shadow"
+                            : "bg-background hover:bg-secondary"
+                        }`}
+                        title={variant.description}
+                      >
+                        {variant.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Shipping Notice */}
               <div className="bg-secondary brutalist-border p-4 mb-6">

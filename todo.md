@@ -104,3 +104,7 @@
 
 ## Product Card Improvements
 - [x] Replace dropdown flavor selector with visible flavor buttons showing all options at once
+
+## Product Detail Page & Bug Fixes
+- [x] Add flavor variant selector to product detail page
+- [x] Fix nested anchor tag error in ProductCard component (already fixed - buttons are outside Link)
