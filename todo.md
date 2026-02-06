@@ -60,3 +60,6 @@
 - [x] Add meta keywords to homepage
 - [x] Extend page title to 30-60 characters (now 79 chars)
 - [x] Add meta description (50-160 characters - now 154 chars)
+
+## Product Additions
+- [x] Add Snoop x Al Fakher Shisha Tobacco 1kg to Shisha collection
