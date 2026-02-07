@@ -233,3 +233,4 @@
 - [x] Add ROR link
 - [x] Add ROR Tobacco link
 - [x] Create custom icons matching social theme
+- [x] Update favicon with new Boss Hookah design
