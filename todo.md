@@ -214,3 +214,4 @@
 - [ ] Submit site to Google Search Console for indexing (requires manual action)
 - [x] Expand meta keywords for better SEO coverage
 - [x] Update sitemap and robots.txt with custom domain (bosshookah.site)
+- [x] Add custom favicon files to website
