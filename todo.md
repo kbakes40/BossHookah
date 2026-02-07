@@ -217,3 +217,4 @@
 - [x] Add custom favicon files to website
 - [x] Update website footer with store address and phone number
 - [ ] Update Google Business Profile website URL to bosshookah.site (requires manual action)
+- [x] Update Instagram link to actual Boss Hookah Instagram account
