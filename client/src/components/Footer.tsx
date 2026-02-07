@@ -59,18 +59,25 @@ export default function Footer() {
           {locationOpen && (
             <div className="pb-6 space-y-4">
               <div>
-                <p className="font-semibold">123 Main Street</p>
-                <p>City, State 12345</p>
-                <p className="mt-2">(555) 123-4567</p>
+                <p className="font-semibold">The Boss Hookah Wholesale</p>
+                <p>6520 Greenfield Rd</p>
+                <p>Dearborn, MI 48126</p>
+                <a href="tel:+13134066589" className="mt-2 inline-block hover:text-primary transition-colors">(313) 406-6589</a>
               </div>
               <div>
                 <p className="font-semibold">Store Hours</p>
-                <p>Monday - Saturday 12PM - 8PM</p>
-                <p>Sunday 1PM - 6PM</p>
+                <p>Open Daily</p>
+                <p>Closes 1:00 AM</p>
               </div>
               <div>
-                <p className="font-semibold">Support Hours</p>
-                <p>Monday - Friday 10AM - 5PM PST</p>
+                <a 
+                  href="https://maps.app.goo.gl/2sXDxnhukx8pzuW3A" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-block text-primary hover:underline font-semibold"
+                >
+                  Get Directions →
+                </a>
               </div>
             </div>
           )}

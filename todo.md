@@ -215,3 +215,5 @@
 - [x] Expand meta keywords for better SEO coverage
 - [x] Update sitemap and robots.txt with custom domain (bosshookah.site)
 - [x] Add custom favicon files to website
+- [x] Update website footer with store address and phone number
+- [ ] Update Google Business Profile website URL to bosshookah.site (requires manual action)
