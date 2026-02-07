@@ -2,7 +2,7 @@
 // Features: Collapsible dropdown menus for Links, Store Location, and Social
 
 import { Link } from "wouter";
-import { Instagram, Facebook, Twitter, ChevronDown, ChevronUp } from "lucide-react";
+import { Instagram, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
 import { useState } from "react";
 
 export default function Footer() {
@@ -93,18 +93,29 @@ export default function Footer() {
             {socialOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
           </button>
           {socialOpen && (
-            <div className="pb-6 flex gap-4">
+            <div className="pb-6 flex gap-4 flex-wrap">
               <a href="https://www.instagram.com/bosshookahshop/" target="_blank" rel="noopener noreferrer" 
-                 className="w-12 h-12 bg-foreground text-background flex items-center justify-center brutalist-border hover:bg-primary hover:border-primary transition-colors duration-150">
+                 className="w-12 h-12 bg-foreground text-background flex items-center justify-center brutalist-border hover:bg-primary hover:border-primary transition-colors duration-150"
+                 title="Instagram">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer"
-                 className="w-12 h-12 bg-foreground text-background flex items-center justify-center brutalist-border hover:bg-primary hover:border-primary transition-colors duration-150">
-                <Facebook className="h-5 w-5" />
+              <a href="/blog" 
+                 className="w-12 h-12 bg-foreground text-background flex items-center justify-center brutalist-border hover:bg-primary hover:border-primary transition-colors duration-150"
+                 title="Blog">
+                <BookOpen className="h-5 w-5" />
               </a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"
-                 className="w-12 h-12 bg-foreground text-background flex items-center justify-center brutalist-border hover:bg-primary hover:border-primary transition-colors duration-150">
-                <Twitter className="h-5 w-5" />
+              <a href="https://www.ror.com" target="_blank" rel="noopener noreferrer"
+                 className="w-12 h-12 bg-foreground text-background flex items-center justify-center brutalist-border hover:bg-primary hover:border-primary transition-colors duration-150 text-xs font-bold"
+                 title="ROR">
+                ROR
+              </a>
+              <a href="https://www.rortobacco.com" target="_blank" rel="noopener noreferrer"
+                 className="w-12 h-12 bg-foreground text-background flex items-center justify-center brutalist-border hover:bg-primary hover:border-primary transition-colors duration-150 text-[10px] font-bold leading-tight text-center"
+                 title="ROR Tobacco">
+                <span className="flex flex-col">
+                  <span>ROR</span>
+                  <span>TCO</span>
+                </span>
               </a>
             </div>
           )}

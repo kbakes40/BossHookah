@@ -20,6 +20,7 @@ import OrderHistory from "./pages/OrderHistory";
 import MemberPerks from "./pages/MemberPerks";
 import BrandCollection from "./pages/BrandCollection";
 import Terms from "./pages/Terms";
+import Blog from "./pages/Blog";
 import FloatingRewardsButton from "./components/FloatingRewardsButton";
 function Router() {
   const [location] = useLocation();
@@ -79,6 +80,7 @@ function Router() {
         {() => <Collection />}
       </Route>
       <Route path={"/terms"} component={Terms} />
+      <Route path={"/blog"} component={Blog} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

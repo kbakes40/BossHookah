@@ -222,3 +222,14 @@
 - [x] Add Open Graph tags for social media sharing
 - [ ] Submit sitemap to Google Search Console (requires manual action)
 - [x] Reduce meta keywords from 47 to 8 focused terms
+
+## Blog Section
+- [x] Create blog page with SEO-optimized articles
+- [x] Add blog route to navigation
+- [x] Add blog icon to footer social section
+
+## Footer Social Updates
+- [x] Remove Facebook and Twitter links
+- [x] Add ROR link
+- [x] Add ROR Tobacco link
+- [x] Create custom icons matching social theme
