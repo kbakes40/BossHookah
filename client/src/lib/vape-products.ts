@@ -26,26 +26,4 @@ export const vapeProducts: Product[] = [
     inStock: true,
 
   },
-  {
-    id: "vape-003",
-    name: "Foger Switch Pro POD ONLY Vape Up to 30,000 Puffs",
-    brand: "Foger",
-    price: 16.99,
-    salePrice: undefined,
-    image: "/images/vapes/foger-switch-pro-pod.jpeg",
-    category: "vapes",
-    inStock: true,
-
-  },
-  {
-    id: "vape-004",
-    name: "Sky Bar",
-    brand: "Sky",
-    price: 14.99,
-    salePrice: undefined,
-    image: "/images/vapes/sky-bar.jpeg",
-    category: "vapes",
-    inStock: true,
-
-  },
 ];
