@@ -18,7 +18,7 @@ export const checkoutRouter = router({
             image: z.string().optional(),
           })
         ),
-        email: z.string().email().optional(),
+
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -26,7 +26,7 @@ export const checkoutRouter = router({
       
       const session = await createCheckoutSession({
         userId: ctx.user?.id || 0,
-        userEmail: input.email || ctx.user?.email || "",
+        userEmail: ctx.user?.email || "",
         userName: ctx.user?.name || "Guest",
         items: input.items,
         successUrl: `${origin}/checkout/success`,

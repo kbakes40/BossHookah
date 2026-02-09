@@ -13,7 +13,6 @@ import { useState } from "react";
 export default function CartDrawer() {
   const { items, cartTotal, cartCount, isOpen, closeCart, updateQuantity, removeFromCart, clearCart } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [email, setEmail] = useState("");
   const createCheckoutSession = trpc.checkout.createSession.useMutation();
 
   if (!isOpen) return null;
@@ -141,20 +140,7 @@ export default function CartDrawer() {
               </span>
             </div>
 
-            {/* Email Input for Guest Checkout */}
-            <div>
-              <label htmlFor="checkout-email" className="block text-sm font-bold mb-2">
-                EMAIL ADDRESS
-              </label>
-              <Input
-                id="checkout-email"
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="brutalist-border"
-              />
-            </div>
+
 
             {/* Checkout Button */}
             <Button 
@@ -176,15 +162,8 @@ export default function CartDrawer() {
                     };
                   });
 
-                  if (!email || !email.includes('@')) {
-                    toast.error("Please enter a valid email address");
-                    setIsCheckingOut(false);
-                    return;
-                  }
-
                   const session = await createCheckoutSession.mutateAsync({
                     items: checkoutItems,
-                    email: email,
                   });
 
                   if (session.url) {
