@@ -23,6 +23,8 @@ export interface Product {
   inStock: boolean;
   featured?: boolean;
   trending?: boolean;
+  description?: string;
+  specs?: string[];
   variants?: ProductVariant[];
 }
 

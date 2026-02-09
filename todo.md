@@ -247,3 +247,4 @@
 - [x] Update ROR Kilo price to $69.99
 - [x] Fix nested anchor tag error on /vapes page
 - [x] Remove Foger Switch and Sky Bar from vape products
+- [x] Add Breeze Prime Disposable Vape product with descriptions and images from thevaporshoppeusa.com
