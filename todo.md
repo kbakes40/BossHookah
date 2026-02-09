@@ -235,3 +235,5 @@
 - [x] Create custom icons matching social theme
 - [x] Update favicon with new Boss Hookah design
 - [x] Remove ROR and ROR Tobacco links from footer social section
+- [x] Update Coco Fuego charcoal product with new image
+- [x] Remove duplicate Coco Fuego products, keep only one
