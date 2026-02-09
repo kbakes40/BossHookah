@@ -251,3 +251,4 @@
 - [x] Add individual flavor images for Breeze Prime variants
 - [x] Remove Breeze Pro from vape collection
 - [x] Implement search functionality to search across all products in catalog
+- [x] Remove Breeze Prime products and import Breeze Pro Disposable Vape with all flavors and images

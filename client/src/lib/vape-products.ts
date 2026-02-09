@@ -1,84 +1,58 @@
-// Vape Products - Imported from thevaporshoppeusa.com (white backgrounds only)
-// Ordered by price from highest to lowest
-
-import { Product } from "./products";
+// Vape Products Data
+import { Product } from './products';
 
 export const vapeProducts: Product[] = [
   {
-    id: "vape-001",
-    name: "Breeze Prime Edition 6000 Puffs",
-    brand: "Breeze",
-    price: 26.99,
-    salePrice: undefined,
-    image: "/images/vapes/breeze-prime-edition-6000.png",
-    category: "vapes",
+    id: 'vape-breeze-pro',
+    name: 'Breeze Pro Disposable Vape',
+    brand: 'Breeze',
+    price: 17.99,
+    category: 'vapes',
+    image: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/VhEZVFHzfWqNMxjz.webp',
+    badge: 'POPULAR',
     inStock: true,
-  },
-  {
-    id: "vape-003",
-    name: "Breeze Prime Disposable Vape",
-    brand: "Breeze",
-    price: 24.99,
-    salePrice: undefined,
-    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/QhlbNTilFboeMZAE.jpeg",
-    category: "vapes",
-    inStock: true,
-    description: "Experience the ultimate vaping satisfaction with the Breeze Prime Edition Disposable Vape. Featuring up to 6000 puffs powered by a robust 1500mAh battery with advanced mesh coil technology and LED battery indicator. Pre-filled with 10ml of premium e-liquid at 5% salt nicotine strength.",
+    featured: true,
+    trending: true,
+    description: "The Breeze Pro isn't just powerful, it's a statement. Premium materials are encompassed by a beautifully designed shell, making this disposable vape truly stand out. It feels as good as it looks.",
+    specs: [
+      'Up to 2,000 puffs per device',
+      '5% Salt Nicotine (50mg/mL)',
+      '6mL E-Juice Capacity',
+      '1,000mAh Internal Battery',
+      'Advanced Mesh Coil Technology',
+      'Draw-Activated Firing',
+      'Fully Disposable',
+      'Non-Refillable'
+    ],
     variants: [
-      { 
-        id: "bp-blueberry-lemon", 
-        name: "Blueberry Lemon", 
-        description: "A delightful burst of tart lemon meets the sweet undertones of blueberry",
-        image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/QhlbNTilFboeMZAE.jpeg"
-      },
-      { 
-        id: "bp-cherry-lemon", 
-        name: "Cherry Lemon", 
-        description: "Zesty punch of lemon combined with rich and succulent notes of cherry"
-      },
-      { 
-        id: "bp-coconut-banana", 
-        name: "Coconut Banana", 
-        description: "Tropical journey with the creaminess of coconut and the rich sweetness of bananas"
-      },
-      { 
-        id: "bp-honeydew-pineapple", 
-        name: "Honeydew Pineapple", 
-        description: "Tropical blend of juicy honeydew melon paired with the tang of ripe pineapple",
-        image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/CDkAVUzbDdxfmnTH.jpeg"
-      },
-      { 
-        id: "bp-lemon-cola", 
-        name: "Lemon Cola", 
-        description: "Classic sparkle of cola enhanced by a zing of lemon",
-        image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/ETzoGYZAatRsDQqU.jpeg"
-      },
-      { 
-        id: "bp-mango", 
-        name: "Mango", 
-        description: "Pure, unadulterated mango goodness capturing the essence of sun-ripened mangoes"
-      },
-      { 
-        id: "bp-mint", 
-        name: "Mint", 
-        description: "Pure, chilling embrace of mint leaving your mouth feeling invigorated and fresh"
-      },
-      { 
-        id: "bp-peach-berry", 
-        name: "Peach Berry", 
-        description: "Harmonious blend where velvety sweetness of peaches meets vibrant notes of assorted berries"
-      },
-      { 
-        id: "bp-strawberry-apple", 
-        name: "Strawberry Apple", 
-        description: "Crispness of freshly picked apples melded with the gentle sweetness of strawberries"
-      },
-      { 
-        id: "bp-strawberry-mint", 
-        name: "Strawberry Mint", 
-        description: "Classic sweetness of strawberries with a cool and refreshing twist of mint",
-        image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/ZOofepaiOyTHBfwM.jpeg"
-      }
+      { id: 'citrus', name: 'Citrus', description: 'Zesty citrus blend with refreshing notes' },
+      { id: 'banana-mint', name: 'Banana Mint', description: 'Creamy banana with cool mint finish' },
+      { id: 'blueberry-banana', name: 'Blueberry Banana', description: 'Sweet blueberries mixed with ripe banana' },
+      { id: 'blueberry-mint', name: 'Blueberry Mint', description: 'Juicy blueberries with icy menthol' },
+      { id: 'blueberry-watermelon', name: 'Blueberry Watermelon', description: 'Blueberry and watermelon fusion' },
+      { id: 'blue-raspberry', name: 'Blue Raspberry', description: 'Classic blue raspberry candy flavor' },
+      { id: 'cherry-cola', name: 'Cherry Cola', description: 'Sweet cherry with fizzy cola notes' },
+      { id: 'cherry-lemon', name: 'Cherry Lemon', description: 'Tart cherry balanced with citrus lemon' },
+      { id: 'grape', name: 'Grape', description: 'Bold purple grape flavor' },
+      { id: 'spearmint', name: 'Spearmint', description: 'Fresh spearmint with cooling sensation' },
+      { id: 'lemon-mint', name: 'Lemon Mint', description: 'Tangy lemon with refreshing mint' },
+      { id: 'watermelon-mint', name: 'Watermelon Mint', description: 'Sweet watermelon with icy mint' },
+      { id: 'menthol', name: 'Menthol', description: 'Pure menthol for maximum cooling' },
+      { id: 'mint', name: 'Mint', description: 'Classic peppermint flavor' },
+      { id: 'orange-mango-watermelon', name: 'Orange Mango Watermelon', description: 'Tropical trio of orange, mango, and watermelon' },
+      { id: 'pineapple-coconut', name: 'Pineapple Coconut', description: 'Tropical pineapple with creamy coconut' },
+      { id: 'pineapple-passion', name: 'Pineapple Passion', description: 'Pineapple and passion fruit blend' },
+      { id: 'pom-berry-mint', name: 'Pom Berry Mint', description: 'Pomegranate and berries with mint' },
+      { id: 'raspberry-lemon', name: 'Raspberry Lemon', description: 'Tart raspberry with citrus lemon' },
+      { id: 'strawberry-banana', name: 'Strawberry Banana', description: 'Classic strawberry banana smoothie' },
+      { id: 'strawberry-cream', name: 'Strawberry Cream', description: 'Sweet strawberries with smooth cream' },
+      { id: 'strawberry-lime', name: 'Strawberry Lime', description: 'Strawberry with zesty lime twist' },
+      { id: 'strawberry-peach-mint', name: 'Strawberry Peach Mint', description: 'Strawberry and peach with cooling mint' },
+      { id: 'strawberry-kiwi', name: 'Strawberry Kiwi', description: 'Sweet strawberry and tangy kiwi' },
+      { id: 'strawmelon', name: 'StrawMelon', description: 'Strawberry and watermelon fusion' },
+      { id: 'tobacco', name: 'Tobacco', description: 'Classic tobacco flavor' },
+      { id: 'vanilla-tobacco', name: 'Vanilla Tobacco', description: 'Smooth vanilla blended with tobacco' },
+      { id: 'peach-mango', name: 'Peach Mango', description: 'Juicy peach and tropical mango' }
     ]
-  },
+  }
 ];
