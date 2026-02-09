@@ -2,7 +2,7 @@
 // Features: Sticky header, navigation with brand dropdowns, search, cart icon
 
 import { ShoppingCart, Search, Menu, User, X, ChevronRight, ChevronDown } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState } from "react";
@@ -18,6 +18,16 @@ export default function Header() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [dropdownTimeout, setDropdownTimeout] = useState<NodeJS.Timeout | null>(null);
   const { cartCount, openCart } = useCart();
+  const [, setLocation] = useLocation();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      setLocation(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
+      setSearchQuery("");
+    }
+  };
 
   // Categories with dropdown menus
   const categoriesWithDropdowns = ['shisha', 'vapes', 'charcoal'];
@@ -85,15 +95,18 @@ export default function Header() {
 
             {/* Center: Search */}
             <div className="hidden md:flex flex-1 max-w-md mx-8">
-              <div className="relative w-full">
+              <form onSubmit={handleSearch} className="relative w-full">
                 <Input
                   type="search"
                   placeholder="Search products..."
                   className="w-full brutalist-border pr-10"
-                  onClick={() => setSearchOpen(true)}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              </div>
+                <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Search className="h-5 w-5 text-muted-foreground" />
+                </button>
+              </form>
             </div>
 
             {/* Right: Icons */}
@@ -342,14 +355,16 @@ export default function Header() {
               <Button variant="ghost" size="icon" onClick={() => setSearchOpen(false)}>
                 <X className="h-6 w-6" />
               </Button>
-              <Input
-                type="search"
-                placeholder="Search products..."
-                className="flex-1 brutalist-border"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus
-              />
+              <form onSubmit={handleSearch} className="flex-1">
+                <Input
+                  type="search"
+                  placeholder="Search products..."
+                  className="w-full brutalist-border"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                />
+              </form>
             </div>
           </div>
         </div>

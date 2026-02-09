@@ -27,6 +27,7 @@ import Returns from "./pages/Returns";
 import Wishlist from "./pages/Wishlist";
 import AgeVerification from "./pages/AgeVerification";
 import About from "./pages/About";
+import SearchResults from "./pages/SearchResults";
 import FloatingRewardsButton from "./components/FloatingRewardsButton";
 function Router() {
   const [location] = useLocation();
@@ -93,6 +94,7 @@ function Router() {
       <Route path={"/wishlist"} component={Wishlist} />
       <Route path={"/age-verification"} component={AgeVerification} />
       <Route path={"/about"} component={About} />
+      <Route path={"/search"} component={SearchResults} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

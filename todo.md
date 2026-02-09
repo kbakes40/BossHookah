@@ -250,3 +250,4 @@
 - [x] Add Breeze Prime Disposable Vape product with descriptions and images from thevaporshoppeusa.com
 - [x] Add individual flavor images for Breeze Prime variants
 - [x] Remove Breeze Pro from vape collection
+- [x] Implement search functionality to search across all products in catalog
