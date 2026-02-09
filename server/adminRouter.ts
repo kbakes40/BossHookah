@@ -65,7 +65,25 @@ export const adminRouter = router({
 
       const offset = (input.page - 1) * input.pageSize;
 
-      let query = db.select().from(orders);
+      let query = db
+        .select({
+          id: orders.id,
+          userId: orders.userId,
+          stripePaymentIntentId: orders.stripePaymentIntentId,
+          stripeCheckoutSessionId: orders.stripeCheckoutSessionId,
+          status: orders.status,
+          fulfillmentStatus: orders.fulfillmentStatus,
+          totalAmount: orders.totalAmount,
+          currency: orders.currency,
+          items: orders.items,
+          shippingAddress: orders.shippingAddress,
+          createdAt: orders.createdAt,
+          updatedAt: orders.updatedAt,
+          customerName: users.name,
+          customerEmail: users.email,
+        })
+        .from(orders)
+        .leftJoin(users, eq(orders.userId, users.id));
 
       if (input.status !== "all") {
         query = query.where(eq(orders.status, input.status)) as any;

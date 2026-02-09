@@ -34,17 +34,33 @@ export async function createCheckoutSession(params: {
   const totalAmount = items.reduce((sum, item) => sum + item.priceInCents * item.quantity, 0);
 
   // Create line items for Stripe
-  const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map(item => ({
-    price_data: {
-      currency: "usd",
-      product_data: {
-        name: item.name,
-        images: item.image ? [item.image] : undefined,
+  const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map(item => {
+    // Validate image URL - Stripe requires absolute URLs starting with http:// or https://
+    let validImageUrl: string | undefined = undefined;
+    if (item.image) {
+      try {
+        const url = new URL(item.image, 'https://example.com'); // Use base URL for relative paths
+        // Only use if it's an absolute URL with http/https protocol
+        if (url.protocol === 'http:' || url.protocol === 'https:') {
+          validImageUrl = item.image.startsWith('http') ? item.image : undefined;
+        }
+      } catch (e) {
+        console.warn('[Stripe] Invalid image URL for item:', item.name, item.image);
+      }
+    }
+
+    return {
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: item.name,
+          images: validImageUrl ? [validImageUrl] : undefined,
+        },
+        unit_amount: item.priceInCents,
       },
-      unit_amount: item.priceInCents,
-    },
-    quantity: item.quantity,
-  }));
+      quantity: item.quantity,
+    };
+  });
 
   // Create checkout session
   console.log('[Stripe] Calling Stripe API with line items:', lineItems.length);

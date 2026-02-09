@@ -262,3 +262,5 @@
 - [x] Create inventory management system
 - [x] Update admin panel to use BossHookah logo icon instead of shield icon
 - [x] Fix checkout session creation error
+- [x] Fix 'Not a valid URL' error on product page
+- [x] Add customer name to order management display in admin panel
