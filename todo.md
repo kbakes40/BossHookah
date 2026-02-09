@@ -237,3 +237,5 @@
 - [x] Remove ROR and ROR Tobacco links from footer social section
 - [x] Update Coco Fuego charcoal product with new image
 - [x] Remove duplicate Coco Fuego products, keep only one
+- [x] Create placeholder pages for all footer links (Contact, Military, Terms, Returns, Wishlist, Age, About)
+- [x] Add routes for all placeholder pages

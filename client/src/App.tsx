@@ -21,6 +21,12 @@ import MemberPerks from "./pages/MemberPerks";
 import BrandCollection from "./pages/BrandCollection";
 import Terms from "./pages/Terms";
 import Blog from "./pages/Blog";
+import Contact from "./pages/Contact";
+import Military from "./pages/Military";
+import Returns from "./pages/Returns";
+import Wishlist from "./pages/Wishlist";
+import AgeVerification from "./pages/AgeVerification";
+import About from "./pages/About";
 import FloatingRewardsButton from "./components/FloatingRewardsButton";
 function Router() {
   const [location] = useLocation();
@@ -81,6 +87,12 @@ function Router() {
       </Route>
       <Route path={"/terms"} component={Terms} />
       <Route path={"/blog"} component={Blog} />
+      <Route path={"/contact"} component={Contact} />
+      <Route path={"/military"} component={Military} />
+      <Route path={"/returns"} component={Returns} />
+      <Route path={"/wishlist"} component={Wishlist} />
+      <Route path={"/age-verification"} component={AgeVerification} />
+      <Route path={"/about"} component={About} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
