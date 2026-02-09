@@ -2,7 +2,7 @@
 // Features: Product grid, filters, sorting
 
 import { useState } from "react";
-import { useRoute, useLocation } from "wouter";
+import { useRoute, useLocation, Link } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
@@ -55,7 +55,7 @@ export default function Collection() {
         <div className="container">
           {/* Breadcrumb */}
           <div className="mb-6 text-sm">
-            <a href="/" className="hover:text-primary">Home</a>
+            <Link href="/" className="hover:text-primary">Home</Link>
             <span className="mx-2">/</span>
             <span className="capitalize">{categoryTitle}</span>
           </div>

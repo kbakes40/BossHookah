@@ -245,3 +245,4 @@
 - [x] Remove Large Starbuzz Charcoal from charcoal products
 - [x] Update Coco Fuego price to $19.99
 - [x] Update ROR Kilo price to $69.99
+- [x] Fix nested anchor tag error on /vapes page
