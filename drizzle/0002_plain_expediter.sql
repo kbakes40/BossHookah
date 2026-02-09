@@ -1,0 +1,1 @@
+ALTER TABLE `orders` ADD `fulfillmentStatus` enum('pending','ready_to_ship','shipped','delivered') DEFAULT 'pending' NOT NULL;

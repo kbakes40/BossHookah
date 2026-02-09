@@ -35,6 +35,7 @@ export const orders = mysqlTable("orders", {
   stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }).notNull().unique(),
   stripeCheckoutSessionId: varchar("stripeCheckoutSessionId", { length: 255 }),
   status: mysqlEnum("status", ["pending", "paid", "failed", "refunded"]).default("pending").notNull(),
+  fulfillmentStatus: mysqlEnum("fulfillmentStatus", ["pending", "ready_to_ship", "shipped", "delivered"]).default("pending").notNull(),
   totalAmount: int("totalAmount").notNull(), // Amount in cents
   currency: varchar("currency", { length: 3 }).default("usd").notNull(),
   items: text("items").notNull(), // JSON string of cart items
@@ -45,3 +46,24 @@ export const orders = mysqlTable("orders", {
 
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
+
+/**
+ * Inventory table - stores product stock levels and pricing
+ */
+export const inventory = mysqlTable("inventory", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: varchar("productId", { length: 255 }).notNull().unique(),
+  productName: text("productName").notNull(),
+  brand: varchar("brand", { length: 255 }).notNull(),
+  category: varchar("category", { length: 255 }).notNull(),
+  stockQuantity: int("stockQuantity").notNull().default(0),
+  lowStockThreshold: int("lowStockThreshold").notNull().default(10),
+  price: int("price").notNull(),
+  cost: int("cost"),
+  sku: varchar("sku", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Inventory = typeof inventory.$inferSelect;
+export type InsertInventory = typeof inventory.$inferInsert;

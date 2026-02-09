@@ -29,6 +29,11 @@ import AgeVerification from "./pages/AgeVerification";
 import About from "./pages/About";
 import SearchResults from "./pages/SearchResults";
 import FloatingRewardsButton from "./components/FloatingRewardsButton";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminOrders from "./pages/AdminOrders";
+import AdminCustomers from "./pages/AdminCustomers";
+import AdminInventory from "./pages/AdminInventory";
 function Router() {
   const [location] = useLocation();
   
@@ -95,6 +100,11 @@ function Router() {
       <Route path={"/age-verification"} component={AgeVerification} />
       <Route path={"/about"} component={About} />
       <Route path={"/search"} component={SearchResults} />
+      <Route path={"/admin"} component={AdminLogin} />
+      <Route path={"/admin/dashboard"} component={AdminDashboard} />
+      <Route path={"/admin/orders"} component={AdminOrders} />
+      <Route path={"/admin/customers"} component={AdminCustomers} />
+      <Route path={"/admin/inventory"} component={AdminInventory} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

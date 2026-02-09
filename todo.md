@@ -253,3 +253,10 @@
 - [x] Implement search functionality to search across all products in catalog
 - [x] Remove Breeze Prime products and import Breeze Pro Disposable Vape with all flavors and images
 - [x] Remove email collection step from checkout and redirect directly to Stripe
+- [ ] Build admin panel at /admin with authentication and role-based access
+- [ ] Create order management system with order status tracking (paid, ready to ship, shipped)
+- [ ] Create customer management system
+- [x] Build admin panel at /admin with authentication and role-based access
+- [x] Create order management system with order status tracking (paid, ready to ship, shipped)
+- [x] Create customer management system
+- [x] Create inventory management system
