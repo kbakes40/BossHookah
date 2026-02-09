@@ -1,5 +1,5 @@
 // ROR Tobacco 1kg Wholesale - Consolidated with flavor variants
-// All flavors priced at $68.99 ($1 less than retail $69.99)
+// All flavors priced at $69.99
 
 import { Product } from "./products";
 import { rorFlavorImages, defaultRorImage } from "../data/ror-images";
@@ -53,7 +53,7 @@ export const wholesaleProducts: Product[] = [
   {
     id: 'ror-tobacco-1kg',
     name: 'ROR Tobacco 1kg',
-    price: 68.99,
+    price: 69.99,
     image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/nltwSZTGdVdVTHiX.jpg",
     category: "wholesale",
     brand: "ROR",

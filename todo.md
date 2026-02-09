@@ -241,3 +241,7 @@
 - [x] Add routes for all placeholder pages
 - [x] Update Breeze Pro vape product with new image
 - [x] Remove sale pricing, show single price only (no strikethrough)
+- [x] Remove Titanium Cubettes from charcoal products
+- [x] Remove Large Starbuzz Charcoal from charcoal products
+- [x] Update Coco Fuego price to $19.99
+- [x] Update ROR Kilo price to $69.99
