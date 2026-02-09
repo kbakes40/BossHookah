@@ -17,11 +17,11 @@ export const vapeProducts: Product[] = [
   },
   {
     id: "vape-002",
-    name: "Breeze Smoke Pro With Mesh Coil",
+    name: "Breeze Pro",
     brand: "Breeze",
     price: 21.99,
     salePrice: undefined,
-    image: "/images/vapes/breeze-smoke-pro-mesh-coil.png",
+    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663313071830/CICXHOSgXsgSBbhJ.jpg",
     category: "vapes",
     inStock: true,
 

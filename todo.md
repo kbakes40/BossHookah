@@ -239,3 +239,5 @@
 - [x] Remove duplicate Coco Fuego products, keep only one
 - [x] Create placeholder pages for all footer links (Contact, Military, Terms, Returns, Wishlist, Age, About)
 - [x] Add routes for all placeholder pages
+- [x] Update Breeze Pro vape product with new image
+- [x] Remove sale pricing, show single price only (no strikethrough)
