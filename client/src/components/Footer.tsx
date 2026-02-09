@@ -104,19 +104,6 @@ export default function Footer() {
                  title="Blog">
                 <BookOpen className="h-5 w-5" />
               </a>
-              <a href="https://www.ror.com" target="_blank" rel="noopener noreferrer"
-                 className="w-12 h-12 bg-foreground text-background flex items-center justify-center brutalist-border hover:bg-primary hover:border-primary transition-colors duration-150 text-xs font-bold"
-                 title="ROR">
-                ROR
-              </a>
-              <a href="https://www.rortobacco.com" target="_blank" rel="noopener noreferrer"
-                 className="w-12 h-12 bg-foreground text-background flex items-center justify-center brutalist-border hover:bg-primary hover:border-primary transition-colors duration-150 text-[10px] font-bold leading-tight text-center"
-                 title="ROR Tobacco">
-                <span className="flex flex-col">
-                  <span>ROR</span>
-                  <span>TCO</span>
-                </span>
-              </a>
             </div>
           )}
         </div>
