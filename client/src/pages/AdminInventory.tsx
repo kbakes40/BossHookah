@@ -141,9 +141,7 @@ export default function AdminInventory() {
       <div className="w-64 bg-gray-900 text-white flex flex-col">
         <div className="p-6 border-b border-gray-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Shield className="w-6 h-6" />
-            </div>
+            <img src="/favicon-96x96.png" alt="5 Star Hookah" className="w-10 h-10" />
             <div>
               <h1 className="font-bold text-lg">5 Star Hookah</h1>
               <p className="text-xs text-gray-400">Admin Panel</p>

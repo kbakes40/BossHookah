@@ -14,9 +14,7 @@ export default function AdminLogin() {
       <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
         {/* Logo/Icon */}
         <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 bg-gray-900 rounded-xl flex items-center justify-center">
-            <Shield className="w-8 h-8 text-white" />
-          </div>
+          <img src="/favicon-96x96.png" alt="5 Star Hookah" className="w-16 h-16" />
         </div>
 
         {/* Title */}

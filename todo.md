@@ -260,3 +260,5 @@
 - [x] Create order management system with order status tracking (paid, ready to ship, shipped)
 - [x] Create customer management system
 - [x] Create inventory management system
+- [x] Update admin panel to use BossHookah logo icon instead of shield icon
+- [x] Fix checkout session creation error

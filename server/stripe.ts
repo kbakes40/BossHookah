@@ -28,6 +28,7 @@ export async function createCheckoutSession(params: {
   cancelUrl: string;
 }) {
   const { userId, userEmail, userName, items, successUrl, cancelUrl } = params;
+  console.log('[Stripe] Creating checkout session:', { userId, userEmail, itemCount: items.length });
 
   // Calculate total amount
   const totalAmount = items.reduce((sum, item) => sum + item.priceInCents * item.quantity, 0);
@@ -46,6 +47,7 @@ export async function createCheckoutSession(params: {
   }));
 
   // Create checkout session
+  console.log('[Stripe] Calling Stripe API with line items:', lineItems.length);
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     line_items: lineItems,
@@ -63,6 +65,7 @@ export async function createCheckoutSession(params: {
     allow_promotion_codes: true,
   });
 
+  console.log('[Stripe] Checkout session created:', session.id, session.url);
   return {
     sessionId: session.id,
     url: session.url,

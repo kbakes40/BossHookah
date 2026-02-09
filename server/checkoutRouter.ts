@@ -22,17 +22,24 @@ export const checkoutRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const origin = ctx.req.headers.origin || "http://localhost:3000";
-      
-      const session = await createCheckoutSession({
-        userId: ctx.user?.id || 0,
-        userEmail: ctx.user?.email || "",
-        userName: ctx.user?.name || "Guest",
-        items: input.items,
-        successUrl: `${origin}/checkout/success`,
-        cancelUrl: `${origin}/checkout/cancel`,
-      });
+      try {
+        const origin = ctx.req.headers.origin || "http://localhost:3000";
+        console.log('[Checkout] Creating session with origin:', origin);
+        
+        const session = await createCheckoutSession({
+          userId: ctx.user?.id || 0,
+          userEmail: ctx.user?.email || "",
+          userName: ctx.user?.name || "Guest",
+          items: input.items,
+          successUrl: `${origin}/checkout/success`,
+          cancelUrl: `${origin}/checkout/cancel`,
+        });
 
-      return session;
+        console.log('[Checkout] Session created successfully:', session.sessionId);
+        return session;
+      } catch (error) {
+        console.error('[Checkout] Error creating session:', error);
+        throw error;
+      }
     }),
 });
