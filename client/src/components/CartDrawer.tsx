@@ -206,9 +206,8 @@ export default function CartDrawer() {
                 setIsCheckingOut(true);
                 try {
                   if (paymentMethod === "zelle") {
-                    // Redirect to Zelle checkout page
+                    // Redirect to Zelle checkout page (don't close cart to preserve items)
                     window.location.href = `/zelle-checkout?delivery=${deliveryMethod}`;
-                    closeCart();
                   } else {
                     // Stripe checkout
                     const checkoutItems = items.map(item => {

@@ -284,6 +284,7 @@
 - [ ] Fix shipping payment checkout error
 - [x] Fix checkout payment error for both shipping and pickup
 - [x] Add payment method selection (Credit Card/Zelle) to checkout flow
-- [ ] Create Zelle payment instructions page with order creation
-- [ ] Add Zelle payment info fields to store settings
-- [ ] Update admin orders to handle manual payment confirmation for Zelle
+- [x] Create Zelle payment instructions page with order creation
+- [x] Add Zelle payment info fields to store settings
+- [x] Update admin orders to handle manual payment confirmation for Zelle
+- [x] Fix Zelle checkout redirect issue - clicking Zelle payment redirects to home instead of checkout page
