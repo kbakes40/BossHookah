@@ -57,6 +57,7 @@ export const adminRouter = router({
         pageSize: z.number().default(20),
         status: z.enum(["all", "pending", "paid", "failed", "refunded"]).default("all"),
         fulfillmentStatus: z.enum(["all", "pending", "ready_to_ship", "shipped", "delivered"]).default("all"),
+        deliveryMethod: z.enum(["all", "shipping", "pickup"]).default("all"),
       })
     )
     .query(async ({ input }) => {
@@ -81,6 +82,7 @@ export const adminRouter = router({
           updatedAt: orders.updatedAt,
           customerName: orders.customerName, // From Stripe checkout
           customerEmail: users.email,
+          deliveryMethod: orders.deliveryMethod,
         })
         .from(orders)
         .leftJoin(users, eq(orders.userId, users.id));
@@ -91,6 +93,10 @@ export const adminRouter = router({
 
       if (input.fulfillmentStatus !== "all") {
         query = query.where(eq(orders.fulfillmentStatus, input.fulfillmentStatus)) as any;
+      }
+
+      if (input.deliveryMethod !== "all") {
+        query = query.where(eq(orders.deliveryMethod, input.deliveryMethod)) as any;
       }
 
       const results = await query

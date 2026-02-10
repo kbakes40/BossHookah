@@ -200,7 +200,7 @@ export default function ProductDetail() {
                       type="number"
                       value={quantity}
                       onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-16 h-10 text-center border-x-3 border-border"
+                      className="w-16 h-10 text-center border-x-3 border-border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <button
                       onClick={() => setQuantity(quantity + 1)}

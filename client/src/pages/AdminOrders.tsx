@@ -30,12 +30,14 @@ export default function AdminOrders() {
   const [, setLocation] = useLocation();
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid" | "failed" | "refunded">("all");
   const [fulfillmentFilter, setFulfillmentFilter] = useState<"all" | "pending" | "ready_to_ship" | "shipped" | "delivered">("all");
+  const [deliveryFilter, setDeliveryFilter] = useState<"all" | "shipping" | "pickup">("all");
 
   const { data: orders, isLoading, refetch } = trpc.admin.getOrders.useQuery({
     page: 1,
     pageSize: 50,
     status: statusFilter,
     fulfillmentStatus: fulfillmentFilter,
+    deliveryMethod: deliveryFilter,
   });
 
   const updateStatus = trpc.admin.updateOrderStatus.useMutation({
@@ -204,6 +206,20 @@ export default function AdminOrders() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium mb-2">Delivery Method</label>
+                <Select value={deliveryFilter} onValueChange={(value: any) => setDeliveryFilter(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Methods</SelectItem>
+                    <SelectItem value="shipping">Shipping</SelectItem>
+                    <SelectItem value="pickup">In-Store Pickup</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium mb-2">Search Orders</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -236,6 +252,9 @@ export default function AdminOrders() {
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Fulfillment
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Delivery
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -286,6 +305,15 @@ export default function AdminOrders() {
                             </SelectContent>
                           </Select>
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            order.deliveryMethod === "pickup" 
+                              ? "bg-purple-100 text-purple-800" 
+                              : "bg-blue-100 text-blue-800"
+                          }`}>
+                            {order.deliveryMethod === "pickup" ? "Pickup" : "Shipping"}
+                          </span>
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           <div className="flex gap-2">
                             <Button variant="ghost" size="sm">
@@ -309,7 +337,7 @@ export default function AdminOrders() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                         No orders found
                       </td>
                     </tr>

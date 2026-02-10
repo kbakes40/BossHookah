@@ -1,0 +1,1 @@
+ALTER TABLE `orders` ADD `deliveryMethod` enum('shipping','pickup') DEFAULT 'shipping' NOT NULL;

@@ -18,7 +18,7 @@ export const checkoutRouter = router({
             image: z.string().optional(),
           })
         ),
-
+        deliveryMethod: z.enum(["shipping", "pickup"]).default("shipping"),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -31,6 +31,7 @@ export const checkoutRouter = router({
           userEmail: ctx.user?.email || "",
           userName: ctx.user?.name || "Guest",
           items: input.items,
+          deliveryMethod: input.deliveryMethod,
           successUrl: `${origin}/checkout/success`,
           cancelUrl: `${origin}/checkout/cancel`,
         });

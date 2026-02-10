@@ -268,3 +268,6 @@
 - [x] Update orders table to store cardholder name from Stripe
 - [x] Update webhook to capture cardholder name from Stripe checkout session
 - [x] Add delete order functionality to admin panel
+- [x] Add delivery method (shipping/in-store pickup) to orders schema and checkout flow
+- [x] Update admin panel to display and filter orders by delivery method
+- [x] Fix quantity selector buttons to use standard + and - symbols

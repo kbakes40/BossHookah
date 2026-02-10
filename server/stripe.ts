@@ -24,10 +24,11 @@ export async function createCheckoutSession(params: {
   userEmail: string;
   userName: string;
   items: Array<{ name: string; priceInCents: number; quantity: number; image?: string }>;
+  deliveryMethod: "shipping" | "pickup";
   successUrl: string;
   cancelUrl: string;
 }) {
-  const { userId, userEmail, userName, items, successUrl, cancelUrl } = params;
+  const { userId, userEmail, userName, items, deliveryMethod, successUrl, cancelUrl } = params;
   console.log('[Stripe] Creating checkout session:', { userId, userEmail, itemCount: items.length });
 
   // Calculate total amount
@@ -77,6 +78,7 @@ export async function createCheckoutSession(params: {
       customer_email: userEmail,
       customer_name: userName,
       items: JSON.stringify(items),
+      delivery_method: deliveryMethod,
     },
     allow_promotion_codes: true,
   });
@@ -124,12 +126,16 @@ export async function handleWebhookEvent(event: Stripe.Event) {
           customerName = session.customer_details.name;
         }
 
+        // Get delivery method from metadata
+        const deliveryMethod = (session.metadata?.delivery_method as "shipping" | "pickup") || "shipping";
+
         // Create order record
         await db.insert(orders).values({
           userId,
           stripePaymentIntentId: session.payment_intent as string,
           stripeCheckoutSessionId: session.id,
           customerName,
+          deliveryMethod,
           status: "paid",
           totalAmount: session.amount_total || 0,
           currency: session.currency || "usd",

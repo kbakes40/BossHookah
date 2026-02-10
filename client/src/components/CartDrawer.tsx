@@ -4,7 +4,7 @@
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { X, Minus, Plus, Trash2 } from "lucide-react";
+import { X, Minus, Plus, Trash2, Truck, Store } from "lucide-react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { useState } from "react";
 export default function CartDrawer() {
   const { items, cartTotal, cartCount, isOpen, closeCart, updateQuantity, removeFromCart, clearCart } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [deliveryMethod, setDeliveryMethod] = useState<"shipping" | "pickup">("shipping");
   const createCheckoutSession = trpc.checkout.createSession.useMutation();
 
   if (!isOpen) return null;
@@ -140,7 +141,34 @@ export default function CartDrawer() {
               </span>
             </div>
 
-
+            {/* Delivery Method Selection */}
+            <div className="space-y-2">
+              <p className="font-display font-bold text-sm">DELIVERY METHOD</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setDeliveryMethod("shipping")}
+                  className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
+                    deliveryMethod === "shipping" 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-background hover:bg-secondary"
+                  }`}
+                >
+                  <Truck className="h-5 w-5" />
+                  <span className="text-sm font-bold">SHIPPING</span>
+                </button>
+                <button
+                  onClick={() => setDeliveryMethod("pickup")}
+                  className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
+                    deliveryMethod === "pickup" 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-background hover:bg-secondary"
+                  }`}
+                >
+                  <Store className="h-5 w-5" />
+                  <span className="text-sm font-bold">PICKUP</span>
+                </button>
+              </div>
+            </div>
 
             {/* Checkout Button */}
             <Button 
@@ -164,6 +192,7 @@ export default function CartDrawer() {
 
                   const session = await createCheckoutSession.mutateAsync({
                     items: checkoutItems,
+                    deliveryMethod,
                   });
 
                   if (session.url) {
