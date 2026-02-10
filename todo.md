@@ -289,3 +289,4 @@
 - [x] Update admin orders to handle manual payment confirmation for Zelle
 - [x] Fix Zelle checkout redirect issue - clicking Zelle payment redirects to home instead of checkout page
 - [x] Fix persistent Zelle redirect bug - still redirecting to home after initial fix
+- [x] Add customer name and phone number input fields to Zelle checkout page

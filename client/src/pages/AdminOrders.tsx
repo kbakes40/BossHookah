@@ -281,8 +281,13 @@ export default function AdminOrders() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           #{order.id}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {order.customerName || 'Guest'}
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          <div>
+                            <div className="font-medium">{order.customerName || 'Guest'}</div>
+                            {order.customerPhone && (
+                              <div className="text-gray-500 text-xs">{order.customerPhone}</div>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(order.createdAt).toLocaleDateString()}

@@ -70,6 +70,7 @@ export const checkoutRouter = router({
         ),
         deliveryMethod: z.enum(["shipping", "pickup"]).default("shipping"),
         customerName: z.string(),
+        customerPhone: z.string(),
         totalAmount: z.number(),
       })
     )
@@ -85,6 +86,7 @@ export const checkoutRouter = router({
         console.log('[Zelle Checkout] Creating order with:', {
           userId: ctx.user?.id || 0,
           customerName: input.customerName,
+          customerPhone: input.customerPhone,
           deliveryMethod: input.deliveryMethod,
           totalAmount: input.totalAmount,
           itemCount: input.items.length,
@@ -96,6 +98,7 @@ export const checkoutRouter = router({
           stripePaymentIntentId: `zelle_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // Unique ID for Zelle orders
           stripeCheckoutSessionId: null,
           customerName: input.customerName,
+          customerPhone: input.customerPhone,
           deliveryMethod: input.deliveryMethod,
           paymentMethod: "zelle",
           status: "pending",

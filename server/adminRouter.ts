@@ -81,6 +81,7 @@ export const adminRouter = router({
           createdAt: orders.createdAt,
           updatedAt: orders.updatedAt,
           customerName: orders.customerName, // From Stripe checkout
+          customerPhone: orders.customerPhone, // Customer phone for Zelle orders
           customerEmail: users.email,
           deliveryMethod: orders.deliveryMethod,
           paymentMethod: orders.paymentMethod,

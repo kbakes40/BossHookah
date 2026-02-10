@@ -64,6 +64,13 @@
       "when": 1770684822483,
       "tag": "0008_broken_ultimates",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1770685978678,
+      "tag": "0009_peaceful_karma",
+      "breakpoints": true
     }
   ]
 }

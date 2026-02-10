@@ -35,6 +35,7 @@ export const orders = mysqlTable("orders", {
   stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }).notNull().unique(),
   stripeCheckoutSessionId: varchar("stripeCheckoutSessionId", { length: 255 }),
   customerName: text("customerName"), // Cardholder name from Stripe
+  customerPhone: varchar("customerPhone", { length: 20 }), // Customer phone number for Zelle orders
   deliveryMethod: mysqlEnum("deliveryMethod", ["shipping", "pickup"]).default("shipping").notNull(),
   paymentMethod: mysqlEnum("paymentMethod", ["stripe", "zelle"]).default("stripe").notNull(),
   status: mysqlEnum("status", ["pending", "paid", "failed", "refunded"]).default("pending").notNull(),

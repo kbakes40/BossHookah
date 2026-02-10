@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Copy, CheckCircle2, MapPin, Phone, Mail } from "lucide-react";
@@ -14,6 +15,9 @@ export default function ZelleCheckout() {
   const { items, cartTotal, clearCart } = useCart();
   const [orderId, setOrderId] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const storeSettings = trpc.store.getSettings.useQuery();
   const createZelleOrder = trpc.checkout.createZelleOrder.useMutation();
@@ -28,36 +32,43 @@ export default function ZelleCheckout() {
       setLocation("/");
       return;
     }
+  }, [items, setLocation]);
 
-    // Create pending order
-    const createOrder = async () => {
-      try {
-        const orderItems = items.map(item => ({
-          name: item.selectedVariantName 
-            ? `${item.brand} - ${item.name} - ${item.selectedVariantName}`
-            : `${item.brand} - ${item.name}`,
-          priceInCents: Math.round((item.salePrice || item.price) * 100),
-          quantity: item.quantity,
-        }));
-
-        const result = await createZelleOrder.mutateAsync({
-          items: orderItems,
-          deliveryMethod,
-          customerName: "Guest Customer", // Zelle orders don't require upfront name
-          totalAmount: Math.round(cartTotal * 100), // Convert to cents
-        });
-
-        setOrderId(result.orderId);
-      } catch (error) {
-        toast.error("Failed to create order");
-        setLocation("/");
-      }
-    };
-
-    if (!orderId) {
-      createOrder();
+  const handleSubmitOrder = async () => {
+    if (!customerName.trim()) {
+      toast.error("Please enter your name");
+      return;
     }
-  }, [items, deliveryMethod, orderId]);
+    if (!customerPhone.trim()) {
+      toast.error("Please enter your phone number");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const orderItems = items.map(item => ({
+        name: item.selectedVariantName 
+          ? `${item.brand} - ${item.name} - ${item.selectedVariantName}`
+          : `${item.brand} - ${item.name}`,
+        priceInCents: Math.round((item.salePrice || item.price) * 100),
+        quantity: item.quantity,
+      }));
+
+      const result = await createZelleOrder.mutateAsync({
+        items: orderItems,
+        deliveryMethod,
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+        totalAmount: Math.round(cartTotal * 100), // Convert to cents
+      });
+
+      setOrderId(result.orderId);
+      toast.success("Order created! Please send payment via Zelle");
+    } catch (error) {
+      toast.error("Failed to create order");
+      setIsSubmitting(false);
+    }
+  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -69,6 +80,123 @@ export default function ZelleCheckout() {
   const zelleEmail = storeSettings.data?.zelleEmail || "payment@bosshookah.com";
   const zellePhone = storeSettings.data?.zellePhone || "313-406-6589";
 
+  // Show customer info form if order not created yet
+  if (!orderId) {
+    return (
+      <div className="min-h-screen bg-background py-12">
+        <div className="container max-w-2xl">
+          <div className="bg-card brutalist-border brutalist-shadow p-8 space-y-8">
+            {/* Header */}
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 brutalist-border">
+                <CheckCircle2 className="h-8 w-8 text-primary" />
+              </div>
+              <h1 className="text-3xl font-display font-black">ZELLE PAYMENT</h1>
+              <p className="text-muted-foreground">
+                Enter your details to complete your order
+              </p>
+            </div>
+
+            {/* Customer Info Form */}
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-bold mb-2">
+                    FULL NAME *
+                  </label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="John Smith"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    className="brutalist-border"
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-bold mb-2">
+                    PHONE NUMBER *
+                  </label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="(313) 555-1234"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    className="brutalist-border"
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+
+              {/* Order Summary */}
+              <div className="space-y-4">
+                <h3 className="font-display font-bold">ORDER SUMMARY</h3>
+                <div className="space-y-2">
+                  {items.map((item, index) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span>
+                        {item.name} {item.selectedVariantName && `- ${item.selectedVariantName}`} x {item.quantity}
+                      </span>
+                      <span className="font-bold">
+                        ${((item.salePrice || item.price) * item.quantity).toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="border-t-3 border-border pt-2 flex justify-between font-display font-bold text-lg">
+                    <span>TOTAL</span>
+                    <span className="text-primary">${cartTotal.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Delivery Method */}
+              <div className="bg-secondary brutalist-border p-4">
+                <p className="font-bold text-sm mb-2">
+                  {deliveryMethod === "pickup" ? "IN-STORE PICKUP" : "SHIPPING"}
+                </p>
+                {deliveryMethod === "pickup" && storeSettings.data && (
+                  <div className="text-sm space-y-1 text-muted-foreground">
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <span>{storeSettings.data.address}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 flex-shrink-0" />
+                      <span>{storeSettings.data.phone}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                onClick={() => setLocation("/")}
+                className="flex-1 brutalist-border"
+                disabled={isSubmitting}
+              >
+                CANCEL
+              </Button>
+              <Button
+                onClick={handleSubmitOrder}
+                className="flex-1 brutalist-border brutalist-shadow bg-primary text-primary-foreground"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "CREATING ORDER..." : "CONTINUE TO PAYMENT"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show payment instructions after order is created
   return (
     <div className="min-h-screen bg-background py-12">
       <div className="container max-w-2xl">
@@ -79,11 +207,9 @@ export default function ZelleCheckout() {
               <CheckCircle2 className="h-8 w-8 text-primary" />
             </div>
             <h1 className="text-3xl font-display font-black">ZELLE PAYMENT</h1>
-            {orderId && (
-              <p className="text-muted-foreground">
-                Order #{orderId} Created
-              </p>
-            )}
+            <p className="text-muted-foreground">
+              Order #{orderId} Created
+            </p>
           </div>
 
           {/* Payment Instructions */}
