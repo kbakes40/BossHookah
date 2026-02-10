@@ -81,8 +81,8 @@ export async function createCheckoutSession(params: {
       user_id: userId.toString(),
       customer_email: userEmail,
       customer_name: userName,
-      items: JSON.stringify(items),
       delivery_method: deliveryMethod,
+      item_count: items.length.toString(),
     },
     allow_promotion_codes: true,
   });
@@ -125,7 +125,21 @@ export async function handleWebhookEvent(event: Stripe.Event) {
         
         // Extract metadata
         const userId = parseInt(session.metadata?.user_id || session.client_reference_id || "0");
-        const items = session.metadata?.items || "[]";
+        
+        // Get line items from session (Stripe stores them, no need for metadata)
+        let items = "[]";
+        try {
+          // Retrieve line items from the session
+          const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+          const itemsArray = lineItems.data.map(item => ({
+            name: item.description,
+            priceInCents: item.amount_total,
+            quantity: item.quantity,
+          }));
+          items = JSON.stringify(itemsArray);
+        } catch (error) {
+          console.error('[Stripe Webhook] Error fetching line items:', error);
+        }
         
         if (!userId) {
           console.error("[Stripe Webhook] No user ID found in session metadata");

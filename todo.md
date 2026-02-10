@@ -293,3 +293,5 @@
 - [x] Close cart drawer when navigating to Zelle checkout page
 - [x] Add automatic phone number formatting with dashes (XXX-XXX-XXXX) and 10-digit limit
 - [x] Add Bitcoin and PayPal as demo payment options with placeholder messages
+- [x] Fix checkout failure with $319 cart total - removed items from Stripe metadata (500 char limit)
+- [x] Fix ROR Kilo product images to match correct flavor names - verified all images are correct from 5starhookah.com
