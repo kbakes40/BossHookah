@@ -277,3 +277,4 @@
 - [x] Update Stripe success URL to redirect to success page with order details
 - [x] Fix checkout error when selecting in-store pickup delivery method
 - [x] Fix store information display on checkout success page for pickup orders
+- [x] Add delete customer functionality to admin panel

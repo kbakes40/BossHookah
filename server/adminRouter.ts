@@ -224,6 +224,21 @@ export const adminRouter = router({
       };
     }),
 
+  // Delete customer
+  deleteCustomer: adminProcedure
+    .input(z.object({ customerId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      // Delete customer
+      await db
+        .delete(users)
+        .where(eq(users.id, input.customerId));
+
+      return { success: true };
+    }),
+
   // Get all inventory items
   getInventory: adminProcedure
     .input(

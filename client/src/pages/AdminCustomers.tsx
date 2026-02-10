@@ -12,7 +12,8 @@ import {
   ChevronLeft,
   Search,
   Mail,
-  Calendar
+  Calendar,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,10 +23,22 @@ export default function AdminCustomers() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
 
-  const { data: customers, isLoading } = trpc.admin.getCustomers.useQuery({
+  const { data: customers, isLoading, refetch } = trpc.admin.getCustomers.useQuery({
     page: 1,
     pageSize: 50,
   });
+
+  const deleteCustomer = trpc.admin.deleteCustomer.useMutation({
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  const handleDelete = (customerId: number, customerName: string) => {
+    if (window.confirm(`Are you sure you want to delete customer "${customerName}"? This action cannot be undone.`)) {
+      deleteCustomer.mutate({ customerId });
+    }
+  };
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -195,9 +208,19 @@ export default function AdminCustomers() {
                           {new Date(customer.lastSignedIn).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <Button variant="ghost" size="sm">
-                            View Details
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm">
+                              View Details
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDelete(customer.id, customer.name || "Guest")}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))
