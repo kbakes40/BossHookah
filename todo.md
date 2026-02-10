@@ -271,3 +271,7 @@
 - [x] Add delivery method (shipping/in-store pickup) to orders schema and checkout flow
 - [x] Update admin panel to display and filter orders by delivery method
 - [x] Fix quantity selector buttons to use standard + and - symbols
+- [x] Create store settings schema in database for address, hours, and pickup instructions
+- [x] Create admin store settings page for managing store information
+- [x] Create checkout success page displaying order confirmation and pickup instructions
+- [x] Update Stripe success URL to redirect to success page with order details

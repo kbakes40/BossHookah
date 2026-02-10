@@ -7,7 +7,7 @@ import { router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "./_core/trpc";
 import { getDb } from "./db";
-import { orders, users, inventory } from "../drizzle/schema";
+import { orders, users, inventory, storeSettings } from "../drizzle/schema";
 import { eq, desc, sql } from "drizzle-orm";
 
 // Admin-only procedure that checks user role
@@ -306,6 +306,79 @@ export const adminRouter = router({
         cost: input.cost ? Math.round(input.cost * 100) : null,
         sku: input.sku || null,
       });
+
+      return { success: true };
+    }),
+
+  // Get store settings
+  getStoreSettings: adminProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+    const [settings] = await db
+      .select()
+      .from(storeSettings)
+      .limit(1);
+
+    return settings || null;
+  }),
+
+  // Update store settings
+  updateStoreSettings: adminProcedure
+    .input(
+      z.object({
+        storeName: z.string(),
+        address: z.string(),
+        city: z.string(),
+        state: z.string(),
+        zipCode: z.string(),
+        phone: z.string(),
+        email: z.string().optional(),
+        hours: z.string(),
+        pickupInstructions: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      // Check if settings exist
+      const [existing] = await db
+        .select()
+        .from(storeSettings)
+        .limit(1);
+
+      if (existing) {
+        // Update existing settings
+        await db
+          .update(storeSettings)
+          .set({
+            storeName: input.storeName,
+            address: input.address,
+            city: input.city,
+            state: input.state,
+            zipCode: input.zipCode,
+            phone: input.phone,
+            email: input.email || null,
+            hours: input.hours,
+            pickupInstructions: input.pickupInstructions,
+            updatedAt: new Date(),
+          })
+          .where(eq(storeSettings.id, existing.id));
+      } else {
+        // Create new settings
+        await db.insert(storeSettings).values({
+          storeName: input.storeName,
+          address: input.address,
+          city: input.city,
+          state: input.state,
+          zipCode: input.zipCode,
+          phone: input.phone,
+          email: input.email || null,
+          hours: input.hours,
+          pickupInstructions: input.pickupInstructions,
+        });
+      }
 
       return { success: true };
     }),

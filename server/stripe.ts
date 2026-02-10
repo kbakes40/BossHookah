@@ -69,7 +69,7 @@ export async function createCheckoutSession(params: {
     payment_method_types: ["card"],
     line_items: lineItems,
     mode: "payment",
-    success_url: successUrl,
+    success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}&delivery_method=${deliveryMethod}`,
     cancel_url: cancelUrl,
     customer_email: userEmail,
     client_reference_id: userId.toString(),

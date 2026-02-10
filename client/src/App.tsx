@@ -34,6 +34,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminOrders from "./pages/AdminOrders";
 import AdminCustomers from "./pages/AdminCustomers";
 import AdminInventory from "./pages/AdminInventory";
+import AdminStoreSettings from "./pages/AdminStoreSettings";
 function Router() {
   const [location] = useLocation();
   
@@ -105,6 +106,7 @@ function Router() {
       <Route path={"/admin/orders"} component={AdminOrders} />
       <Route path={"/admin/customers"} component={AdminCustomers} />
       <Route path={"/admin/inventory"} component={AdminInventory} />
+      <Route path={"/admin/store-settings"} component={AdminStoreSettings} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

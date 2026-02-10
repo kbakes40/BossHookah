@@ -69,3 +69,24 @@ export const inventory = mysqlTable("inventory", {
 
 export type Inventory = typeof inventory.$inferSelect;
 export type InsertInventory = typeof inventory.$inferInsert;
+/**
+ * Store settings table - stores store information for pickup orders
+ * Single row table with id=1
+ */
+export const storeSettings = mysqlTable("storeSettings", {
+  id: int("id").autoincrement().primaryKey(),
+  storeName: text("storeName").notNull(),
+  address: text("address").notNull(),
+  city: varchar("city", { length: 255 }).notNull(),
+  state: varchar("state", { length: 2 }).notNull(),
+  zipCode: varchar("zipCode", { length: 10 }).notNull(),
+  phone: varchar("phone", { length: 20 }).notNull(),
+  email: varchar("email", { length: 320 }),
+  hours: text("hours").notNull(), // JSON string of store hours
+  pickupInstructions: text("pickupInstructions").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type StoreSettings = typeof storeSettings.$inferSelect;
+export type InsertStoreSettings = typeof storeSettings.$inferInsert;
