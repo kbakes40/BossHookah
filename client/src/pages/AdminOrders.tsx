@@ -60,6 +60,16 @@ export default function AdminOrders() {
     },
   });
 
+  const confirmZellePayment = trpc.admin.confirmZellePayment.useMutation({
+    onSuccess: () => {
+      toast.success("Payment confirmed successfully");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to confirm payment");
+    },
+  });
+
   // Redirect if not authenticated or not admin
   useEffect(() => {
     if (!loading) {
@@ -248,7 +258,10 @@ export default function AdminOrders() {
                       Amount
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Payment
+                      Payment Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Payment Method
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Fulfillment
@@ -280,6 +293,15 @@ export default function AdminOrders() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(order.status)}`}>
                             {order.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            order.paymentMethod === "zelle" 
+                              ? "bg-indigo-100 text-indigo-800" 
+                              : "bg-blue-100 text-blue-800"
+                          }`}>
+                            {order.paymentMethod === "zelle" ? "Zelle" : "Card"}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -316,6 +338,20 @@ export default function AdminOrders() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           <div className="flex gap-2">
+                            {order.paymentMethod === "zelle" && order.status === "pending" && (
+                              <Button 
+                                variant="default" 
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm(`Confirm Zelle payment received for order #${order.id}?`)) {
+                                    confirmZellePayment.mutate({ orderId: order.id });
+                                  }
+                                }}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                              >
+                                Confirm Payment
+                              </Button>
+                            )}
                             <Button variant="ghost" size="sm">
                               View Details
                             </Button>

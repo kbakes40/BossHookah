@@ -24,6 +24,8 @@ export default function AdminStoreSettings() {
   const [email, setEmail] = useState("");
   const [hours, setHours] = useState("");
   const [pickupInstructions, setPickupInstructions] = useState("");
+  const [zelleEmail, setZelleEmail] = useState("");
+  const [zellePhone, setZellePhone] = useState("");
 
   const { data: settings, isLoading, refetch } = trpc.admin.getStoreSettings.useQuery();
 
@@ -48,6 +50,8 @@ export default function AdminStoreSettings() {
       setEmail(settings.email || "");
       setHours(settings.hours || "");
       setPickupInstructions(settings.pickupInstructions || "");
+      setZelleEmail(settings.zelleEmail || "");
+      setZellePhone(settings.zellePhone || "");
     }
   }, [settings]);
 
@@ -87,6 +91,8 @@ export default function AdminStoreSettings() {
       email,
       hours,
       pickupInstructions,
+      zelleEmail,
+      zellePhone,
     });
   };
 
@@ -291,6 +297,41 @@ export default function AdminStoreSettings() {
                   <p className="text-xs text-gray-500 mt-1">
                     Instructions shown to customers who select in-store pickup
                   </p>
+                </div>
+
+                {/* Zelle Payment Information */}
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Zelle Payment Information</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Configure Zelle payment details for customers who choose to pay via Zelle
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                        <Mail className="w-4 h-4" />
+                        Zelle Email
+                      </label>
+                      <Input
+                        type="email"
+                        value={zelleEmail}
+                        onChange={(e) => setZelleEmail(e.target.value)}
+                        placeholder="payments@bosshookah.com"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Email address for receiving Zelle payments</p>
+                    </div>
+                    <div>
+                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                        <Phone className="w-4 h-4" />
+                        Zelle Phone
+                      </label>
+                      <Input
+                        value={zellePhone}
+                        onChange={(e) => setZellePhone(e.target.value)}
+                        placeholder="(313) 406-6589"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Phone number for receiving Zelle payments</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 

@@ -83,6 +83,7 @@ export const adminRouter = router({
           customerName: orders.customerName, // From Stripe checkout
           customerEmail: users.email,
           deliveryMethod: orders.deliveryMethod,
+          paymentMethod: orders.paymentMethod,
         })
         .from(orders)
         .leftJoin(users, eq(orders.userId, users.id));
@@ -167,6 +168,40 @@ export const adminRouter = router({
 
       await db
         .delete(orders)
+        .where(eq(orders.id, input.orderId));
+
+      return { success: true };
+    }),
+
+  // Confirm Zelle payment (change status from pending to paid)
+  confirmZellePayment: adminProcedure
+    .input(z.object({ orderId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      // Verify order exists and is a Zelle order
+      const [order] = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.id, input.orderId))
+        .limit(1);
+
+      if (!order) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
+      }
+
+      if (order.paymentMethod !== "zelle") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Only Zelle orders can be confirmed" });
+      }
+
+      // Update order status to paid
+      await db
+        .update(orders)
+        .set({ 
+          status: "paid",
+          updatedAt: new Date(),
+        })
         .where(eq(orders.id, input.orderId));
 
       return { success: true };
@@ -373,6 +408,8 @@ export const adminRouter = router({
         email: z.string().optional(),
         hours: z.string(),
         pickupInstructions: z.string(),
+        zelleEmail: z.string().optional(),
+        zellePhone: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -399,6 +436,8 @@ export const adminRouter = router({
             email: input.email || null,
             hours: input.hours,
             pickupInstructions: input.pickupInstructions,
+            zelleEmail: input.zelleEmail || null,
+            zellePhone: input.zellePhone || null,
             updatedAt: new Date(),
           })
           .where(eq(storeSettings.id, existing.id));
@@ -414,6 +453,8 @@ export const adminRouter = router({
           email: input.email || null,
           hours: input.hours,
           pickupInstructions: input.pickupInstructions,
+          zelleEmail: input.zelleEmail || null,
+          zellePhone: input.zellePhone || null,
         });
       }
 

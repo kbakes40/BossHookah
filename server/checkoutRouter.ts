@@ -55,4 +55,72 @@ export const checkoutRouter = router({
         throw error;
       }
     }),
+
+  // Create Zelle order (pending payment confirmation)
+  createZelleOrder: publicProcedure
+    .input(
+      z.object({
+        items: z.array(
+          z.object({
+            name: z.string(),
+            priceInCents: z.number(),
+            quantity: z.number(),
+            image: z.string().optional(),
+          })
+        ),
+        deliveryMethod: z.enum(["shipping", "pickup"]).default("shipping"),
+        customerName: z.string(),
+        totalAmount: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { getDb } = await import("./db");
+      const { orders } = await import("../drizzle/schema");
+      const { TRPCError } = await import("@trpc/server");
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      try {
+        console.log('[Zelle Checkout] Creating order with:', {
+          userId: ctx.user?.id || 0,
+          customerName: input.customerName,
+          deliveryMethod: input.deliveryMethod,
+          totalAmount: input.totalAmount,
+          itemCount: input.items.length,
+        });
+
+        // Create order with pending status
+        const [order] = await db.insert(orders).values({
+          userId: ctx.user?.id || 0,
+          stripePaymentIntentId: `zelle_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // Unique ID for Zelle orders
+          stripeCheckoutSessionId: null,
+          customerName: input.customerName,
+          deliveryMethod: input.deliveryMethod,
+          paymentMethod: "zelle",
+          status: "pending",
+          fulfillmentStatus: "pending",
+          totalAmount: input.totalAmount,
+          currency: "usd",
+          items: JSON.stringify(input.items),
+          shippingAddress: null,
+        }).$returningId();
+
+        console.log('[Zelle Checkout] Order created successfully:', order.id);
+
+        return {
+          orderId: order.id,
+          success: true,
+        };
+      } catch (error: any) {
+        console.error('[Zelle Checkout] Error creating order:', {
+          message: error?.message,
+          stack: error?.stack,
+        });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create Zelle order",
+        });
+      }
+    }),
 });

@@ -35,6 +35,7 @@ import AdminOrders from "./pages/AdminOrders";
 import AdminCustomers from "./pages/AdminCustomers";
 import AdminInventory from "./pages/AdminInventory";
 import AdminStoreSettings from "./pages/AdminStoreSettings";
+import ZelleCheckout from "./pages/ZelleCheckout";
 function Router() {
   const [location] = useLocation();
   
@@ -51,6 +52,7 @@ function Router() {
       <Route path={"/product/:id"} component={ProductDetail} />
       <Route path={"/checkout/success"} component={CheckoutSuccess} />
       <Route path={"/checkout/cancel"} component={CheckoutCancel} />
+      <Route path={"/zelle-checkout"} component={ZelleCheckout} />
       <Route path={"/sign-in"} component={SignIn} />
       <Route path={"/create-account"} component={CreateAccount} />
       <Route path={"/account"} component={MyAccount} />

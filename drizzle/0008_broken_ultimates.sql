@@ -1,0 +1,1 @@
+ALTER TABLE `orders` ADD `paymentMethod` enum('stripe','zelle') DEFAULT 'stripe' NOT NULL;

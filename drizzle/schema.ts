@@ -36,6 +36,7 @@ export const orders = mysqlTable("orders", {
   stripeCheckoutSessionId: varchar("stripeCheckoutSessionId", { length: 255 }),
   customerName: text("customerName"), // Cardholder name from Stripe
   deliveryMethod: mysqlEnum("deliveryMethod", ["shipping", "pickup"]).default("shipping").notNull(),
+  paymentMethod: mysqlEnum("paymentMethod", ["stripe", "zelle"]).default("stripe").notNull(),
   status: mysqlEnum("status", ["pending", "paid", "failed", "refunded"]).default("pending").notNull(),
   fulfillmentStatus: mysqlEnum("fulfillmentStatus", ["pending", "ready_to_ship", "shipped", "delivered"]).default("pending").notNull(),
   totalAmount: int("totalAmount").notNull(), // Amount in cents
@@ -84,6 +85,8 @@ export const storeSettings = mysqlTable("storeSettings", {
   email: varchar("email", { length: 320 }),
   hours: text("hours").notNull(), // JSON string of store hours
   pickupInstructions: text("pickupInstructions").notNull(),
+  zelleEmail: varchar("zelleEmail", { length: 320 }),
+  zellePhone: varchar("zellePhone", { length: 20 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

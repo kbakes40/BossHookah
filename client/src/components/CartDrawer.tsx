@@ -14,6 +14,7 @@ export default function CartDrawer() {
   const { items, cartTotal, cartCount, isOpen, closeCart, updateQuantity, removeFromCart, clearCart } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<"shipping" | "pickup">("shipping");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "zelle">("card");
   const createCheckoutSession = trpc.checkout.createSession.useMutation();
 
   if (!isOpen) return null;
@@ -170,6 +171,33 @@ export default function CartDrawer() {
               </div>
             </div>
 
+            {/* Payment Method Selection */}
+            <div className="space-y-2">
+              <p className="font-display font-bold text-sm">PAYMENT METHOD</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setPaymentMethod("card")}
+                  className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
+                    paymentMethod === "card" 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-background hover:bg-secondary"
+                  }`}
+                >
+                  <span className="text-sm font-bold">CREDIT CARD</span>
+                </button>
+                <button
+                  onClick={() => setPaymentMethod("zelle")}
+                  className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
+                    paymentMethod === "zelle" 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-background hover:bg-secondary"
+                  }`}
+                >
+                  <span className="text-sm font-bold">ZELLE</span>
+                </button>
+              </div>
+            </div>
+
             {/* Checkout Button */}
             <Button 
               className="w-full h-14 brutalist-border brutalist-shadow bg-primary text-primary-foreground hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 text-lg font-black"
@@ -177,28 +205,35 @@ export default function CartDrawer() {
               onClick={async () => {
                 setIsCheckingOut(true);
                 try {
-                  const checkoutItems = items.map(item => {
-                    const itemName = item.selectedVariantName 
-                      ? `${item.brand} - ${item.name} - ${item.selectedVariantName}`
-                      : `${item.brand} - ${item.name}`;
-                    
-                    return {
-                      name: itemName,
-                      priceInCents: Math.round((item.salePrice || item.price) * 100),
-                      quantity: item.quantity,
-                      image: item.image,
-                    };
-                  });
-
-                  const session = await createCheckoutSession.mutateAsync({
-                    items: checkoutItems,
-                    deliveryMethod,
-                  });
-
-                  if (session.url) {
-                    toast.success("Redirecting to checkout...");
-                    window.open(session.url, "_blank");
+                  if (paymentMethod === "zelle") {
+                    // Redirect to Zelle checkout page
+                    window.location.href = `/zelle-checkout?delivery=${deliveryMethod}`;
                     closeCart();
+                  } else {
+                    // Stripe checkout
+                    const checkoutItems = items.map(item => {
+                      const itemName = item.selectedVariantName 
+                        ? `${item.brand} - ${item.name} - ${item.selectedVariantName}`
+                        : `${item.brand} - ${item.name}`;
+                      
+                      return {
+                        name: itemName,
+                        priceInCents: Math.round((item.salePrice || item.price) * 100),
+                        quantity: item.quantity,
+                        image: item.image,
+                      };
+                    });
+
+                    const session = await createCheckoutSession.mutateAsync({
+                      items: checkoutItems,
+                      deliveryMethod,
+                    });
+
+                    if (session.url) {
+                      toast.success("Redirecting to checkout...");
+                      window.open(session.url, "_blank");
+                      closeCart();
+                    }
                   }
                 } catch (error: any) {
                   if (error.message?.includes("login")) {

@@ -283,3 +283,7 @@
 - [x] Provide instructions for restoring admin access
 - [ ] Fix shipping payment checkout error
 - [x] Fix checkout payment error for both shipping and pickup
+- [x] Add payment method selection (Credit Card/Zelle) to checkout flow
+- [ ] Create Zelle payment instructions page with order creation
+- [ ] Add Zelle payment info fields to store settings
+- [ ] Update admin orders to handle manual payment confirmation for Zelle

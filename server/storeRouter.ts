@@ -30,6 +30,8 @@ export const storeRouter = router({
         email: "info@bosshookah.com",
         hours: "Open Daily\nCloses 1:00 AM",
         pickupInstructions: "Please bring your order confirmation and a valid ID when picking up your order. Call us at (313) 406-6589 if you have any questions.",
+        zelleEmail: null,
+        zellePhone: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
