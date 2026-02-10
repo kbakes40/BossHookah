@@ -34,6 +34,7 @@ export const orders = mysqlTable("orders", {
   userId: int("userId").notNull(),
   stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }).notNull().unique(),
   stripeCheckoutSessionId: varchar("stripeCheckoutSessionId", { length: 255 }),
+  customerName: text("customerName"), // Cardholder name from Stripe
   status: mysqlEnum("status", ["pending", "paid", "failed", "refunded"]).default("pending").notNull(),
   fulfillmentStatus: mysqlEnum("fulfillmentStatus", ["pending", "ready_to_ship", "shipped", "delivered"]).default("pending").notNull(),
   totalAmount: int("totalAmount").notNull(), // Amount in cents

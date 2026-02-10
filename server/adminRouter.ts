@@ -79,7 +79,7 @@ export const adminRouter = router({
           shippingAddress: orders.shippingAddress,
           createdAt: orders.createdAt,
           updatedAt: orders.updatedAt,
-          customerName: users.name,
+          customerName: orders.customerName, // From Stripe checkout
           customerEmail: users.email,
         })
         .from(orders)
@@ -147,6 +147,20 @@ export const adminRouter = router({
           fulfillmentStatus: input.fulfillmentStatus,
           updatedAt: new Date(),
         })
+        .where(eq(orders.id, input.orderId));
+
+      return { success: true };
+    }),
+
+  // Delete order
+  deleteOrder: adminProcedure
+    .input(z.object({ orderId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      await db
+        .delete(orders)
         .where(eq(orders.id, input.orderId));
 
       return { success: true };

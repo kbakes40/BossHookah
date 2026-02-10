@@ -265,3 +265,6 @@
 - [x] Fix 'Not a valid URL' error on product page
 - [x] Add customer name to order management display in admin panel
 - [x] Fix color variant selection to prevent page scroll on product detail page
+- [x] Update orders table to store cardholder name from Stripe
+- [x] Update webhook to capture cardholder name from Stripe checkout session
+- [x] Add delete order functionality to admin panel

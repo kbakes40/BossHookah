@@ -118,11 +118,18 @@ export async function handleWebhookEvent(event: Stripe.Event) {
           break;
         }
 
+        // Get customer name from session
+        let customerName: string | null = null;
+        if (session.customer_details?.name) {
+          customerName = session.customer_details.name;
+        }
+
         // Create order record
         await db.insert(orders).values({
           userId,
           stripePaymentIntentId: session.payment_intent as string,
           stripeCheckoutSessionId: session.id,
+          customerName,
           status: "paid",
           totalAmount: session.amount_total || 0,
           currency: session.currency || "usd",

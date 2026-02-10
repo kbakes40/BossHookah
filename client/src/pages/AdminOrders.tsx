@@ -10,7 +10,8 @@ import {
   LogOut,
   Shield,
   ChevronLeft,
-  Search
+  Search,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +45,16 @@ export default function AdminOrders() {
     },
     onError: () => {
       toast.error("Failed to update order status");
+    },
+  });
+
+  const deleteOrder = trpc.admin.deleteOrder.useMutation({
+    onSuccess: () => {
+      toast.success("Order deleted successfully");
+      refetch();
+    },
+    onError: () => {
+      toast.error("Failed to delete order");
     },
   });
 
@@ -276,9 +287,23 @@ export default function AdminOrders() {
                           </Select>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <Button variant="ghost" size="sm">
-                            View Details
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm">
+                              View Details
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => {
+                                if (confirm(`Are you sure you want to delete order #${order.id}?`)) {
+                                  deleteOrder.mutate({ orderId: order.id });
+                                }
+                              }}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))
