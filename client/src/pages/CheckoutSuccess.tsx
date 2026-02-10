@@ -23,6 +23,12 @@ export default function CheckoutSuccess() {
     if (method) setDeliveryMethod(method);
   }, [location]);
 
+  // Fetch order details by session ID
+  const { data: orderDetails } = trpc.store.getOrderBySessionId.useQuery(
+    { sessionId: orderId || "" },
+    { enabled: !!orderId }
+  );
+
   // Fetch store settings for pickup instructions
   const { data: storeSettings } = trpc.store.getSettings.useQuery(undefined, {
     enabled: deliveryMethod === "pickup",
@@ -45,10 +51,15 @@ export default function CheckoutSuccess() {
             <p className="text-xl mb-2">
               Thank you for your purchase. Your order has been successfully processed.
             </p>
-            {orderId && (
-              <p className="text-sm text-gray-600">
-                Order ID: <span className="font-mono font-semibold">{orderId}</span>
-              </p>
+            {orderDetails && (
+              <div className="space-y-1">
+                <p className="text-sm text-gray-600">
+                  Order Number: <span className="font-mono font-semibold text-lg text-primary">#{orderDetails.id}</span>
+                </p>
+                <p className="text-xs text-gray-500">
+                  Stripe Session: <span className="font-mono">{orderId}</span>
+                </p>
+              </div>
             )}
           </div>
 

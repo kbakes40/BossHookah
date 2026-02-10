@@ -5,7 +5,9 @@
 import { router, publicProcedure } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "./db";
-import { storeSettings } from "../drizzle/schema";
+import { storeSettings, orders } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
 
 export const storeRouter = router({
   // Get store settings (public endpoint for checkout success page)
@@ -35,4 +37,30 @@ export const storeRouter = router({
 
     return settings[0];
   }),
+
+  // Get order by Stripe session ID (public endpoint for checkout success page)
+  getOrderBySessionId: publicProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      const [order] = await db
+        .select({
+          id: orders.id,
+          stripeCheckoutSessionId: orders.stripeCheckoutSessionId,
+          totalAmount: orders.totalAmount,
+          deliveryMethod: orders.deliveryMethod,
+          createdAt: orders.createdAt,
+        })
+        .from(orders)
+        .where(eq(orders.stripeCheckoutSessionId, input.sessionId))
+        .limit(1);
+
+      if (!order) {
+        return null;
+      }
+
+      return order;
+    }),
 });
