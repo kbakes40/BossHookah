@@ -279,3 +279,7 @@
 - [x] Fix store information display on checkout success page for pickup orders
 - [x] Add delete customer functionality to admin panel
 - [x] Display internal order number on checkout success page for admin dashboard reference
+- [x] Add protection to prevent admin users from being deleted
+- [x] Provide instructions for restoring admin access
+- [ ] Fix shipping payment checkout error
+- [x] Fix checkout payment error for both shipping and pickup

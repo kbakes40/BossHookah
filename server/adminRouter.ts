@@ -227,9 +227,31 @@ export const adminRouter = router({
   // Delete customer
   deleteCustomer: adminProcedure
     .input(z.object({ customerId: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      // Prevent deleting yourself
+      if (input.customerId === ctx.user.id) {
+        throw new TRPCError({ 
+          code: "FORBIDDEN",
+          message: "You cannot delete your own account"
+        });
+      }
+
+      // Check if user is admin
+      const [userToDelete] = await db
+        .select({ role: users.role })
+        .from(users)
+        .where(eq(users.id, input.customerId))
+        .limit(1);
+
+      if (userToDelete?.role === "admin") {
+        throw new TRPCError({ 
+          code: "FORBIDDEN",
+          message: "Cannot delete admin users"
+        });
+      }
 
       // Delete customer
       await db
