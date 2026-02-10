@@ -5,13 +5,14 @@ import { useCart } from "@/contexts/CartContext";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { X, Minus, Plus, Trash2, Truck, Store } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useState } from "react";
 
 export default function CartDrawer() {
   const { items, cartTotal, cartCount, isOpen, closeCart, updateQuantity, removeFromCart, clearCart } = useCart();
+  const [, setLocation] = useLocation();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<"shipping" | "pickup">("shipping");
   const [paymentMethod, setPaymentMethod] = useState<"card" | "zelle">("card");
@@ -206,8 +207,8 @@ export default function CartDrawer() {
                 setIsCheckingOut(true);
                 try {
                   if (paymentMethod === "zelle") {
-                    // Redirect to Zelle checkout page (don't close cart to preserve items)
-                    window.location.href = `/zelle-checkout?delivery=${deliveryMethod}`;
+                    // Navigate to Zelle checkout page using React Router (preserves state)
+                    setLocation(`/zelle-checkout?delivery=${deliveryMethod}`);
                   } else {
                     // Stripe checkout
                     const checkoutItems = items.map(item => {
