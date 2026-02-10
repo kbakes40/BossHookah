@@ -15,7 +15,7 @@ export default function CartDrawer() {
   const [, setLocation] = useLocation();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<"shipping" | "pickup">("shipping");
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "zelle">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "zelle" | "bitcoin" | "paypal">("card");
   const createCheckoutSession = trpc.checkout.createSession.useMutation();
 
   if (!isOpen) return null;
@@ -175,7 +175,7 @@ export default function CartDrawer() {
             {/* Payment Method Selection */}
             <div className="space-y-2">
               <p className="font-display font-bold text-sm">PAYMENT METHOD</p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setPaymentMethod("card")}
                   className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
@@ -196,6 +196,26 @@ export default function CartDrawer() {
                 >
                   <span className="text-sm font-bold">ZELLE</span>
                 </button>
+                <button
+                  onClick={() => setPaymentMethod("bitcoin")}
+                  className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
+                    paymentMethod === "bitcoin" 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-background hover:bg-secondary"
+                  }`}
+                >
+                  <span className="text-sm font-bold">BITCOIN</span>
+                </button>
+                <button
+                  onClick={() => setPaymentMethod("paypal")}
+                  className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
+                    paymentMethod === "paypal" 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-background hover:bg-secondary"
+                  }`}
+                >
+                  <span className="text-sm font-bold">PAYPAL</span>
+                </button>
               </div>
             </div>
 
@@ -210,6 +230,16 @@ export default function CartDrawer() {
                     // Navigate to Zelle checkout page using React Router (preserves state)
                     closeCart();
                     setLocation(`/zelle-checkout?delivery=${deliveryMethod}`);
+                  } else if (paymentMethod === "bitcoin") {
+                    // Bitcoin payment - demo placeholder
+                    toast.info("Bitcoin payment is available upon request. Please contact us to arrange Bitcoin payment.");
+                    setIsCheckingOut(false);
+                    return;
+                  } else if (paymentMethod === "paypal") {
+                    // PayPal payment - demo placeholder
+                    toast.info("PayPal payment is available upon request. Please contact us to arrange PayPal payment.");
+                    setIsCheckingOut(false);
+                    return;
                   } else {
                     // Stripe checkout
                     const checkoutItems = items.map(item => {

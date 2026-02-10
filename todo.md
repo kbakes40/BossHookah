@@ -292,3 +292,4 @@
 - [x] Add customer name and phone number input fields to Zelle checkout page
 - [x] Close cart drawer when navigating to Zelle checkout page
 - [x] Add automatic phone number formatting with dashes (XXX-XXX-XXXX) and 10-digit limit
+- [x] Add Bitcoin and PayPal as demo payment options with placeholder messages
