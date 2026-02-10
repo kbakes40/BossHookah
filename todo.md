@@ -290,3 +290,5 @@
 - [x] Fix Zelle checkout redirect issue - clicking Zelle payment redirects to home instead of checkout page
 - [x] Fix persistent Zelle redirect bug - still redirecting to home after initial fix
 - [x] Add customer name and phone number input fields to Zelle checkout page
+- [x] Close cart drawer when navigating to Zelle checkout page
+- [x] Add automatic phone number formatting with dashes (XXX-XXX-XXXX) and 10-digit limit

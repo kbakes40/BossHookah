@@ -208,6 +208,7 @@ export default function CartDrawer() {
                 try {
                   if (paymentMethod === "zelle") {
                     // Navigate to Zelle checkout page using React Router (preserves state)
+                    closeCart();
                     setLocation(`/zelle-checkout?delivery=${deliveryMethod}`);
                   } else {
                     // Stripe checkout

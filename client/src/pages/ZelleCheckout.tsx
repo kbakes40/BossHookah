@@ -18,6 +18,29 @@ export default function ZelleCheckout() {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Format phone number as XXX-XXX-XXXX
+  const formatPhoneNumber = (value: string) => {
+    // Remove all non-digit characters
+    const digits = value.replace(/\D/g, '');
+    
+    // Limit to 10 digits
+    const limited = digits.slice(0, 10);
+    
+    // Format with dashes
+    if (limited.length <= 3) {
+      return limited;
+    } else if (limited.length <= 6) {
+      return `${limited.slice(0, 3)}-${limited.slice(3)}`;
+    } else {
+      return `${limited.slice(0, 3)}-${limited.slice(3, 6)}-${limited.slice(6)}`;
+    }
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setCustomerPhone(formatted);
+  };
   
   const storeSettings = trpc.store.getSettings.useQuery();
   const createZelleOrder = trpc.checkout.createZelleOrder.useMutation();
@@ -41,6 +64,12 @@ export default function ZelleCheckout() {
     }
     if (!customerPhone.trim()) {
       toast.error("Please enter your phone number");
+      return;
+    }
+    // Validate phone number has 10 digits
+    const phoneDigits = customerPhone.replace(/\D/g, '');
+    if (phoneDigits.length !== 10) {
+      toast.error("Please enter a valid 10-digit phone number");
       return;
     }
 
@@ -122,9 +151,9 @@ export default function ZelleCheckout() {
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="(313) 555-1234"
+                    placeholder="313-555-1234"
                     value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    onChange={handlePhoneChange}
                     className="brutalist-border"
                     disabled={isSubmitting}
                   />
