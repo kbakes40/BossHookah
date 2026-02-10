@@ -24,7 +24,7 @@ export default function CheckoutSuccess() {
   }, [location]);
 
   // Fetch store settings for pickup instructions
-  const { data: storeSettings } = trpc.admin.getStoreSettings.useQuery(undefined, {
+  const { data: storeSettings } = trpc.store.getSettings.useQuery(undefined, {
     enabled: deliveryMethod === "pickup",
   });
 

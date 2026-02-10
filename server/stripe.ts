@@ -65,7 +65,11 @@ export async function createCheckoutSession(params: {
 
   // Create checkout session
   console.log('[Stripe] Calling Stripe API with line items:', lineItems.length);
-  const session = await stripe.checkout.sessions.create({
+  console.log('[Stripe] Delivery method:', deliveryMethod);
+  console.log('[Stripe] Success URL:', `${successUrl}?session_id={CHECKOUT_SESSION_ID}&delivery_method=${deliveryMethod}`);
+  
+  try {
+    const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     line_items: lineItems,
     mode: "payment",
@@ -83,11 +87,19 @@ export async function createCheckoutSession(params: {
     allow_promotion_codes: true,
   });
 
-  console.log('[Stripe] Checkout session created:', session.id, session.url);
-  return {
-    sessionId: session.id,
-    url: session.url,
-  };
+    console.log('[Stripe] Checkout session created:', session.id, session.url);
+    return {
+      sessionId: session.id,
+      url: session.url,
+    };
+  } catch (error) {
+    console.error('[Stripe] Error creating checkout session:', error);
+    if (error instanceof Error) {
+      console.error('[Stripe] Error message:', error.message);
+      console.error('[Stripe] Error stack:', error.stack);
+    }
+    throw error;
+  }
 }
 
 /**
