@@ -8,6 +8,7 @@ type AuthContextType = {
   loading: boolean;
   isAuthenticated: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
   /** Alias for signOut — kept for compatibility with existing components */
   logout: () => Promise<void>;
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   isAuthenticated: false,
   signInWithGoogle: async () => {},
+  signInWithApple: async () => {},
   signOut: async () => {},
   logout: async () => {},
   refresh: async () => {},
@@ -57,6 +59,15 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     });
   }, []);
 
+  const signInWithApple = useCallback(async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "apple",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setSession(null);
@@ -74,11 +85,12 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       loading,
       isAuthenticated: Boolean(session?.user),
       signInWithGoogle,
+      signInWithApple,
       signOut,
       logout: signOut,
       refresh,
     }),
-    [session, loading, signInWithGoogle, signOut, refresh]
+    [session, loading, signInWithGoogle, signInWithApple, signOut, refresh]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
