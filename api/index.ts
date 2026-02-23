@@ -1,7 +1,6 @@
 import "dotenv/config";
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from "../server/_core/oauth";
 import { appRouter } from "../server/routers";
 import { createContext } from "../server/_core/context";
 
@@ -14,7 +13,6 @@ app.post(
   async (req, res) => {
     const { stripe, handleWebhookEvent } = await import("../server/stripe");
     const { ENV } = await import("../server/_core/env");
-
     const sig = req.headers["stripe-signature"];
     if (!sig) {
       res.status(400).send("No signature");
@@ -26,7 +24,6 @@ app.post(
         sig,
         ENV.stripeWebhookSecret
       );
-
       const result = await handleWebhookEvent(event);
       res.json(result);
     } catch (err) {
@@ -39,9 +36,6 @@ app.post(
 // Configure body parser
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
-
-// OAuth callback
-registerOAuthRoutes(app);
 
 // tRPC API
 app.use(

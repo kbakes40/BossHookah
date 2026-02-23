@@ -1,114 +1,59 @@
-// Sign In Page - Demo Authentication
-import { useState } from "react";
-import { useLocation } from "wouter";
+import { useSupabaseAuth } from "@/lib/SupabaseAuthProvider";
+import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import { Link } from "wouter";
+import { useEffect } from "react";
 
 export default function SignIn() {
-  const [, setLocation] = useLocation();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { user, loading, signInWithGoogle } = useSupabaseAuth();
 
-  const handleSignIn = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Demo login - accept any credentials
-    if (email && password) {
-      localStorage.setItem("demoUser", JSON.stringify({
-        email: email,
-        name: email.split("@")[0],
-        loggedIn: true
-      }));
-      toast.success("Welcome back!");
-      setLocation("/account");
-    } else {
-      toast.error("Please enter email and password");
+  // If already signed in, redirect to intended destination
+  useEffect(() => {
+    if (!loading && user) {
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = params.get("returnTo") || "/";
+      window.location.replace(returnTo);
     }
-  };
+  }, [user, loading]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      
-      <main className="flex-1 py-16">
-        <div className="container max-w-md">
-          <div className="brutalist-border bg-background p-8">
-            <h1 className="text-4xl font-display font-black mb-2">SIGN IN</h1>
-            <p className="text-muted-foreground mb-8">
-              Welcome back! Sign in to your account.
+      <main className="flex-1 flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md">
+          <div className="border-3 border-border bg-card p-8 brutalist-shadow">
+            <h1 className="text-3xl font-black mb-2 uppercase tracking-tight">
+              Sign In
+            </h1>
+            <p className="text-muted-foreground mb-8 text-sm">
+              Sign in to track your orders and manage your account.
             </p>
 
-            <form onSubmit={handleSignIn} className="space-y-6">
-              <div>
-                <label htmlFor="email" className="block text-sm font-bold mb-2">
-                  EMAIL ADDRESS
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="brutalist-border"
-                  required
-                />
-              </div>
+            <Button
+              onClick={signInWithGoogle}
+              disabled={loading}
+              className="w-full h-12 bg-white text-black hover:bg-gray-50 transition-all duration-150 text-base font-bold flex items-center gap-3 justify-center border-2 border-black rounded-md shadow"
+            >
+              {/* Google icon */}
+              <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.5 6.5 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z"/>
+                <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.1 19 13 24 13c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.5 6.5 29.6 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/>
+                <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.3 26.8 36 24 36c-5.3 0-9.7-3.1-11.3-7.5l-6.6 5.1C9.6 39.5 16.3 44 24 44z"/>
+                <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.2 5.6l6.2 5.2C40.9 35.6 44 30.2 44 24c0-1.2-.1-2.3-.4-3.5z"/>
+              </svg>
+              Continue with Google
+            </Button>
 
-              <div>
-                <label htmlFor="password" className="block text-sm font-bold mb-2">
-                  PASSWORD
-                </label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="brutalist-border"
-                  required
-                />
-              </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" className="brutalist-border" />
-                  <span>Remember me</span>
-                </label>
-                <a href="#" className="text-primary hover:underline font-bold">
-                  Forgot password?
-                </a>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-12 brutalist-border brutalist-shadow bg-primary text-primary-foreground hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 text-lg font-black"
-              >
-                SIGN IN
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                Don't have an account?{" "}
-                <Link href="/create-account" className="text-primary hover:underline font-bold">
-                  Create one now
-                </Link>
-              </p>
-            </div>
-
-            <div className="mt-8 pt-8 border-t-3 border-border">
-              <p className="text-xs text-center text-muted-foreground">
-                🎭 <strong>DEMO MODE:</strong> Enter any email and password to sign in
-              </p>
-            </div>
+            <p className="text-xs text-center text-muted-foreground mt-6">
+              By signing in you agree to our{" "}
+              <a href="/terms" className="underline hover:text-foreground">
+                Terms of Service
+              </a>
+              .
+            </p>
           </div>
         </div>
       </main>
-
       <Footer />
     </div>
   );

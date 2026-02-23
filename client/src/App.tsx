@@ -1,4 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
+import { SupabaseAuthProvider } from "@/lib/SupabaseAuthProvider";
+import AuthCallback from "./pages/AuthCallback";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch, useLocation } from "wouter";
@@ -54,6 +56,7 @@ function Router() {
       <Route path={"/checkout/cancel"} component={CheckoutCancel} />
       <Route path={"/zelle-checkout"} component={ZelleCheckout} />
       <Route path={"/sign-in"} component={SignIn} />
+      <Route path={"/auth/callback"} component={AuthCallback} />
       <Route path={"/create-account"} component={CreateAccount} />
       <Route path={"/account"} component={MyAccount} />
       <Route path={"/orders"} component={OrderHistory} />
@@ -118,6 +121,7 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
+      <SupabaseAuthProvider>
       <ThemeProvider defaultTheme="light">
         <CartProvider>
           <TooltipProvider>
@@ -129,6 +133,7 @@ function App() {
           </TooltipProvider>
         </CartProvider>
       </ThemeProvider>
+      </SupabaseAuthProvider>
     </ErrorBoundary>
   );
 }
