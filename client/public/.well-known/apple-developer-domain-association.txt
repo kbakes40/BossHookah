@@ -1,0 +1,16 @@
+{
+  "webcredentials": {
+    "apps": [
+      "F7MG43HDFH.site.bosshookah.signin"
+    ]
+  },
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "F7MG43HDFH.site.bosshookah.signin",
+        "paths": ["*"]
+      }
+    ]
+  }
+}
