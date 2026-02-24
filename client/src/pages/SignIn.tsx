@@ -62,14 +62,14 @@ export default function SignIn() {
         <div className="w-full max-w-md">
           {/* Card */}
           <div className="border-3 border-border bg-card p-8 brutalist-shadow">
-            {/* Brand mark */}
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-primary flex items-center justify-center">
-                <span className="text-white font-black text-sm">BH</span>
-              </div>
-              <span className="font-black text-sm uppercase tracking-widest text-muted-foreground">
-                Boss Hookah
-              </span>
+            {/* Boss Hookah Logo */}
+            <div className="flex justify-center mb-6">
+              <img
+                src="/favicon.svg"
+                alt="Boss Hookah"
+                className="w-24 h-24 rounded-full object-cover border-2 border-border"
+                style={{ boxShadow: "3px 3px 0 0 #0A0A0A" }}
+              />
             </div>
 
             <h1 className="text-3xl font-black mb-2 uppercase tracking-tight">
