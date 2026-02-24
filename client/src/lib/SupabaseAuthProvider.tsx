@@ -11,6 +11,7 @@ type AuthContextType = {
   signInWithApple: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
   signUpWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
+  signInWithMagicLink: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   /** Alias for signOut — kept for compatibility with existing components */
   logout: () => Promise<void>;
@@ -27,6 +28,7 @@ const AuthContext = createContext<AuthContextType>({
   signInWithApple: async () => {},
   signInWithEmail: async () => ({ error: null }),
   signUpWithEmail: async () => ({ error: null }),
+  signInWithMagicLink: async () => ({ error: null }),
   signOut: async () => {},
   logout: async () => {},
   refresh: async () => {},
@@ -90,6 +92,18 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     return { error: null };
   }, []);
 
+  const signInWithMagicLink = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        shouldCreateUser: true,
+      },
+    });
+    if (error) return { error: error.message };
+    return { error: null };
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setSession(null);
@@ -110,11 +124,12 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       signInWithApple,
       signInWithEmail,
       signUpWithEmail,
+      signInWithMagicLink,
       signOut,
       logout: signOut,
       refresh,
     }),
-    [session, loading, signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail, signOut, refresh]
+    [session, loading, signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail, signInWithMagicLink, signOut, refresh]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

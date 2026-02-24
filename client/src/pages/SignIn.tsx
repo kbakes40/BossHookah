@@ -5,14 +5,12 @@ import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
 
 export default function SignIn() {
-  const { user, loading, signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail } = useSupabaseAuth();
+  const { user, loading, signInWithGoogle, signInWithApple, signInWithMagicLink } = useSupabaseAuth();
 
-  const [mode, setMode] = useState<"social" | "email-login" | "email-signup">("social");
+  const [mode, setMode] = useState<"social" | "email">("social");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // If already signed in, redirect to intended destination
@@ -24,34 +22,16 @@ export default function SignIn() {
     }
   }, [user, loading]);
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
-    const { error } = await signInWithEmail(email, password);
-    setSubmitting(false);
-    if (error) setError(error);
-  };
-
-  const handleEmailSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-    setSubmitting(true);
-    const { error } = await signUpWithEmail(email, password);
+    const { error } = await signInWithMagicLink(email);
     setSubmitting(false);
     if (error) {
       setError(error);
     } else {
-      setSuccess("Account created! Check your email to confirm your account, then sign in.");
-      setMode("email-login");
+      setSent(true);
     }
   };
 
@@ -62,6 +42,7 @@ export default function SignIn() {
         <div className="w-full max-w-md">
           {/* Card */}
           <div className="border-3 border-border bg-card p-8 brutalist-shadow">
+
             {/* Boss Hookah Logo */}
             <div className="flex justify-center mb-6">
               <img
@@ -72,21 +53,14 @@ export default function SignIn() {
               />
             </div>
 
-            <h1 className="text-3xl font-black mb-2 uppercase tracking-tight">
-              {mode === "email-signup" ? "Create Account" : "Welcome Back"}
+            <h1 className="text-3xl font-black mb-2 uppercase tracking-tight text-center">
+              {mode === "email" && sent ? "Check Your Email" : "Welcome Back"}
             </h1>
-            <p className="text-muted-foreground mb-8 text-sm leading-relaxed">
-              {mode === "email-signup"
-                ? "Create your account to start shopping."
+            <p className="text-muted-foreground mb-8 text-sm leading-relaxed text-center">
+              {mode === "email" && sent
+                ? `We sent a magic link to ${email}. Click it to sign in instantly — no password needed.`
                 : "Sign in to track your orders, manage your account, and access exclusive wholesale pricing."}
             </p>
-
-            {/* Success message */}
-            {success && (
-              <div className="mb-4 p-3 bg-green-50 border-2 border-green-500 text-green-700 text-sm font-medium">
-                {success}
-              </div>
-            )}
 
             {/* Error message */}
             {error && (
@@ -139,9 +113,9 @@ export default function SignIn() {
                   <div className="flex-1 h-px bg-border" />
                 </div>
 
-                {/* Email login button */}
+                {/* Magic link email button */}
                 <Button
-                  onClick={() => { setMode("email-login"); setError(null); }}
+                  onClick={() => { setMode("email"); setError(null); setSent(false); }}
                   variant="outline"
                   className="w-full h-12 border-2 border-border rounded-none text-sm font-bold hover:bg-muted transition-all duration-100"
                   style={{ boxShadow: "4px 4px 0 0 #0A0A0A" }}
@@ -153,7 +127,6 @@ export default function SignIn() {
                   Continue with Email
                 </Button>
 
-                {/* Auto-account note */}
                 <p className="text-xs text-center text-muted-foreground mt-6">
                   Don't have an account?{" "}
                   <span className="font-bold text-foreground">
@@ -170,12 +143,12 @@ export default function SignIn() {
               </>
             )}
 
-            {/* Email login form */}
-            {mode === "email-login" && (
-              <form onSubmit={handleEmailLogin} className="space-y-4">
+            {/* Magic link email form */}
+            {mode === "email" && !sent && (
+              <form onSubmit={handleMagicLink} className="space-y-4">
                 <div>
                   <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1.5">
-                    Email
+                    Email Address
                   </label>
                   <input
                     type="email"
@@ -184,19 +157,7 @@ export default function SignIn() {
                     onChange={e => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     className="w-full h-11 px-3 border-2 border-border bg-background text-sm font-medium focus:outline-none focus:border-primary transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1.5">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full h-11 px-3 border-2 border-border bg-background text-sm font-medium focus:outline-none focus:border-primary transition-colors"
+                    autoFocus
                   />
                 </div>
 
@@ -206,24 +167,11 @@ export default function SignIn() {
                   className="w-full h-12 bg-primary text-white hover:bg-primary/90 rounded-none text-sm font-bold border-2 border-border"
                   style={{ boxShadow: "4px 4px 0 0 #0A0A0A" }}
                 >
-                  {submitting ? "Signing in…" : "Sign In"}
+                  {submitting ? "Sending…" : "Send Magic Link"}
                 </Button>
 
-                <div className="flex items-center gap-3 my-2">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">or</span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
-
                 <p className="text-xs text-center text-muted-foreground">
-                  Don't have an account?{" "}
-                  <button
-                    type="button"
-                    onClick={() => { setMode("email-signup"); setError(null); }}
-                    className="font-bold text-primary underline hover:no-underline"
-                  >
-                    Create one
-                  </button>
+                  We'll email you a secure link — no password needed.
                 </p>
 
                 <button
@@ -239,80 +187,35 @@ export default function SignIn() {
               </form>
             )}
 
-            {/* Email sign-up form */}
-            {mode === "email-signup" && (
-              <form onSubmit={handleEmailSignup} className="space-y-4">
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1.5">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="w-full h-11 px-3 border-2 border-border bg-background text-sm font-medium focus:outline-none focus:border-primary transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1.5">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="At least 6 characters"
-                    className="w-full h-11 px-3 border-2 border-border bg-background text-sm font-medium focus:outline-none focus:border-primary transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1.5">
-                    Confirm Password
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full h-11 px-3 border-2 border-border bg-background text-sm font-medium focus:outline-none focus:border-primary transition-colors"
-                  />
+            {/* Magic link sent confirmation */}
+            {mode === "email" && sent && (
+              <div className="space-y-4 text-center">
+                <div className="w-16 h-16 bg-primary/10 border-2 border-primary rounded-full flex items-center justify-center mx-auto">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-primary">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
                 </div>
 
-                <Button
-                  type="submit"
-                  disabled={submitting || loading}
-                  className="w-full h-12 bg-primary text-white hover:bg-primary/90 rounded-none text-sm font-bold border-2 border-border"
-                  style={{ boxShadow: "4px 4px 0 0 #0A0A0A" }}
-                >
-                  {submitting ? "Creating account…" : "Create Account"}
-                </Button>
-
-                <p className="text-xs text-center text-muted-foreground">
-                  Already have an account?{" "}
+                <p className="text-xs text-muted-foreground">
+                  Didn't receive it?{" "}
                   <button
                     type="button"
-                    onClick={() => { setMode("email-login"); setError(null); }}
+                    onClick={() => setSent(false)}
                     className="font-bold text-primary underline hover:no-underline"
                   >
-                    Sign in
+                    Resend
+                  </button>
+                  {" "}or{" "}
+                  <button
+                    type="button"
+                    onClick={() => { setMode("social"); setError(null); setSent(false); setEmail(""); }}
+                    className="font-bold text-primary underline hover:no-underline"
+                  >
+                    try a different method
                   </button>
                 </p>
-
-                <button
-                  type="button"
-                  onClick={() => { setMode("social"); setError(null); }}
-                  className="w-full text-xs text-muted-foreground hover:text-foreground font-medium flex items-center justify-center gap-1 mt-2"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M19 12H5M12 5l-7 7 7 7"/>
-                  </svg>
-                  Back to all sign-in options
-                </button>
-              </form>
+              </div>
             )}
           </div>
 
