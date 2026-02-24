@@ -1,4 +1,4 @@
-// My Account Page - Demo User Dashboard
+// My Account Page - Supabase Auth
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import Header from "@/components/Header";
@@ -8,46 +8,61 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Link } from "wouter";
 import { User, Package, MapPin, CreditCard, LogOut } from "lucide-react";
+import { useSupabaseAuth } from "@/lib/SupabaseAuthProvider";
 
 export default function MyAccount() {
   const [, setLocation] = useLocation();
-  const [user, setUser] = useState<any>(null);
+  const { user, loading, signOut, isAuthenticated } = useSupabaseAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
   useEffect(() => {
-    const demoUser = localStorage.getItem("demoUser");
-    if (demoUser) {
-      const userData = JSON.parse(demoUser);
-      setUser(userData);
-      setName(userData.name);
-      setEmail(userData.email);
-    } else {
+    if (!loading && !isAuthenticated) {
       setLocation("/sign-in");
     }
-  }, [setLocation]);
+    if (user) {
+      setName(user.user_metadata?.full_name || user.user_metadata?.name || "");
+      setEmail(user.email || "");
+    }
+  }, [loading, isAuthenticated, user, setLocation]);
 
   const handleSaveProfile = () => {
-    const updatedUser = { ...user, name, email };
-    localStorage.setItem("demoUser", JSON.stringify(updatedUser));
-    setUser(updatedUser);
+    // Profile editing is read-only for OAuth users; just close edit mode
     setIsEditing(false);
-    toast.success("Profile updated successfully!");
+    toast.info("Profile is managed by your Google/Apple account.");
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("demoUser");
+  const handleLogout = async () => {
+    await signOut();
     toast.success("Logged out successfully");
     setLocation("/");
   };
 
-  if (!user) return null;
+  // Show loading spinner while auth state is being determined
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) return null;
+
+  const displayName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "User";
+  const memberSince = user.created_at
+    ? new Date(user.created_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "Today";
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      
+
       <main className="flex-1 py-16">
         <div className="container max-w-4xl">
           <div className="flex items-center justify-between mb-8">
@@ -73,7 +88,7 @@ export default function MyAccount() {
                   </div>
                 </div>
               </Link>
-              
+
               <Link href="/orders" className="block">
                 <div className="brutalist-border p-4 hover:bg-secondary hover:translate-x-1 transition-all">
                   <div className="flex items-center gap-3">
@@ -103,97 +118,39 @@ export default function MyAccount() {
               <div className="brutalist-border bg-background p-8">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-display font-black">PROFILE INFORMATION</h2>
-                  {!isEditing && (
-                    <Button
-                      onClick={() => setIsEditing(true)}
-                      variant="outline"
-                      className="brutalist-border"
-                    >
-                      EDIT
-                    </Button>
-                  )}
                 </div>
 
-                {isEditing ? (
-                  <div className="space-y-6">
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-bold mb-2">
-                        FULL NAME
-                      </label>
-                      <Input
-                        id="name"
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="brutalist-border"
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-bold mb-2">
-                        EMAIL ADDRESS
-                      </label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="brutalist-border"
-                      />
-                    </div>
-
-                    <div className="flex gap-3">
-                      <Button
-                        onClick={handleSaveProfile}
-                        className="brutalist-border brutalist-shadow bg-primary text-primary-foreground"
-                      >
-                        SAVE CHANGES
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setIsEditing(false);
-                          setName(user.name);
-                          setEmail(user.email);
-                        }}
-                        variant="outline"
-                        className="brutalist-border"
-                      >
-                        CANCEL
-                      </Button>
-                    </div>
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-bold mb-2 text-muted-foreground">
+                      FULL NAME
+                    </label>
+                    <p className="text-lg font-semibold">{displayName}</p>
                   </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-bold mb-2 text-muted-foreground">
-                        FULL NAME
-                      </label>
-                      <p className="text-lg font-semibold">{user.name}</p>
-                    </div>
 
-                    <div>
-                      <label className="block text-sm font-bold mb-2 text-muted-foreground">
-                        EMAIL ADDRESS
-                      </label>
-                      <p className="text-lg font-semibold">{user.email}</p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold mb-2 text-muted-foreground">
-                        MEMBER SINCE
-                      </label>
-                      <p className="text-lg font-semibold">
-                        {user.createdAt 
-                          ? new Date(user.createdAt).toLocaleDateString('en-US', { 
-                              year: 'numeric', 
-                              month: 'long', 
-                              day: 'numeric' 
-                            })
-                          : 'Today'}
-                      </p>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-bold mb-2 text-muted-foreground">
+                      EMAIL ADDRESS
+                    </label>
+                    <p className="text-lg font-semibold">{user.email}</p>
                   </div>
-                )}
+
+                  <div>
+                    <label className="block text-sm font-bold mb-2 text-muted-foreground">
+                      MEMBER SINCE
+                    </label>
+                    <p className="text-lg font-semibold">{memberSince}</p>
+                  </div>
+
+                  {user.app_metadata?.provider && (
+                    <div>
+                      <label className="block text-sm font-bold mb-2 text-muted-foreground">
+                        SIGNED IN WITH
+                      </label>
+                      <p className="text-lg font-semibold capitalize">{user.app_metadata.provider}</p>
+                    </div>
+                  )}
+                </div>
 
                 <div className="mt-8 pt-8 border-t-3 border-border">
                   <h3 className="text-lg font-display font-black mb-4">ACCOUNT ACTIONS</h3>
@@ -201,21 +158,14 @@ export default function MyAccount() {
                     <Button
                       variant="outline"
                       className="w-full justify-start brutalist-border"
-                      onClick={() => toast.info("Demo feature - not implemented")}
-                    >
-                      Change Password
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start brutalist-border"
-                      onClick={() => toast.info("Demo feature - not implemented")}
+                      onClick={() => toast.info("Email preferences coming soon")}
                     >
                       Email Preferences
                     </Button>
                     <Button
                       variant="outline"
                       className="w-full justify-start brutalist-border text-destructive"
-                      onClick={() => toast.info("Demo feature - not implemented")}
+                      onClick={() => toast.info("Please contact support to delete your account")}
                     >
                       Delete Account
                     </Button>

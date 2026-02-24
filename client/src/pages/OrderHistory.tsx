@@ -1,13 +1,14 @@
-// Order History Page - Demo Orders
-import { useEffect, useState } from "react";
+// Order History Page - Supabase Auth
+import { useEffect } from "react";
 import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { User, Package, MapPin, CreditCard, LogOut, ChevronRight } from "lucide-react";
+import { useSupabaseAuth } from "@/lib/SupabaseAuthProvider";
 
-// Mock order data
+// Mock order data (replace with real DB query when orders are stored in Supabase)
 const mockOrders = [
   {
     id: "ORD-2024-001",
@@ -43,23 +44,28 @@ const mockOrders = [
 
 export default function OrderHistory() {
   const [, setLocation] = useLocation();
-  const [user, setUser] = useState<any>(null);
+  const { user, loading, signOut, isAuthenticated } = useSupabaseAuth();
 
   useEffect(() => {
-    const demoUser = localStorage.getItem("demoUser");
-    if (demoUser) {
-      setUser(JSON.parse(demoUser));
-    } else {
+    if (!loading && !isAuthenticated) {
       setLocation("/sign-in");
     }
-  }, [setLocation]);
+  }, [loading, isAuthenticated, setLocation]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("demoUser");
+  const handleLogout = async () => {
+    await signOut();
     setLocation("/");
   };
 
-  if (!user) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) return null;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -79,7 +85,7 @@ export default function OrderHistory() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      
+
       <main className="flex-1 py-16">
         <div className="container max-w-4xl">
           <div className="flex items-center justify-between mb-8">
@@ -105,7 +111,7 @@ export default function OrderHistory() {
                   </div>
                 </div>
               </Link>
-              
+
               <Link href="/orders" className="block">
                 <div className="brutalist-border p-4 bg-primary text-primary-foreground hover:translate-x-1 transition-transform">
                   <div className="flex items-center gap-3">
@@ -155,10 +161,10 @@ export default function OrderHistory() {
                           {order.id}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          Placed on {new Date(order.date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
+                          Placed on {new Date(order.date).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
                           })}
                         </p>
                       </div>
@@ -215,13 +221,6 @@ export default function OrderHistory() {
                   </div>
                 ))
               )}
-
-              {/* Demo Notice */}
-              <div className="brutalist-border bg-secondary p-4">
-                <p className="text-sm text-center">
-                  🎭 <strong>DEMO MODE:</strong> These are sample orders for demonstration purposes
-                </p>
-              </div>
             </div>
           </div>
         </div>
