@@ -75,11 +75,11 @@ export async function createCheckoutSession(params: {
     mode: "payment",
     success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}&delivery_method=${deliveryMethod}`,
     cancel_url: cancelUrl,
-    customer_email: userEmail,
+    ...(userEmail && userEmail.includes('@') ? { customer_email: userEmail } : {}),
     client_reference_id: userId.toString(),
     metadata: {
       user_id: userId.toString(),
-      customer_email: userEmail,
+      customer_email: userEmail || '',
       customer_name: userName,
       delivery_method: deliveryMethod,
       item_count: items.length.toString(),
