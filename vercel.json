@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm vite build --config vite.vercel.config.ts && npx esbuild api/index.ts --platform=node --packages=external --bundle --format=cjs --outfile=api/bundle.js",
+  "buildCommand": "pnpm vite build --config vite.vercel.config.ts && npx esbuild api/index.ts --platform=node --packages=external --bundle --format=cjs --outfile=api/bundle.cjs",
   "outputDirectory": "dist/public",
   "installCommand": "pnpm install",
   "framework": null,
@@ -43,7 +43,7 @@
     }
   ],
   "functions": {
-    "api/bundle.js": {
+    "api/bundle.cjs": {
       "maxDuration": 30
     }
   }
