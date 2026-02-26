@@ -1,13 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm vite build --config vite.vercel.config.ts && npx esbuild api/index.ts --platform=node --packages=external --bundle --format=cjs --outfile=api/bundle.cjs",
+  "buildCommand": "pnpm vite build --config vite.vercel.config.ts && node_modules/.bin/esbuild api/index.ts --platform=node --packages=external --bundle --format=cjs --outfile=api/server.cjs",
   "outputDirectory": "dist/public",
   "installCommand": "pnpm install",
   "framework": null,
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/bundle"
+      "destination": "/api/server"
     },
     {
       "source": "/((?!api/|\\.well-known/).*)",
@@ -15,23 +15,6 @@
     }
   ],
   "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        },
-        {
-          "key": "Pragma",
-          "value": "no-cache"
-        },
-        {
-          "key": "Expires",
-          "value": "0"
-        }
-      ]
-    },
     {
       "source": "/assets/(.*)",
       "headers": [
@@ -43,7 +26,7 @@
     }
   ],
   "functions": {
-    "api/bundle.cjs": {
+    "api/server.cjs": {
       "maxDuration": 30
     }
   }
