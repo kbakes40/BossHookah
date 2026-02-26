@@ -1,303 +1,156 @@
 /**
- * Admin Router - Admin-only procedures for order and customer management
+ * Admin Router — All data operations use Supabase (bh_* tables)
+ * MySQL/Drizzle has been fully replaced with Supabase REST API.
  */
-
 import { z } from "zod";
-import { router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
-import { protectedProcedure } from "./_core/trpc";
-import { getDb } from "./db";
-import { orders, users, inventory, storeSettings } from "../drizzle/schema";
-import { eq, desc, sql } from "drizzle-orm";
-
-// Admin-only procedure that checks user role
-const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== "admin") {
-    throw new TRPCError({ 
-      code: "FORBIDDEN",
-      message: "Admin access required"
-    });
-  }
-  return next({ ctx });
-});
+import { router, adminProcedure } from "./_core/trpc";
+import { supabaseAdmin } from "./_core/supabaseAdmin";
 
 export const adminRouter = router({
-  // Get dashboard stats
+  // ─── Dashboard Stats ───────────────────────────────────────────────────────
   getStats: adminProcedure.query(async () => {
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const [
+      { count: totalOrders },
+      { count: totalCustomers },
+      { count: totalProducts },
+      { data: revenueData },
+      { count: pendingOrders },
+    ] = await Promise.all([
+      supabaseAdmin.from("bh_orders").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("bh_customers").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("bh_products").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("bh_orders").select("total_amount").eq("status", "paid"),
+      supabaseAdmin.from("bh_orders").select("*", { count: "exact", head: true }).eq("fulfillment_status", "pending"),
+    ]);
 
-    const [orderStats] = await db
-      .select({
-        totalOrders: sql<number>`COUNT(*)`,
-        pendingOrders: sql<number>`SUM(CASE WHEN fulfillmentStatus = 'pending' THEN 1 ELSE 0 END)`,
-        totalRevenue: sql<number>`SUM(CASE WHEN status = 'paid' THEN totalAmount ELSE 0 END)`,
-      })
-      .from(orders);
-
-    const [customerStats] = await db
-      .select({
-        totalCustomers: sql<number>`COUNT(*)`,
-      })
-      .from(users);
+    const totalRevenue = (revenueData || []).reduce(
+      (sum: number, o: any) => sum + (o.total_amount || 0),
+      0
+    );
 
     return {
-      totalOrders: Number(orderStats?.totalOrders || 0),
-      pendingOrders: Number(orderStats?.pendingOrders || 0),
-      totalRevenue: Number(orderStats?.totalRevenue || 0) / 100, // Convert cents to dollars
-      totalCustomers: Number(customerStats?.totalCustomers || 0),
+      totalOrders: totalOrders || 0,
+      totalCustomers: totalCustomers || 0,
+      totalProducts: totalProducts || 0,
+      totalRevenue,
+      pendingOrders: pendingOrders || 0,
     };
   }),
 
-  // Get all orders with pagination
+  // ─── Orders ────────────────────────────────────────────────────────────────
   getOrders: adminProcedure
     .input(
       z.object({
         page: z.number().default(1),
         pageSize: z.number().default(20),
-        status: z.enum(["all", "pending", "paid", "failed", "refunded"]).default("all"),
-        fulfillmentStatus: z.enum(["all", "pending", "ready_to_ship", "shipped", "delivered"]).default("all"),
-        deliveryMethod: z.enum(["all", "shipping", "pickup"]).default("all"),
+        status: z.string().optional(),
       })
     )
     .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
       const offset = (input.page - 1) * input.pageSize;
+      let query = supabaseAdmin
+        .from("bh_orders")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(offset, offset + input.pageSize - 1);
 
-      let query = db
-        .select({
-          id: orders.id,
-          userId: orders.userId,
-          stripePaymentIntentId: orders.stripePaymentIntentId,
-          stripeCheckoutSessionId: orders.stripeCheckoutSessionId,
-          status: orders.status,
-          fulfillmentStatus: orders.fulfillmentStatus,
-          totalAmount: orders.totalAmount,
-          currency: orders.currency,
-          items: orders.items,
-          shippingAddress: orders.shippingAddress,
-          createdAt: orders.createdAt,
-          updatedAt: orders.updatedAt,
-          customerName: orders.customerName, // From Stripe checkout
-          customerPhone: orders.customerPhone, // Customer phone for Zelle orders
-          customerEmail: users.email,
-          deliveryMethod: orders.deliveryMethod,
-          paymentMethod: orders.paymentMethod,
-        })
-        .from(orders)
-        .leftJoin(users, eq(orders.userId, users.id));
-
-      if (input.status !== "all") {
-        query = query.where(eq(orders.status, input.status)) as any;
+      if (input.status && input.status !== "all") {
+        query = query.eq("status", input.status);
       }
 
-      if (input.fulfillmentStatus !== "all") {
-        query = query.where(eq(orders.fulfillmentStatus, input.fulfillmentStatus)) as any;
-      }
-
-      if (input.deliveryMethod !== "all") {
-        query = query.where(eq(orders.deliveryMethod, input.deliveryMethod)) as any;
-      }
-
-      const results = await query
-        .orderBy(desc(orders.createdAt))
-        .limit(input.pageSize)
-        .offset(offset);
-
-      return results;
-    }),
-
-  // Get single order details
-  getOrder: adminProcedure
-    .input(z.object({ orderId: z.number() }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
-      const [order] = await db
-        .select()
-        .from(orders)
-        .where(eq(orders.id, input.orderId));
-
-      if (!order) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
-      }
-
-      // Get customer info
-      const [customer] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, order.userId));
+      const { data, count, error } = await query;
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
 
       return {
-        ...order,
-        customer,
+        orders: data || [],
+        total: count || 0,
+        page: input.page,
+        pageSize: input.pageSize,
       };
     }),
 
-  // Update order fulfillment status
   updateOrderStatus: adminProcedure
     .input(
       z.object({
-        orderId: z.number(),
-        fulfillmentStatus: z.enum(["pending", "ready_to_ship", "shipped", "delivered"]),
+        orderId: z.string(),
+        status: z.string().optional(),
+        fulfillmentStatus: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const update: any = { updated_at: new Date().toISOString() };
+      if (input.status) update.status = input.status;
+      if (input.fulfillmentStatus) update.fulfillment_status = input.fulfillmentStatus;
 
-      await db
-        .update(orders)
-        .set({ 
-          fulfillmentStatus: input.fulfillmentStatus,
-          updatedAt: new Date(),
-        })
-        .where(eq(orders.id, input.orderId));
+      const { error } = await supabaseAdmin
+        .from("bh_orders")
+        .update(update)
+        .eq("id", input.orderId);
 
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       return { success: true };
     }),
 
-  // Delete order
   deleteOrder: adminProcedure
-    .input(z.object({ orderId: z.number() }))
+    .input(z.object({ orderId: z.string() }))
     .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const { error } = await supabaseAdmin
+        .from("bh_orders")
+        .delete()
+        .eq("id", input.orderId);
 
-      await db
-        .delete(orders)
-        .where(eq(orders.id, input.orderId));
-
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       return { success: true };
     }),
 
-  // Confirm Zelle payment (change status from pending to paid)
-  confirmZellePayment: adminProcedure
-    .input(z.object({ orderId: z.number() }))
-    .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
-      // Verify order exists and is a Zelle order
-      const [order] = await db
-        .select()
-        .from(orders)
-        .where(eq(orders.id, input.orderId))
-        .limit(1);
-
-      if (!order) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
-      }
-
-      if (order.paymentMethod !== "zelle") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Only Zelle orders can be confirmed" });
-      }
-
-      // Update order status to paid
-      await db
-        .update(orders)
-        .set({ 
-          status: "paid",
-          updatedAt: new Date(),
-        })
-        .where(eq(orders.id, input.orderId));
-
-      return { success: true };
-    }),
-
-  // Get all customers with pagination
+  // ─── Customers ─────────────────────────────────────────────────────────────
   getCustomers: adminProcedure
     .input(
       z.object({
         page: z.number().default(1),
         pageSize: z.number().default(20),
+        search: z.string().optional(),
       })
     )
     .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
       const offset = (input.page - 1) * input.pageSize;
+      let query = supabaseAdmin
+        .from("bh_customers")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(offset, offset + input.pageSize - 1);
 
-      const results = await db
-        .select()
-        .from(users)
-        .orderBy(desc(users.createdAt))
-        .limit(input.pageSize)
-        .offset(offset);
-
-      return results;
-    }),
-
-  // Get customer details with order history
-  getCustomer: adminProcedure
-    .input(z.object({ customerId: z.number() }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
-      const [customer] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, input.customerId));
-
-      if (!customer) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Customer not found" });
+      if (input.search) {
+        query = query.or(
+          `name.ilike.%${input.search}%,email.ilike.%${input.search}%`
+        );
       }
 
-      const customerOrders = await db
-        .select()
-        .from(orders)
-        .where(eq(orders.userId, input.customerId))
-        .orderBy(desc(orders.createdAt));
+      const { data, count, error } = await query;
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
 
       return {
-        ...customer,
-        orders: customerOrders,
+        customers: data || [],
+        total: count || 0,
+        page: input.page,
+        pageSize: input.pageSize,
       };
     }),
 
-  // Delete customer
   deleteCustomer: adminProcedure
-    .input(z.object({ customerId: z.number() }))
-    .mutation(async ({ input, ctx }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    .input(z.object({ customerId: z.string() }))
+    .mutation(async ({ input }) => {
+      const { error } = await supabaseAdmin
+        .from("bh_customers")
+        .delete()
+        .eq("id", input.customerId);
 
-      // Prevent deleting yourself
-      if (input.customerId === ctx.user.id) {
-        throw new TRPCError({ 
-          code: "FORBIDDEN",
-          message: "You cannot delete your own account"
-        });
-      }
-
-      // Check if user is admin
-      const [userToDelete] = await db
-        .select({ role: users.role })
-        .from(users)
-        .where(eq(users.id, input.customerId))
-        .limit(1);
-
-      if (userToDelete?.role === "admin") {
-        throw new TRPCError({ 
-          code: "FORBIDDEN",
-          message: "Cannot delete admin users"
-        });
-      }
-
-      // Delete customer
-      await db
-        .delete(users)
-        .where(eq(users.id, input.customerId));
-
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       return { success: true };
     }),
 
-  // Get all inventory items
+  // ─── Products / Inventory ──────────────────────────────────────────────────
   getInventory: adminProcedure
     .input(
       z.object({
@@ -307,158 +160,115 @@ export const adminRouter = router({
       })
     )
     .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
       const offset = (input.page - 1) * input.pageSize;
-
-      let query = db.select().from(inventory);
+      let query = supabaseAdmin
+        .from("bh_products")
+        .select("*", { count: "exact" })
+        .order("name", { ascending: true })
+        .range(offset, offset + input.pageSize - 1);
 
       if (input.category) {
-        query = query.where(eq(inventory.category, input.category)) as any;
+        query = query.eq("category", input.category);
       }
 
-      const results = await query
-        .orderBy(inventory.productName)
-        .limit(input.pageSize)
-        .offset(offset);
+      const { data, count, error } = await query;
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
 
-      return results;
+      return {
+        items: data || [],
+        total: count || 0,
+        page: input.page,
+        pageSize: input.pageSize,
+      };
     }),
 
-  // Update inventory stock
   updateInventoryStock: adminProcedure
     .input(
       z.object({
-        inventoryId: z.number(),
-        stockQuantity: z.number(),
+        productId: z.string(),
+        stock: z.number(),
       })
     )
     .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const { error } = await supabaseAdmin
+        .from("bh_products")
+        .update({ stock: input.stock })
+        .eq("id", input.productId);
 
-      await db
-        .update(inventory)
-        .set({ 
-          stockQuantity: input.stockQuantity,
-          updatedAt: new Date(),
-        })
-        .where(eq(inventory.id, input.inventoryId));
-
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       return { success: true };
     }),
 
-  // Add inventory item
   addInventoryItem: adminProcedure
     .input(
       z.object({
-        productId: z.string(),
-        productName: z.string(),
-        brand: z.string(),
+        name: z.string(),
+        brand: z.string().optional(),
         category: z.string(),
-        stockQuantity: z.number(),
-        lowStockThreshold: z.number().default(10),
         price: z.number(),
-        cost: z.number().optional(),
+        stock: z.number(),
         sku: z.string().optional(),
+        badge: z.string().optional(),
+        in_stock: z.boolean().default(true),
       })
     )
     .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
-      await db.insert(inventory).values({
-        productId: input.productId,
-        productName: input.productName,
-        brand: input.brand,
+      const { error } = await supabaseAdmin.from("bh_products").insert({
+        name: input.name,
+        brand: input.brand || null,
         category: input.category,
-        stockQuantity: input.stockQuantity,
-        lowStockThreshold: input.lowStockThreshold,
-        price: Math.round(input.price * 100), // Convert to cents
-        cost: input.cost ? Math.round(input.cost * 100) : null,
+        price: input.price,
+        stock: input.stock,
         sku: input.sku || null,
+        badge: input.badge || null,
+        in_stock: input.in_stock,
       });
 
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       return { success: true };
     }),
 
-  // Get store settings
+  // ─── Store Settings ────────────────────────────────────────────────────────
   getStoreSettings: adminProcedure.query(async () => {
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
-    const [settings] = await db
-      .select()
-      .from(storeSettings)
-      .limit(1);
-
-    return settings || null;
+    const { data } = await supabaseAdmin
+      .from("bh_store_settings")
+      .select("*")
+      .limit(1)
+      .single();
+    return data || null;
   }),
 
-  // Update store settings
   updateStoreSettings: adminProcedure
     .input(
       z.object({
         storeName: z.string(),
-        address: z.string(),
-        city: z.string(),
-        state: z.string(),
-        zipCode: z.string(),
-        phone: z.string(),
+        address: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        zipCode: z.string().optional(),
+        phone: z.string().optional(),
         email: z.string().optional(),
-        hours: z.string(),
-        pickupInstructions: z.string(),
+        hours: z.string().optional(),
+        pickupInstructions: z.string().optional(),
         zelleEmail: z.string().optional(),
         zellePhone: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
-      // Check if settings exist
-      const [existing] = await db
-        .select()
-        .from(storeSettings)
-        .limit(1);
+      const { data: existing } = await supabaseAdmin
+        .from("bh_store_settings")
+        .select("id")
+        .limit(1)
+        .single();
 
       if (existing) {
-        // Update existing settings
-        await db
-          .update(storeSettings)
-          .set({
-            storeName: input.storeName,
-            address: input.address,
-            city: input.city,
-            state: input.state,
-            zipCode: input.zipCode,
-            phone: input.phone,
-            email: input.email || null,
-            hours: input.hours,
-            pickupInstructions: input.pickupInstructions,
-            zelleEmail: input.zelleEmail || null,
-            zellePhone: input.zellePhone || null,
-            updatedAt: new Date(),
-          })
-          .where(eq(storeSettings.id, existing.id));
+        await supabaseAdmin
+          .from("bh_store_settings")
+          .update({ ...input, updated_at: new Date().toISOString() })
+          .eq("id", existing.id);
       } else {
-        // Create new settings
-        await db.insert(storeSettings).values({
-          storeName: input.storeName,
-          address: input.address,
-          city: input.city,
-          state: input.state,
-          zipCode: input.zipCode,
-          phone: input.phone,
-          email: input.email || null,
-          hours: input.hours,
-          pickupInstructions: input.pickupInstructions,
-          zelleEmail: input.zelleEmail || null,
-          zellePhone: input.zellePhone || null,
-        });
+        await supabaseAdmin.from("bh_store_settings").insert(input);
       }
-
       return { success: true };
     }),
 });
