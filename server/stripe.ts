@@ -1,12 +1,10 @@
 /**
  * Stripe Integration - Webhook Handler and Checkout Session Creation
+ * Orders are saved to Supabase (bh_orders table) instead of MySQL.
  */
-
 import Stripe from "stripe";
 import { ENV } from "./_core/env";
-import { getDb } from "./db";
-import { orders, users } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { supabaseAdmin } from "./_core/supabaseAdmin";
 
 if (!ENV.stripeSecretKey) {
   throw new Error("STRIPE_SECRET_KEY is required");
@@ -20,7 +18,7 @@ export const stripe = new Stripe(ENV.stripeSecretKey, {
  * Create a Stripe Checkout Session for product purchase
  */
 export async function createCheckoutSession(params: {
-  userId: number;
+  userId: string | number;
   userEmail: string;
   userName: string;
   items: Array<{ name: string; priceInCents: number; quantity: number; image?: string }>;
@@ -31,17 +29,11 @@ export async function createCheckoutSession(params: {
   const { userId, userEmail, userName, items, deliveryMethod, successUrl, cancelUrl } = params;
   console.log('[Stripe] Creating checkout session:', { userId, userEmail, itemCount: items.length });
 
-  // Calculate total amount
-  const totalAmount = items.reduce((sum, item) => sum + item.priceInCents * item.quantity, 0);
-
-  // Create line items for Stripe
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map(item => {
-    // Validate image URL - Stripe requires absolute URLs starting with http:// or https://
     let validImageUrl: string | undefined = undefined;
     if (item.image) {
       try {
-        const url = new URL(item.image, 'https://example.com'); // Use base URL for relative paths
-        // Only use if it's an absolute URL with http/https protocol
+        const url = new URL(item.image, 'https://example.com');
         if (url.protocol === 'http:' || url.protocol === 'https:') {
           validImageUrl = item.image.startsWith('http') ? item.image : undefined;
         }
@@ -49,7 +41,6 @@ export async function createCheckoutSession(params: {
         console.warn('[Stripe] Invalid image URL for item:', item.name, item.image);
       }
     }
-
     return {
       price_data: {
         currency: "usd",
@@ -63,55 +54,36 @@ export async function createCheckoutSession(params: {
     };
   });
 
-  // Create checkout session
-  console.log('[Stripe] Calling Stripe API with line items:', lineItems.length);
-  console.log('[Stripe] Delivery method:', deliveryMethod);
-  console.log('[Stripe] Success URL:', `${successUrl}?session_id={CHECKOUT_SESSION_ID}&delivery_method=${deliveryMethod}`);
-  
   try {
     const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
-    line_items: lineItems,
-    mode: "payment",
-    success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}&delivery_method=${deliveryMethod}`,
-    cancel_url: cancelUrl,
-    ...(userEmail && userEmail.includes('@') ? { customer_email: userEmail } : {}),
-    client_reference_id: userId.toString(),
-    metadata: {
-      user_id: userId.toString(),
-      customer_email: userEmail || '',
-      customer_name: userName,
-      delivery_method: deliveryMethod,
-      item_count: items.length.toString(),
-    },
-    allow_promotion_codes: true,
-  });
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      mode: "payment",
+      success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}&delivery_method=${deliveryMethod}`,
+      cancel_url: cancelUrl,
+      ...(userEmail && userEmail.includes('@') ? { customer_email: userEmail } : {}),
+      client_reference_id: String(userId),
+      metadata: {
+        user_id: String(userId),
+        user_name: userName || "Guest",
+        delivery_method: deliveryMethod,
+        item_count: items.length.toString(),
+      },
+      allow_promotion_codes: true,
+    });
 
-    console.log('[Stripe] Checkout session created:', session.id, session.url);
-    return {
-      sessionId: session.id,
-      url: session.url,
-    };
-  } catch (error) {
-    console.error('[Stripe] Error creating checkout session:', error);
-    if (error instanceof Error) {
-      console.error('[Stripe] Error message:', error.message);
-      console.error('[Stripe] Error stack:', error.stack);
-    }
+    console.log('[Stripe] Session created:', session.id);
+    return { sessionId: session.id, url: session.url };
+  } catch (error: any) {
+    console.error('[Stripe] Error creating session:', error?.message);
     throw error;
   }
 }
 
 /**
- * Handle Stripe webhook events
+ * Handle Stripe webhook events — saves orders to Supabase bh_orders table
  */
 export async function handleWebhookEvent(event: Stripe.Event) {
-  const db = await getDb();
-  if (!db) {
-    console.error("[Stripe Webhook] Database not available");
-    return { success: false, error: "Database unavailable" };
-  }
-
   // Handle test events
   if (event.id.startsWith("evt_test_")) {
     console.log("[Stripe Webhook] Test event detected, returning verification response");
@@ -122,101 +94,104 @@ export async function handleWebhookEvent(event: Stripe.Event) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        
-        // Extract metadata
-        const userId = parseInt(session.metadata?.user_id || session.client_reference_id || "0");
-        
-        // Get line items from session (Stripe stores them, no need for metadata)
-        let items = "[]";
+
+        const userId = session.metadata?.user_id || session.client_reference_id || null;
+        const deliveryMethod = (session.metadata?.delivery_method as "shipping" | "pickup") || "shipping";
+        const customerName = session.customer_details?.name || session.metadata?.user_name || "Guest";
+        const customerEmail = session.customer_details?.email || session.customer_email || null;
+        const customerPhone = session.customer_details?.phone || null;
+
+        // Retrieve line items from Stripe
+        let items: any[] = [];
         try {
-          // Retrieve line items from the session
           const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
-          const itemsArray = lineItems.data.map(item => ({
+          items = lineItems.data.map(item => ({
             name: item.description,
             priceInCents: item.amount_total,
             quantity: item.quantity,
           }));
-          items = JSON.stringify(itemsArray);
         } catch (error) {
           console.error('[Stripe Webhook] Error fetching line items:', error);
         }
-        
-        if (!userId) {
-          console.error("[Stripe Webhook] No user ID found in session metadata");
-          break;
+
+        // Get shipping address if available
+        let shippingAddress = null;
+        if (session.shipping_details?.address) {
+          shippingAddress = session.shipping_details.address;
         }
 
-        // Get customer name from session
-        let customerName: string | null = null;
-        if (session.customer_details?.name) {
-          customerName = session.customer_details.name;
+        // Save order to Supabase bh_orders
+        const { data: orderData, error: orderError } = await supabaseAdmin
+          .from('bh_orders')
+          .insert({
+            status: 'paid',
+            fulfillment_status: 'pending',
+            total_amount: session.amount_total || 0,
+            currency: session.currency || 'usd',
+            customer_name: customerName,
+            customer_email: customerEmail,
+            customer_phone: customerPhone,
+            stripe_session_id: session.id,
+            stripe_payment_intent: typeof session.payment_intent === 'string' ? session.payment_intent : null,
+            payment_method: 'stripe',
+            delivery_method: deliveryMethod,
+            items: items,
+            shipping_address: shippingAddress,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (orderError) {
+          console.error('[Stripe Webhook] Error saving order to Supabase:', orderError);
+        } else {
+          console.log(`[Stripe Webhook] Order saved to Supabase: ${orderData?.id}, session ${session.id}`);
         }
 
-        // Get delivery method from metadata
-        const deliveryMethod = (session.metadata?.delivery_method as "shipping" | "pickup") || "shipping";
-
-        // Create order record
-        await db.insert(orders).values({
-          userId,
-          stripePaymentIntentId: session.payment_intent as string,
-          stripeCheckoutSessionId: session.id,
-          customerName,
-          deliveryMethod,
-          status: "paid",
-          totalAmount: session.amount_total || 0,
-          currency: session.currency || "usd",
-          items,
-          shippingAddress: null, // Shipping details can be retrieved from PaymentIntent if needed
-        });
-
-        // Update user's Stripe customer ID if available
-        if (session.customer) {
-          await db
-            .update(users)
-            .set({ stripeCustomerId: session.customer as string })
-            .where(eq(users.id, userId));
+        // Upsert customer in bh_customers if we have an email
+        if (customerEmail) {
+          await supabaseAdmin
+            .from('bh_customers')
+            .upsert({
+              email: customerEmail,
+              name: customerName,
+              phone: customerPhone,
+              stripe_customer_id: typeof session.customer === 'string' ? session.customer : null,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'email' });
         }
 
-        console.log(`[Stripe Webhook] Order created for user ${userId}, session ${session.id}`);
         break;
       }
 
       case "payment_intent.succeeded": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        
-        // Update order status
-        await db
-          .update(orders)
-          .set({ status: "paid" })
-          .where(eq(orders.stripePaymentIntentId, paymentIntent.id));
-
+        await supabaseAdmin
+          .from('bh_orders')
+          .update({ status: 'paid', updated_at: new Date().toISOString() })
+          .eq('stripe_payment_intent', paymentIntent.id);
         console.log(`[Stripe Webhook] Payment succeeded for intent ${paymentIntent.id}`);
         break;
       }
 
       case "payment_intent.payment_failed": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        
-        // Update order status
-        await db
-          .update(orders)
-          .set({ status: "failed" })
-          .where(eq(orders.stripePaymentIntentId, paymentIntent.id));
-
+        await supabaseAdmin
+          .from('bh_orders')
+          .update({ status: 'failed', updated_at: new Date().toISOString() })
+          .eq('stripe_payment_intent', paymentIntent.id);
         console.log(`[Stripe Webhook] Payment failed for intent ${paymentIntent.id}`);
         break;
       }
 
       case "charge.refunded": {
         const charge = event.data.object as Stripe.Charge;
-        
-        // Update order status
         if (charge.payment_intent) {
-          await db
-            .update(orders)
-            .set({ status: "refunded" })
-            .where(eq(orders.stripePaymentIntentId, charge.payment_intent as string));
-
+          await supabaseAdmin
+            .from('bh_orders')
+            .update({ status: 'refunded', updated_at: new Date().toISOString() })
+            .eq('stripe_payment_intent', charge.payment_intent as string);
           console.log(`[Stripe Webhook] Charge refunded for intent ${charge.payment_intent}`);
         }
         break;
@@ -225,7 +200,6 @@ export async function handleWebhookEvent(event: Stripe.Event) {
       default:
         console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
     }
-
     return { success: true };
   } catch (error) {
     console.error("[Stripe Webhook] Error processing event:", error);
