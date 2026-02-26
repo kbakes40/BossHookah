@@ -8,6 +8,7 @@ export const ENV = {
   // Supabase
   supabaseUrl: process.env.VITE_SUPABASE_URL ?? "",
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
-  // Admin email - this user will always have admin role
+  // Admin emails - these users will always have admin role
   adminEmail: "kevin@bakerhub.com",
+  adminEmails: ["kevin@bakerhub.com", "chillvibesss420@gmail.com"],
 };

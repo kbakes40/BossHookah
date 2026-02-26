@@ -49,10 +49,10 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = user.lastSignedIn;
     }
 
-    // Grant admin role to the designated admin email
+    // Grant admin role to designated admin emails
     const isAdmin =
       user.role === "admin" ||
-      (user.email && user.email.toLowerCase() === ENV.adminEmail.toLowerCase());
+      (user.email && ENV.adminEmails.some(e => e.toLowerCase() === user.email!.toLowerCase()));
 
     if (isAdmin) {
       values.role = "admin";
