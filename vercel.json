@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm vite build --config vite.vercel.config.ts",
+  "buildCommand": "pnpm vite build --config vite.vercel.config.ts && node_modules/.bin/esbuild server/_vercel_exports.ts --platform=node --packages=external --bundle --format=esm --outfile=api/_server.mjs",
   "outputDirectory": "dist/public",
   "installCommand": "pnpm install",
   "framework": null,
@@ -28,7 +28,7 @@
   "functions": {
     "api/index.ts": {
       "maxDuration": 30,
-      "includeFiles": "server/**"
+      "includeFiles": "api/_server.mjs"
     }
   }
 }
