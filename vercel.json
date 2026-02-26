@@ -43,7 +43,7 @@
     }
   ],
   "functions": {
-    "api/index.js": {
+    "api/index.ts": {
       "maxDuration": 30
     }
   }
