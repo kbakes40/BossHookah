@@ -8,7 +8,6 @@ type AuthContextType = {
   loading: boolean;
   isAuthenticated: boolean;
   signInWithGoogle: () => Promise<void>;
-  signInWithApple: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
   signUpWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
   signInWithMagicLink: (email: string) => Promise<{ error: string | null }>;
@@ -25,7 +24,6 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   isAuthenticated: false,
   signInWithGoogle: async () => {},
-  signInWithApple: async () => {},
   signInWithEmail: async () => ({ error: null }),
   signUpWithEmail: async () => ({ error: null }),
   signInWithMagicLink: async () => ({ error: null }),
@@ -61,15 +59,6 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
           access_type: "offline",
           prompt: "consent",
         },
-      },
-    });
-  }, []);
-
-  const signInWithApple = useCallback(async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "apple",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
   }, []);
@@ -121,7 +110,6 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       loading,
       isAuthenticated: Boolean(session?.user),
       signInWithGoogle,
-      signInWithApple,
       signInWithEmail,
       signUpWithEmail,
       signInWithMagicLink,
@@ -129,7 +117,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       logout: signOut,
       refresh,
     }),
-    [session, loading, signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail, signInWithMagicLink, signOut, refresh]
+    [session, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signInWithMagicLink, signOut, refresh]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
