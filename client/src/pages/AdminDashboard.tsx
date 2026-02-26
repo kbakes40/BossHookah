@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useSupabaseAuth } from "@/lib/SupabaseAuthProvider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface Product { id: string; name: string; category: string; price: number; stock: number; sku: string; created_at: string; }
+interface Product { id: string; name: string; brand?: string; category: string; price: number; sale_price?: number; stock: number; sku: string; image_url?: string; badge?: string; in_stock?: boolean; featured?: boolean; trending?: boolean; description?: string; created_at: string; }
 interface Order { id: string; customer_name: string; customer_email: string; total: number; status: string; fulfillment_status: string; created_at: string; }
 interface Customer { id: string; name: string; email: string; phone: string; total_spent: number; order_count: number; created_at: string; }
 
@@ -302,14 +302,31 @@ export default function AdminDashboard() {
                     {products.length === 0 ? <EmptyState msg="No products yet." /> : (
                       <>
                         <table className="w-full text-xs">
-                          <thead><tr><Th>Name</Th><Th>Category</Th><Th>Price</Th><Th>Stock</Th><Th>SKU</Th></tr></thead>
+                          <thead><tr><Th>Product</Th><Th>Brand</Th><Th>Category</Th><Th>Price</Th><Th>Stock</Th><Th>Status</Th><Th>SKU</Th></tr></thead>
                           <tbody className="divide-y divide-zinc-900/60">
                             {prodSlice.map(p => (
                               <tr key={p.id} className="hover:bg-zinc-900/30 transition-colors">
-                                <Td>{p.name}</Td>
+                                <Td>
+                                  <div className="flex items-center gap-2">
+                                    {p.image_url && <img src={p.image_url} alt={p.name} className="w-8 h-8 rounded-lg object-cover bg-zinc-800" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
+                                    <div>
+                                      <p className="text-zinc-200 font-medium">{p.name}</p>
+                                      {p.badge && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#1f2619] text-[#d7ff3f] font-semibold">{p.badge}</span>}
+                                    </div>
+                                  </div>
+                                </Td>
+                                <Td muted>{p.brand || "—"}</Td>
                                 <Td muted>{p.category || "—"}</Td>
-                                <Td>${(p.price || 0).toFixed(2)}</Td>
+                                <Td>
+                                  <span className="text-zinc-200">${(p.price || 0).toFixed(2)}</span>
+                                  {p.sale_price && <span className="ml-1 text-[10px] text-[#d7ff3f]">→ ${p.sale_price.toFixed(2)}</span>}
+                                </Td>
                                 <Td><span className={p.stock < 5 ? "text-red-400 font-medium" : "text-zinc-200"}>{p.stock}</span></Td>
+                                <Td>
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${p.in_stock !== false ? 'bg-[#1f2619] text-[#d7ff3f]' : 'bg-red-900/60 text-red-300'}`}>
+                                    {p.in_stock !== false ? 'In Stock' : 'Out of Stock'}
+                                  </span>
+                                </Td>
                                 <Td muted>{p.sku || "—"}</Td>
                               </tr>
                             ))}
