@@ -1,8 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { appRouter } from "../server/routers";
-import { createContext } from "../server/_core/context";
+// Import from pre-compiled server bundle (built by esbuild during Vercel build)
+import { appRouter, createContext, stripe, handleWebhookEvent, ENV } from "./_server.mjs";
 
 const app = express();
 
@@ -11,8 +11,6 @@ app.post(
   "/api/stripe/webhook",
   express.raw({ type: "application/json" }),
   async (req, res) => {
-    const { stripe, handleWebhookEvent } = await import("../server/stripe");
-    const { ENV } = await import("../server/_core/env");
     const sig = req.headers["stripe-signature"];
     if (!sig) {
       res.status(400).send("No signature");
