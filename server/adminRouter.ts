@@ -3,6 +3,7 @@
  */
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import type { PostgrestError } from "@supabase/supabase-js";
 import { router, adminProcedure } from "./_core/trpc";
 import { supabaseAdmin } from "./_core/supabaseAdmin";
 import {
@@ -13,6 +14,34 @@ import {
   storeSettingsToSnake,
 } from "./_core/supabaseMappers";
 import { countSiteCatalogSkus, siteProductsToBhRows } from "./siteCatalogSync";
+
+function formatSupabaseErr(err: PostgrestError): string {
+  return [err.message, err.details, err.hint, err.code ? `(${err.code})` : ""]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** Remove prior catalog imports (sku starts with catalog:). Uses select + delete by id for broad PostgREST compatibility. */
+async function deleteBhProductsCatalogRows(): Promise<void> {
+  const { data: rows, error: selErr } = await supabaseAdmin
+    .from("bh_products")
+    .select("id")
+    .like("sku", "catalog:%");
+
+  if (selErr) {
+    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: formatSupabaseErr(selErr) });
+  }
+
+  const ids = (rows ?? []).map(r => String((r as { id: string }).id));
+  const DEL_CHUNK = 100;
+  for (let i = 0; i < ids.length; i += DEL_CHUNK) {
+    const slice = ids.slice(i, i + DEL_CHUNK);
+    const { error: delErr } = await supabaseAdmin.from("bh_products").delete().in("id", slice);
+    if (delErr) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: formatSupabaseErr(delErr) });
+    }
+  }
+}
 
 export const adminRouter = router({
   getStats: adminProcedure.query(async () => {
@@ -208,15 +237,16 @@ export const adminRouter = router({
       const chunk = 120;
 
       if (input.mode === "replace") {
-        const { error: delErr } = await supabaseAdmin.from("bh_products").delete().like("sku", "catalog:%");
-        if (delErr) {
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: delErr.message });
-        }
+        await deleteBhProductsCatalogRows();
         for (let i = 0; i < rows.length; i += chunk) {
           const batch = rows.slice(i, i + chunk);
           const { error } = await supabaseAdmin.from("bh_products").insert(batch);
           if (error) {
-            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+            const msg = formatSupabaseErr(error);
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: `${msg} If this mentions UNIQUE or duplicate sku, run supabase/migrations/003_bh_products_sku_unique_fix.sql and try again.`,
+            });
           }
         }
         return { success: true as const, mode: input.mode, count: rows.length };
@@ -229,7 +259,11 @@ export const adminRouter = router({
           ignoreDuplicates: true,
         });
         if (error) {
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+          const msg = formatSupabaseErr(error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `${msg} If this mentions ON CONFLICT, run supabase/migrations/003_bh_products_sku_unique_fix.sql in the SQL editor.`,
+          });
         }
       }
       return { success: true as const, mode: input.mode, count: rows.length };

@@ -80,7 +80,8 @@ export default function AdminInventory() {
       refetch();
     },
     onError: err => {
-      toast.error(err.message || "Catalog import failed");
+      console.error("[syncSiteCatalog]", err);
+      toast.error(err.message || "Catalog import failed", { duration: 12_000 });
     },
   });
 
@@ -377,8 +378,10 @@ export default function AdminInventory() {
               </Dialog>
                 </div>
                 <p className="text-xs text-gray-500 text-right max-w-md">
-                  Run migration <code className="text-gray-700">002_bh_products_sku_unique.sql</code> in Supabase so
-                  catalog sync can upsert by SKU.
+                  If import fails, open Supabase → SQL and run{" "}
+                  <code className="text-gray-700">003_bh_products_sku_unique_fix.sql</code> (and ensure{" "}
+                  <code className="text-gray-700">Vercel</code> has the real <code className="text-gray-700">SUPABASE_SERVICE_ROLE_KEY</code>,
+                  not the anon key).
                 </p>
               </div>
             </div>

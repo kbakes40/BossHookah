@@ -39,6 +39,7 @@ export type BhProductInsert = {
   description: string | null;
   featured: boolean;
   trending: boolean;
+  created_at: string;
   updated_at: string;
 };
 
@@ -71,6 +72,7 @@ export function siteProductsToBhRows(
         description: p.description ?? null,
         featured: Boolean(p.featured),
         trending: Boolean(p.trending),
+        created_at: now,
         updated_at: now,
       });
       continue;
@@ -93,6 +95,7 @@ export function siteProductsToBhRows(
         description: v.description ?? p.description ?? null,
         featured: Boolean(p.featured),
         trending: Boolean(p.trending),
+        created_at: now,
         updated_at: now,
       });
     }
