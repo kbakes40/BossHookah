@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
 import { trpc } from "@/lib/trpc";
 import { useStorefrontCatalog } from "@/hooks/useStorefrontCatalog";
+import { useShopCurrency } from "@/contexts/CurrencyContext";
+import { FREE_SHIPPING_THRESHOLD_USD } from "@shared/shipping";
 
 export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
@@ -34,6 +36,7 @@ export default function ProductDetail() {
   const [selectedVariant, setSelectedVariant] = useState("");
   const { addToCart } = useCart();
   const { products: catalog } = useStorefrontCatalog();
+  const { formatUsd } = useShopCurrency();
 
   useEffect(() => {
     if (product?.variants?.length) {
@@ -162,16 +165,14 @@ export default function ProductDetail() {
                 {product.salePrice ? (
                   <div className="flex items-center gap-3">
                     <span className="text-3xl price-tag font-black text-primary">
-                      ${product.salePrice.toFixed(2)}
+                      {formatUsd(product.salePrice)}
                     </span>
                     <span className="text-xl price-tag line-through text-muted-foreground">
-                      ${product.price.toFixed(2)}
+                      {formatUsd(product.price)}
                     </span>
                   </div>
                 ) : (
-                  <span className="text-3xl price-tag font-black">
-                    ${product.price.toFixed(2)} USD
-                  </span>
+                  <span className="text-3xl price-tag font-black">{formatUsd(product.price)}</span>
                 )}
               </div>
 
@@ -219,7 +220,8 @@ export default function ProductDetail() {
               {/* Shipping Notice */}
               <div className="bg-secondary brutalist-border p-4 mb-6">
                 <p className="text-sm font-semibold">
-                  Spend $100 to FREE SHIPPING Use Code <span className="text-primary">FREESHIP</span>
+                  Spend {formatUsd(FREE_SHIPPING_THRESHOLD_USD)} to FREE SHIPPING Use Code{" "}
+                  <span className="text-primary">FREESHIP</span>
                 </p>
               </div>
 

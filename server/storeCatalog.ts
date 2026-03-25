@@ -24,6 +24,14 @@ function catalogKeyFromSku(sku: string): string | null {
   return m ? m[1] : null;
 }
 
+function weightLbFromRows(rows: BhProductRow[]): number | undefined {
+  for (const r of rows) {
+    const w = r.weight_lb;
+    if (w != null && Number(w) > 0) return Number(w);
+  }
+  return undefined;
+}
+
 function extractVariantLabel(fullName: string): string {
   const idx = fullName.indexOf(" — ");
   if (idx === -1) return fullName.trim();
@@ -61,6 +69,7 @@ function mergeCatalogGroup(key: string, rows: BhProductRow[]): Product {
 
   const src = base || variantRows[0] || first;
   const descRow = [base, ...variantRows].find(r => r?.description);
+  const wLb = weightLbFromRows(rows);
 
   return {
     id: key,
@@ -78,10 +87,13 @@ function mergeCatalogGroup(key: string, rows: BhProductRow[]): Product {
     trending: rows.some(r => r.trending === true),
     description: descRow?.description ? String(descRow.description) : undefined,
     variants: variants.length > 0 ? variants : undefined,
+    ...(wLb != null ? { weightLb: wLb } : {}),
   };
 }
 
 export function mapNonCatalogRow(row: BhProductRow): Product {
+  const w =
+    row.weight_lb != null && Number(row.weight_lb) > 0 ? Number(row.weight_lb) : undefined;
   return {
     id: String(row.id ?? ""),
     name: String(row.name ?? ""),
@@ -95,6 +107,7 @@ export function mapNonCatalogRow(row: BhProductRow): Product {
     featured: Boolean(row.featured),
     trending: Boolean(row.trending),
     description: row.description ? String(row.description) : undefined,
+    ...(w != null ? { weightLb: w } : {}),
   };
 }
 

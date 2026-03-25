@@ -26,6 +26,8 @@ export interface Product {
   description?: string;
   specs?: string[];
   variants?: ProductVariant[];
+  /** Shipping weight per unit (lb). If omitted, shared shipping logic uses 1 lb per unit. */
+  weightLb?: number;
 }
 
 export const categories = [
@@ -91,7 +93,8 @@ export const products: Product[] = [
     ]
   },
 
-  { id: '8', name: 'Modern Glass Hookah', brand: 'Contemporary', price: 549.99, category: 'hookahs', image: '/images/YYJ0jfpn8sr2.jpg', inStock: true, featured: true },
+  /** Temporary $0.10 for PayPal/sandbox checkout tests — restore real price when done. */
+  { id: '8', name: 'Modern Glass Hookah', brand: 'Contemporary', price: 0.10, category: 'hookahs', image: '/images/YYJ0jfpn8sr2.jpg', inStock: true, featured: true },
   { id: '9', name: 'Traditional Brass Hookah', brand: 'Heritage', price: 399.99, category: 'hookahs', image: '/images/osJ2wAX3W81I.jpg', inStock: true, featured: true },
   { id: '10', name: 'Designer Hookah Premium', brand: 'Elite', price: 651.99, category: 'hookahs', image: '/images/5Ws20RGhEkJh.jpg', inStock: true, featured: true },
   

@@ -1,8 +1,6 @@
-// Terms and Conditions Page
-// Based on standard e-commerce terms format
-
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Link } from "wouter";
 
 export default function Terms() {
   return (
@@ -11,225 +9,338 @@ export default function Terms() {
 
       <main className="flex-1 py-12">
         <div className="container max-w-4xl">
-          <h1 className="text-4xl font-display font-black mb-8">Terms and Conditions</h1>
-          
-          <div className="prose prose-lg max-w-none space-y-6">
-            <p className="text-lg">
-              The following Terms and Conditions apply to the use of this Web site as well as all transactions conducted through the site.
+          <h1 className="text-4xl md:text-5xl font-display font-black mb-8 text-center md:text-left">
+            TERMS &amp; CONDITIONS
+          </h1>
+
+          <div className="prose prose-lg max-w-none space-y-8">
+            <p className="text-lg leading-relaxed">
+              These Terms &amp; Conditions (&quot;Terms&quot;) govern your access to and use of
+              bosshookah.site and any purchases you make through Boss Hookah Wholesale
+              (&quot;Boss Hookah,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;). By
+              using the site or placing an order, you agree to these Terms. If you do not agree, do
+              not use the site or purchase from us.
             </p>
 
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Legal Notice</h2>
-              <p className="mb-4">
-                You must be 21 or older to purchase products from our website.
-              </p>
-              <p className="mb-4">
-                In an effort to combat credit card fraud and to prevent the purchases of our products by minors, bosshookah.site reserves the right to request additional verification before an order is processed and shipped. We only ask for this information to verify the identity of the credit card holder and said information is not shared with outside parties.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">In General</h2>
-              <p className="mb-4">
-                Boss Hookah ("bosshookah.site") owns and operates this Website. This document governs your relationship with bosshookah.site. Access to and use of this Website and the products and services available through this Website (collectively, the "Services") are subject to the following terms, conditions and notices (the "Terms of Service"). By using the Services, you are agreeing to all of the Terms of Service, as may be updated by us from time to time. You should check this page regularly to take notice of any changes we may have made to the Terms of Service.
-              </p>
-              <p className="mb-4">
-                Access to this Website is permitted on a temporary basis, and we reserve the right to withdraw or amend the Services without notice. We will not be liable if for any reason this Website is unavailable at any time or for any period. From time to time, we may restrict access to some parts or all of this Website.
-              </p>
-              <p className="mb-4">
-                This Website may contain links to other websites (the "Linked Sites"), which are not operated by bosshookah.site. Boss Hookah has no control over the Linked Sites and accepts no responsibility for them or for any loss or damage that may arise from your use of them. Your use of the Linked Sites will be subject to the terms of use and service contained within each such site.
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Website use</h2>
+              <p className="leading-relaxed">
+                We grant you a limited, revocable license to access and use the site for personal,
+                non-commercial shopping in accordance with these Terms. We may modify, suspend, or
+                discontinue any part of the site at any time. The site may contain links to
+                third-party sites; we are not responsible for their content or policies. You agree
+                not to misuse the site, interfere with its operation, scrape or harvest data without
+                permission, or use it for unlawful purposes.
               </p>
             </section>
 
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Privacy Policy</h2>
-              <p className="mb-4">
-                Our privacy policy sets out how we will use your information. By using this Website, you consent to the processing described therein and warrant that all data provided by you is accurate.
-              </p>
-              
-              <h3 className="text-xl font-semibold mb-3 mt-6">Google Analytics</h3>
-              <p className="mb-4">
-                This website uses Google Analytics, a web analytics service provided by Google, Inc. ("Google"). Google Analytics uses "cookies" (text files placed on your computer) to help analyze how users interact with our site. The information generated by the cookie about your use of the website (including your IP address) will be transmitted to and stored by Google on servers in the United States.
-              </p>
-              <p className="mb-4">
-                You may refuse the use of cookies by selecting the appropriate settings on your browser. However, please note that if you do this, you may not be able to use the full functionality of this website.
-              </p>
-
-              <h3 className="text-xl font-semibold mb-3 mt-6">GDPR Compliance (European Users)</h3>
-              <p className="mb-4">
-                If you are located in the European Economic Area (EEA), you have certain data protection rights under the General Data Protection Regulation (GDPR) including rights to access, rectification, erasure, restriction of processing, data portability, and objection to processing of your personal data.
-              </p>
-
-              <h3 className="text-xl font-semibold mb-3 mt-6">CCPA Compliance (California Residents)</h3>
-              <p className="mb-4">
-                If you are a California resident, the California Consumer Privacy Act (CCPA) provides you with specific rights regarding your personal information including the right to know, delete, and opt-out of the sale of your personal information.
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Eligibility &amp; age requirement</h2>
+              <p className="leading-relaxed">
+                Boss Hookah is an adult-oriented retailer. You must be at least{" "}
+                <strong>21 years of age</strong> to purchase age-restricted products. By creating an
+                account, using the site, or placing an order, you represent and warrant that you are
+                at least 21 and that you are legally permitted to purchase, possess, and receive the
+                products in your jurisdiction. You further represent that all information you
+                provide is accurate and that you will not purchase on behalf of a minor or for
+                unlawful resale where prohibited. Additional age verification requirements are
+                described on our{" "}
+                <Link href="/age-verification" className="text-primary font-semibold hover:underline">
+                  Age Verification
+                </Link>{" "}
+                page and may apply before, during, or after checkout.
               </p>
             </section>
 
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Prohibitions</h2>
-              <p className="mb-4">
-                You must not misuse this Website. You will not: commit or encourage a criminal offense; transmit or distribute a virus, trojan, worm, logic bomb or any other material which is malicious, technologically harmful, in breach of confidence or in any way offensive or obscene; hack into any aspect of the Service; corrupt data; cause annoyance to other users; infringe upon the rights of any other person's proprietary rights; send any unsolicited advertising or promotional material, commonly referred to as "spam"; or attempt to affect the performance or functionality of any computer facilities of or accessed through this Website. Breaching this provision would constitute a criminal offense and bosshookah.site will report any such breach to the relevant law enforcement authorities and disclose your identity to them.
-              </p>
-              <p className="mb-4">
-                We will not be liable for any loss or damage caused by a distributed denial-of-service attack, viruses or other technologically harmful material that may infect your computer equipment, computer programs, data or other proprietary material due to your use of this Website or to your downloading of any material posted on it, or on any website linked to it.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Intellectual Property, Software and Content</h2>
-              <p className="mb-4">
-                The intellectual property rights in all software and content (including photographic images) made available to you on or through this Website remains the property of bosshookah.site or its licensors and are protected by copyright laws and treaties around the world. All such rights are reserved by bosshookah.site and its licensors. You may store, print and display the content supplied solely for your own personal use. You are not permitted to publish, manipulate, distribute or otherwise reproduce, in any format, any of the content or copies of the content supplied to you or which appears on this Website nor may you use any such content in connection with any business or commercial enterprise.
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Account responsibility</h2>
+              <p className="leading-relaxed">
+                If you create an account, you are responsible for safeguarding your credentials and
+                for all activity under your account. Notify us promptly of any unauthorized use. We
+                may suspend or close accounts that violate these Terms, fail verification, or
+                present fraud or compliance risk.
               </p>
             </section>
 
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Terms of Sale</h2>
-              <p className="mb-4">
-                By placing an order you are offering to purchase a product on and subject to the following terms and conditions. All orders are subject to availability and confirmation of the order price. Dispatch times may vary according to availability and subject to any delays resulting from postal delays or force majeure for which we will not be responsible.
-              </p>
-              <p className="mb-4">
-                In order to contract with bosshookah.site you must be over 21 years of age and possess a valid credit or debit card issued by a bank acceptable to us. Boss Hookah retains the right to refuse any request made by you. If your order is accepted we will inform you by email and we will confirm the identity of the party which you have contracted with. When placing an order you undertake that all details you provide to us are true and accurate, that you are an authorized user of the credit or debit card used to place your order and that there are sufficient funds to cover the cost of the goods. The cost of foreign products and services may fluctuate. All prices advertised are subject to such changes.
-              </p>
-
-              <h3 className="text-xl font-semibold mb-3 mt-6">(a) Our Contract</h3>
-              <p className="mb-4">
-                When you place an order, you will receive an acknowledgement e-mail confirming receipt of your order: this email will only be an acknowledgement and will not constitute acceptance of your order. A contract between us will not be formed until we send you confirmation by e-mail that the goods which you ordered have been dispatched to you. Only those goods listed in the confirmation e-mail sent at the time of dispatch will be included in the contract formed.
-              </p>
-
-              <h3 className="text-xl font-semibold mb-3 mt-6">(b) Pricing and Availability</h3>
-              <p className="mb-4">
-                Whilst we try and ensure that all details, descriptions and prices which appear on this Website are accurate, errors may occur. If we discover an error in the price of any goods which you have ordered we will inform you of this as soon as possible and give you the option of reconfirming your order at the correct price or cancelling it. If we are unable to contact you we will treat the order as cancelled. If you cancel and you have already paid for the goods, you will receive a full refund.
-              </p>
-              <p className="mb-4">
-                Delivery costs will be charged in addition; such additional charges are clearly displayed where applicable and included in the 'Total Cost'. Orders are subject to signature upon delivery to ensure that the package is delivered safely and correctly.
-              </p>
-
-              <h3 className="text-xl font-semibold mb-3 mt-6">(c) Payment</h3>
-              <p className="mb-4">
-                Upon receiving your order we carry out a standard authorization check on your payment card to ensure there are sufficient funds to fulfil the transaction. Your card will be debited upon authorisation being received. The monies received upon the debiting of your card shall be treated as a deposit against the value of the goods you wish to purchase. Once the goods have been despatched and you have been sent a confirmation email the monies paid as a deposit shall be used as consideration for the value of goods you have purchased as listed in the confirmation email.
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Product information &amp; availability</h2>
+              <p className="leading-relaxed">
+                We strive for accurate descriptions, images, and specifications, but occasional
+                errors may occur. Products are offered subject to availability.{" "}
+                <strong>
+                  Product availability, pricing, promotions, and packaging may change without
+                  notice.
+                </strong>{" "}
+                We reserve the right to limit quantities, discontinue items, or correct pricing and
+                description errors before or after an order is placed. If we cannot fulfill an order
+                as priced or described, we may cancel it and refund any amount collected, or offer an
+                alternative at our discretion.
               </p>
             </section>
 
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Use Of Site - Ordering</h2>
-              
-              <h3 className="text-xl font-semibold mb-3">ORDERS PLACED ONLINE</h3>
-              <p className="mb-4">
-                Orders can be placed online using a valid credit card (Visa, MasterCard, Discover, and American Express). Also by e-checks.
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Pricing &amp; payment</h2>
+              <p className="leading-relaxed">
+                All prices are in U.S. dollars unless stated otherwise. Taxes and shipping, where
+                applicable, are additional and shown before you complete checkout. You authorize us
+                and our payment partners to charge your selected payment method for the total
+                purchase amount. We may use verification and fraud-prevention measures; failed
+                verification or payment may result in delay or cancellation. Chargebacks and
+                disputed payments are addressed below.
               </p>
+            </section>
 
-              <h3 className="text-xl font-semibold mb-3">MONEY ORDERS OR CASHIERS CHECKS</h3>
-              <p className="mb-4">
-                Shop online and select "Manual Payment" as your payment method. Print out your final invoice (including shipping costs) and mail payment to:
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Orders, acceptance &amp; cancellation</h2>
+              <p className="leading-relaxed">
+                Submitting an order is an offer to purchase. We may refuse or cancel any order, in
+                whole or in part, at any time before fulfillment, including for suspected fraud,
+                payment issues, inventory errors, failure to meet age or identity verification,
+                compliance concerns, or inability to ship to your location. Receipt of an order
+                acknowledgment does not guarantee acceptance. A contract is formed when we charge
+                your payment or ship your order, as applicable under our processes.
               </p>
-              <div className="bg-secondary p-4 rounded-md mb-4">
-                <p className="font-semibold">Boss Hookah</p>
-                <p>8342 Melrose Avenue</p>
-                <p>Los Angeles, CA 90069</p>
+              <p className="leading-relaxed">
+                <strong>
+                  Boss Hookah may cancel or refuse any order that cannot be verified, appears
+                  fraudulent, or cannot legally be shipped to the customer&apos;s location.
+                </strong>{" "}
+                If we cancel after payment, we will refund applicable amounts unless law or
+                investigation requires otherwise.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Shipping &amp; compliance</h2>
+              <p className="leading-relaxed">
+                We <strong>do not ship products where prohibited by law</strong> and reserve the
+                right to limit or refuse shipments based on state or local rules, carrier
+                restrictions, or compliance requirements. You are responsible for providing a
+                complete, accurate delivery address and for being available when signature or
+                adult-receipt is required.
+              </p>
+              <p className="leading-relaxed">
+                <strong>
+                  Boss Hookah is not responsible for orders that are delayed, denied, returned,
+                  refused by the carrier, or seized by authorities due to local restrictions, failed
+                  age verification, incorrect addresses, recipient unavailability, or carrier or
+                  customs handling.
+                </strong>{" "}
+                Risk of loss passes in accordance with our carrier terms and applicable law once
+                the shipment is tendered to the carrier, except where a narrow claim applies as
+                described in our Return Policy.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Returns &amp; refunds</h2>
+              <p className="leading-relaxed">
+                All sales are subject to our strict return policy. Please review our{" "}
+                <Link href="/returns" className="text-primary font-semibold hover:underline">
+                  Return Policy
+                </Link>{" "}
+                in full. Except as stated there for wrong-item or transit-damage claims submitted
+                within the required timeframe with documentation,{" "}
+                <strong>all sales are final</strong> and we do not accept returns, exchanges, or
+                refunds on the categories listed in that policy.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Chargebacks &amp; fraud prevention</h2>
+              <p className="leading-relaxed">
+                If you dispute a charge with your bank or card issuer without first contacting us to
+                resolve a legitimate issue, we may suspend your account, refuse future orders, and
+                pursue available remedies. False claims, stolen payment methods, or collusion to
+                circumvent age or shipping rules may be reported to law enforcement and payment
+                networks. We cooperate with investigations as required by law.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Intellectual property</h2>
+              <p className="leading-relaxed">
+                All content on the site — including text, graphics, logos, images, and software — is
+                owned by Boss Hookah or its licensors and is protected by copyright, trademark, and
+                other laws. You may not copy, modify, distribute, or create derivative works without
+                our prior written consent. Product and brand names of third parties are used for
+                identification only and do not imply endorsement.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Limitation of liability</h2>
+              <p className="leading-relaxed">
+                To the fullest extent permitted by applicable law, Boss Hookah and its officers,
+                directors, employees, and agents shall not be liable for any indirect, incidental,
+                special, consequential, or punitive damages, or for lost profits, data, or goodwill,
+                arising from your use of the site or purchase of products, whether based in contract,
+                tort, strict liability, or otherwise, even if advised of the possibility of such
+                damages. Our total liability for any claim arising out of or relating to the site or
+                your order shall not exceed the amount you paid for the specific products giving
+                rise to the claim in the twelve (12) months preceding the claim. Some jurisdictions
+                do not allow certain limitations; in those jurisdictions our liability is limited to
+                the maximum permitted by law. Nothing in these Terms limits liability that cannot
+                legally be limited, including for gross negligence or willful misconduct where
+                applicable.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Indemnification</h2>
+              <p className="leading-relaxed">
+                You agree to indemnify, defend, and hold harmless Boss Hookah and its affiliates,
+                and their respective directors, officers, employees, and agents, from and against
+                any claims, damages, losses, liabilities, and expenses (including reasonable
+                attorneys&apos; fees) arising out of your use of the site, your breach of these
+                Terms, your violation of law, or your misuse of any product.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Governing law &amp; disputes</h2>
+              <p className="leading-relaxed">
+                These Terms are governed by the laws of the State of Michigan, without regard to
+                conflict-of-law principles, except where preempted by federal law. You agree that
+                state or federal courts located in Wayne County, Michigan shall have exclusive
+                jurisdiction over disputes arising from these Terms or your use of the site, subject
+                to mandatory consumer protections in your home jurisdiction where they cannot
+                lawfully be waived.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Changes to these Terms</h2>
+              <p className="leading-relaxed">
+                We may update these Terms at any time. The &quot;Last updated&quot; date at the
+                bottom of this page will change when we do. Continued use of the site after changes
+                constitutes acceptance of the revised Terms. If you do not agree, you must stop
+                using the site. Material changes may, where required, be communicated through the
+                site or by email.
+              </p>
+            </section>
+
+            <section className="space-y-4 brutalist-border bg-secondary p-8">
+              <h2 className="text-2xl font-display font-black">Privacy &amp; data practices</h2>
+              <p className="leading-relaxed text-base">
+                This section summarizes how we handle personal information in connection with the
+                site and orders. It is part of these Terms.
+              </p>
+              <h3 className="text-xl font-display font-black mt-4">Information we collect</h3>
+              <p className="leading-relaxed text-base">
+                We may collect identifiers and contact details (such as name, email, phone, and
+                shipping address), order history, device and browser data, communications logs, and
+                verification-related information when you shop, create an account, or contact
+                support.
+              </p>
+              <h3 className="text-xl font-display font-black mt-4">How we use information</h3>
+              <p className="leading-relaxed text-base">
+                We use this information to process and fulfill orders, verify age and identity,
+                prevent fraud, communicate about your transactions, improve the site, comply with
+                law, and enforce these Terms.
+              </p>
+              <h3 className="text-xl font-display font-black mt-4">Payment &amp; fraud prevention</h3>
+              <p className="leading-relaxed text-base">
+                Payment details are processed by secure service providers. We do not store full
+                payment credentials on our servers. We may share limited transaction data with
+                processors and fraud-screening tools as needed to complete and protect transactions.
+              </p>
+              <h3 className="text-xl font-display font-black mt-4">Account data</h3>
+              <p className="leading-relaxed text-base">
+                Account information is used to personalize your experience, save preferences where
+                available, and link orders to your profile when you sign in.
+              </p>
+              <h3 className="text-xl font-display font-black mt-4">Email &amp; SMS</h3>
+              <p className="leading-relaxed text-base">
+                We may send transactional messages related to orders and verification. Where
+                permitted, we may send marketing email or SMS; you may opt out of marketing
+                communications using the instructions in those messages or by contacting us,
+                subject to transactional notices we must send.
+              </p>
+              <h3 className="text-xl font-display font-black mt-4">Cookies &amp; analytics</h3>
+              <p className="leading-relaxed text-base">
+                We use cookies and similar technologies to operate the site, remember preferences,
+                and understand aggregate traffic and performance. You can control cookies through
+                browser settings; disabling them may limit certain features.
+              </p>
+              <h3 className="text-xl font-display font-black mt-4">Service providers &amp; sharing</h3>
+              <p className="leading-relaxed text-base">
+                We share information with hosting, logistics, payment, verification, analytics, and
+                communications vendors who process data on our behalf under contractual
+                obligations. We may disclose information when required by law or to protect our
+                rights, customers, or the public.
+              </p>
+              <h3 className="text-xl font-display font-black mt-4">Legal compliance &amp; rights</h3>
+              <p className="leading-relaxed text-base">
+                Depending on where you live, you may have rights to access, correct, delete, or
+                restrict certain personal data, or to object to processing. To exercise applicable
+                rights, contact us using the information below. We will respond in accordance with
+                applicable law.
+              </p>
+              <h3 className="text-xl font-display font-black mt-4">Retention</h3>
+              <p className="leading-relaxed text-base">
+                We retain information as long as necessary for the purposes above, including order
+                records, tax and accounting obligations, fraud prevention, and dispute resolution,
+                then delete or anonymize it where feasible.
+              </p>
+              <h3 className="text-xl font-display font-black mt-4">Contact (privacy)</h3>
+              <p className="leading-relaxed text-base">
+                For privacy questions or requests, email{" "}
+                <a href="mailto:info@bosshookah.site" className="text-primary font-semibold hover:underline">
+                  info@bosshookah.site
+                </a>{" "}
+                or call{" "}
+                <a href="tel:+13134066589" className="text-primary font-semibold hover:underline">
+                  (313) 406-6589
+                </a>
+                .
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Severability</h2>
+              <p className="leading-relaxed">
+                If any provision of these Terms is held invalid or unenforceable, the remaining
+                provisions remain in full effect, and the invalid provision shall be modified to the
+                minimum extent necessary to make it enforceable.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-2xl font-display font-black">Contact us</h2>
+              <div className="bg-secondary brutalist-border p-6 not-prose">
+                <p className="mb-2">
+                  <strong>Email:</strong>{" "}
+                  <a href="mailto:info@bosshookah.site" className="text-primary font-semibold hover:underline">
+                    info@bosshookah.site
+                  </a>
+                </p>
+                <p className="mb-2">
+                  <strong>Phone:</strong>{" "}
+                  <a href="tel:+13134066589" className="text-primary font-semibold hover:underline">
+                    (313) 406-6589
+                  </a>
+                </p>
+                <p className="mb-2">
+                  <strong>Address:</strong>
+                </p>
+                <p>Boss Hookah Wholesale</p>
+                <p>6520 Greenfield Rd</p>
+                <p>Dearborn, MI 48126</p>
               </div>
-              <p className="mb-4">
-                Please make money orders or cashiers checks payable to "Boss Hookah." Please include a copy of your driver's license or ID for age verification purposes. As soon as we receive payment we will ship out your order.
+              <p className="leading-relaxed">
+                We aim to respond to substantive inquiries within a reasonable time. For order-specific
+                issues, include your order number.
               </p>
             </section>
 
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Refund & Return Policy</h2>
-              <p className="mb-4">
-                We accept returns in sellable condition in all original packaging within 14 days of purchase for a full refund minus all shipping costs, and a 15% restocking fee will be applied. All returns must be authorized first by phone or email.
-              </p>
-              <p className="mb-4">
-                Custom-made and special-order items are NOT RETURNABLE.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Disclaimer of Liability</h2>
-              <p className="mb-4">
-                The material displayed on this Website is provided without any guarantees, conditions or warranties as to its accuracy. Unless expressly stated to the contrary to the fullest extent permitted by law bosshookah.site and its suppliers, content providers and advertisers hereby expressly exclude all conditions, warranties and other terms which might otherwise be implied by statute, common law or the law of equity and shall not be liable for any damages whatsoever, including but without limitation to any direct, indirect, special, consequential, punitive or incidental damages, or damages for loss of use, profits, data or other intangibles, damage to goodwill or reputation, or the cost of procurement of substitute goods and services, arising out of or related to the use, inability to use, performance or failures of this Website or the Linked Sites and any materials posted thereon, irrespective of whether such damages were foreseeable or arise in contract, tort, equity, restitution, by statute, at common law or otherwise. This does not affect bosshookah.site's liability for death or personal injury arising from its negligence, fraudulent misrepresentation, misrepresentation as to a fundamental matter or any other liability which cannot be excluded or limited under applicable law.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Linking to this Website</h2>
-              <p className="mb-4">
-                You may link to our home page, provided you do so in a way that is fair and legal and does not damage our reputation or take advantage of it, but you must not establish a link in such a way as to suggest any form of association, approval or endorsement on our part where none exists. You must not establish a link from any website that is not owned by you. This Website must not be framed on any other site, nor may you create a link to any part of this Website other than the home page. We reserve the right to withdraw linking permission without notice.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Disclaimer as to Ownership of Trade Marks, Images and Third Party Copyright</h2>
-              <p className="mb-4">
-                Except where expressly stated to the contrary all persons (including their names and images), third party trade marks and content, services and/or locations featured on this Website are in no way associated, linked or affiliated with bosshookah.site and you should not rely on the existence of such a connection or affiliation. Any trade marks/names featured on this Website are owned by the respective trade mark owners. Where a trade mark or brand name is referred to it is used solely to describe or identify the products and services and is in no way an assertion that such products or services are endorsed by or connected to bosshookah.site.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Indemnity</h2>
-              <p className="mb-4">
-                You agree to indemnify, defend and hold harmless bosshookah.site, its directors, officers, employees, consultants, agents, and affiliates, from any and all third party claims, liability, damages and/or costs (including, but not limited to, legal fees) arising from your use this Website or your breach of the Terms of Service.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Variation</h2>
-              <p className="mb-4">
-                Boss Hookah shall have the right in its absolute discretion at any time and without notice to amend, remove or vary the Services and/or any page of this Website.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Invalidity</h2>
-              <p className="mb-4">
-                If any part of the Terms of Service is unenforceable (including any provision in which we exclude our liability to you) the enforceability of any other part of the Terms of Service will not be affected all other clauses remaining in full force and effect. So far as possible where any clause/sub-clause or part of a clause/sub-clause can be severed to render the remaining part valid, the clause shall be interpreted accordingly. Alternatively, you agree that the clause shall be rectified and interpreted in such a way that closely resembles the original meaning of the clause/sub-clause as is permitted by law.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Complaints</h2>
-              <p className="mb-4">
-                We operate a complaints handling procedure which we will use to try to resolve disputes when they first arise, please let us know if you have any complaints or comments.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Waiver</h2>
-              <p className="mb-4">
-                If you breach these conditions and we take no action, we will still be entitled to use our rights and remedies in any other situation where you breach these conditions.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Entire Agreement</h2>
-              <p className="mb-4">
-                The above Terms of Service constitute the entire agreement of the parties and supersede any and all preceding and contemporaneous agreements between you and bosshookah.site. Any waiver of any provision of the Terms of Service will be effective only if in writing and signed by a Director of Boss Hookah.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Contact Information</h2>
-              <p className="mb-4">
-                If you have questions about these Terms & Conditions or our Privacy Policy, please contact us at:
-              </p>
-              <div className="bg-secondary p-4 rounded-md mb-4">
-                <p className="mb-2"><strong>Email:</strong> info@bosshookah.site</p>
-                <p className="mb-2"><strong>Phone:</strong> (323) 555-0198</p>
-                <p className="mb-2"><strong>Address:</strong></p>
-                <p>Boss Hookah</p>
-                <p>8342 Melrose Avenue</p>
-                <p>Los Angeles, CA 90069</p>
-              </div>
-              <p className="mb-4">
-                <strong>Response Time:</strong> We aim to respond to all inquiries within 48 hours.
-              </p>
-            </section>
-
-            <section className="border-t pt-6 mt-8">
+            <section className="border-t-3 border-border pt-6 mt-8">
               <p className="text-sm text-muted-foreground">
-                <strong>Last Updated:</strong> February 6, 2026
+                <strong>Last updated:</strong> March 25, 2026
               </p>
               <p className="text-sm text-muted-foreground mt-2">
-                By using this website, you acknowledge that you have read and understood these Terms & Conditions and our Privacy Policy.
+                By using bosshookah.site, you acknowledge that you have read and understood these
+                Terms and our privacy practices described above.
               </p>
             </section>
           </div>

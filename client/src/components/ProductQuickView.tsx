@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { X, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { Product } from "@/lib/products";
+import { useShopCurrency } from "@/contexts/CurrencyContext";
 
 interface ProductQuickViewProps {
   product: Product | null;
@@ -12,6 +13,7 @@ interface ProductQuickViewProps {
 
 export default function ProductQuickView({ product, open, onClose }: ProductQuickViewProps) {
   const [quantity, setQuantity] = useState(1);
+  const { formatUsd } = useShopCurrency();
 
   if (!product) return null;
 
@@ -61,15 +63,15 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
               {product.salePrice ? (
                 <>
                   <span className="text-4xl font-black text-primary">
-                    ${product.salePrice.toFixed(2)}
+                    {formatUsd(product.salePrice)}
                   </span>
                   <span className="text-xl text-muted-foreground line-through">
-                    ${product.price.toFixed(2)}
+                    {formatUsd(product.price)}
                   </span>
                 </>
               ) : (
                 <span className="text-4xl font-black text-primary">
-                  ${product.price.toFixed(2)}
+                  {formatUsd(product.price)}
                 </span>
               )}
             </div>

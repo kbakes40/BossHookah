@@ -39,6 +39,7 @@ export type BhProductInsert = {
   description: string | null;
   featured: boolean;
   trending: boolean;
+  weight_lb: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -72,6 +73,7 @@ export function siteProductsToBhRows(
         description: p.description ?? null,
         featured: Boolean(p.featured),
         trending: Boolean(p.trending),
+        weight_lb: p.weightLb != null && p.weightLb > 0 ? p.weightLb : null,
         created_at: now,
         updated_at: now,
       });
@@ -95,6 +97,7 @@ export function siteProductsToBhRows(
         description: v.description ?? p.description ?? null,
         featured: Boolean(p.featured),
         trending: Boolean(p.trending),
+        weight_lb: p.weightLb != null && p.weightLb > 0 ? p.weightLb : null,
         created_at: now,
         updated_at: now,
       });

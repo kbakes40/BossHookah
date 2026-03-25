@@ -66,6 +66,7 @@ function rowsToCsv(rows: BhProductInsert[]): string {
     "description",
     "featured",
     "trending",
+    "weight_lb",
     "created_at",
     "updated_at",
   ];

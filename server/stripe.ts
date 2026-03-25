@@ -35,13 +35,24 @@ export async function createCheckoutSession(params: {
   userName: string;
   items: Array<{ name: string; priceInCents: number; quantity: number; image?: string }>;
   deliveryMethod: "shipping" | "pickup";
+  /** Added as a separate Stripe line item when greater than 0 (pickup should pass 0). */
+  shippingCents?: number;
   successUrl: string;
   cancelUrl: string;
 }) {
   if (!ENV.stripeSecretKey) {
     throw new Error("STRIPE_SECRET_KEY is not configured");
   }
-  const { userId, userEmail, userName, items, deliveryMethod, successUrl, cancelUrl } = params;
+  const {
+    userId,
+    userEmail,
+    userName,
+    items,
+    deliveryMethod,
+    shippingCents = 0,
+    successUrl,
+    cancelUrl,
+  } = params;
   console.log('[Stripe] Creating checkout session:', { userId, userEmail, itemCount: items.length });
 
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map(item => {
@@ -68,6 +79,18 @@ export async function createCheckoutSession(params: {
       quantity: item.quantity,
     };
   });
+
+  const shipping = Math.max(0, Math.round(shippingCents));
+  if (shipping > 0) {
+    lineItems.push({
+      price_data: {
+        currency: "usd",
+        product_data: { name: "Shipping" },
+        unit_amount: shipping,
+      },
+      quantity: 1,
+    });
+  }
 
   try {
     const session = await stripe.checkout.sessions.create({

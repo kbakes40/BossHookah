@@ -4,8 +4,11 @@
 import { Link } from "wouter";
 import { Instagram, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
 import { useState } from "react";
+import { useShopCurrency } from "@/contexts/CurrencyContext";
+import { isShopCurrencyId } from "@shared/currency";
 
 export default function Footer() {
+  const { currency, setCurrency } = useShopCurrency();
   const [linksOpen, setLinksOpen] = useState(false);
   const [locationOpen, setLocationOpen] = useState(false);
   const [socialOpen, setSocialOpen] = useState(false);
@@ -113,10 +116,18 @@ export default function Footer() {
       <div className="border-t-3 border-border py-6">
         <div className="container flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-4">
-            <select className="brutalist-border px-4 py-2 bg-background">
-              <option>United States (USD $)</option>
-              <option>Canada (CAD $)</option>
-              <option>United Kingdom (GBP £)</option>
+            <select
+              className="brutalist-border px-4 py-2 bg-background"
+              value={currency}
+              onChange={e => {
+                const v = e.target.value;
+                if (isShopCurrencyId(v)) setCurrency(v);
+              }}
+              aria-label="Display currency"
+            >
+              <option value="usd">United States (USD $)</option>
+              <option value="cad">Canada (CAD $)</option>
+              <option value="gbp">United Kingdom (GBP £)</option>
             </select>
           </div>
           

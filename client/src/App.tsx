@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CartProvider } from "./contexts/CartContext";
+import { CurrencyProvider } from "./contexts/CurrencyContext";
 import CartDrawer from "./components/CartDrawer";
 import AgeVerificationModal from "./components/AgeVerificationModal";
 import Home from "./pages/Home";
@@ -125,15 +126,17 @@ function App() {
     <ErrorBoundary>
       <SupabaseAuthProvider>
       <ThemeProvider defaultTheme="light">
-        <CartProvider>
-          <TooltipProvider>
-            <Toaster />
-            <AgeVerificationModal />
-            <Router />
-            <CartDrawer />
-            <FloatingRewardsButton />
-          </TooltipProvider>
-        </CartProvider>
+        <CurrencyProvider>
+          <CartProvider>
+            <TooltipProvider>
+              <Toaster />
+              <AgeVerificationModal />
+              <Router />
+              <CartDrawer />
+              <FloatingRewardsButton />
+            </TooltipProvider>
+          </CartProvider>
+        </CurrencyProvider>
       </ThemeProvider>
       </SupabaseAuthProvider>
     </ErrorBoundary>

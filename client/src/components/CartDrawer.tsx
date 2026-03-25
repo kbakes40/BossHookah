@@ -8,17 +8,48 @@ import { X, Minus, Plus, Trash2, Truck, Store } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { PAYPAL_CHECKOUT_STORAGE_KEY } from "@/lib/paypalCheckoutStorage";
+import {
+  PAYPAL_CHECKOUT_STORAGE_KEY,
+  CHECKOUT_SHIPPING_ZIP_KEY,
+} from "@/lib/paypalCheckoutStorage";
+import { calculateShipping, orderGrandTotalUsd, FREE_SHIPPING_THRESHOLD_USD } from "@shared/shipping";
+import { useShopCurrency } from "@/contexts/CurrencyContext";
 
 export default function CartDrawer() {
   const { items, cartTotal, cartCount, isOpen, closeCart, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { formatUsd, displayTotals } = useShopCurrency();
   const [, setLocation] = useLocation();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<"shipping" | "pickup">("shipping");
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "zelle" | "bitcoin" | "paypal">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "zelle" | "bitcoin" | "paypal">("paypal");
+  const [cardPaypalInfoOpen, setCardPaypalInfoOpen] = useState(false);
+  const [bitcoinInfoOpen, setBitcoinInfoOpen] = useState(false);
+  const [shippingZip, setShippingZip] = useState("");
   const createCheckoutSession = trpc.checkout.createSession.useMutation();
+
+  const shippingQuote = useMemo(
+    () =>
+      calculateShipping({
+        subtotal: cartTotal,
+        deliveryMethod,
+        lines: items.map(i => ({
+          quantity: i.quantity,
+          weightLb: i.weightLb,
+        })),
+        address:
+          deliveryMethod === "shipping" && shippingZip.trim()
+            ? { zip: shippingZip.trim() }
+            : {},
+      }),
+    [cartTotal, deliveryMethod, items, shippingZip]
+  );
+
+  const cartGrandTotal = orderGrandTotalUsd(cartTotal, shippingQuote);
+  const shipUsd =
+    deliveryMethod === "pickup" ? 0 : shippingQuote.shippingAmount;
+  const checkoutTotals = displayTotals(cartTotal, shipUsd);
 
   if (!isOpen) return null;
 
@@ -114,7 +145,7 @@ export default function CartDrawer() {
                   {/* Price */}
                   <div className="text-right">
                     <p className="price-tag font-bold">
-                      ${((item.salePrice || item.price) * item.quantity).toFixed(2)}
+                      {formatUsd((item.salePrice || item.price) * item.quantity)}
                     </p>
                   </div>
                 </div>
@@ -129,20 +160,20 @@ export default function CartDrawer() {
             {/* Shipping Notice */}
             <div className="bg-secondary brutalist-border p-4 text-sm">
               <p className="font-semibold">
-                {cartTotal >= 100 ? (
-                  <span className="text-primary">✓ You qualify for FREE SHIPPING!</span>
+                {cartTotal >= FREE_SHIPPING_THRESHOLD_USD ? (
+                  <span className="text-primary">You unlocked FREE SHIPPING</span>
                 ) : (
-                  <>Spend ${(100 - cartTotal).toFixed(2)} more for FREE SHIPPING</>
+                  <>
+                    Spend {formatUsd(shippingQuote.remainingForFreeShipping)} more for FREE SHIPPING
+                  </>
                 )}
               </p>
             </div>
 
             {/* Subtotal */}
-            <div className="flex items-center justify-between text-lg">
+            <div className="flex items-center justify-between text-base">
               <span className="font-display font-bold">SUBTOTAL</span>
-              <span className="price-tag font-black text-2xl">
-                ${cartTotal.toFixed(2)} USD
-              </span>
+              <span className="price-tag font-bold">{checkoutTotals.subtotal}</span>
             </div>
 
             {/* Delivery Method Selection */}
@@ -172,6 +203,47 @@ export default function CartDrawer() {
                   <span className="text-sm font-bold">PICKUP</span>
                 </button>
               </div>
+              {deliveryMethod === "shipping" && (
+                <div className="space-y-1 pt-1">
+                  <label htmlFor="cart-shipping-zip" className="text-[10px] font-bold uppercase text-muted-foreground">
+                    ZIP code (optional — refines estimate)
+                  </label>
+                  <Input
+                    id="cart-shipping-zip"
+                    value={shippingZip}
+                    onChange={e => setShippingZip(e.target.value)}
+                    placeholder="e.g. 48124"
+                    className="h-9 brutalist-border text-sm"
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Shipping + total (after delivery method so pickup zeros shipping correctly) */}
+            <div className="space-y-2 border-t-3 border-border pt-3">
+              <div className="flex items-center justify-between text-base">
+                <span className="font-display font-bold">SHIPPING</span>
+                <span className="price-tag font-bold">
+                  {deliveryMethod === "pickup"
+                    ? formatUsd(0)
+                    : shippingQuote.isFreeShipping
+                      ? "FREE"
+                      : checkoutTotals.shipping}
+                </span>
+              </div>
+              {deliveryMethod === "shipping" &&
+                shippingQuote.isEstimated &&
+                shippingQuote.estimatedShippingText && (
+                  <p className="text-[10px] text-muted-foreground leading-snug">
+                    {shippingQuote.estimatedShippingText}
+                  </p>
+                )}
+              <div className="flex items-center justify-between text-lg pt-1">
+                <span className="font-display font-bold">TOTAL</span>
+                <span className="price-tag font-black text-2xl">{checkoutTotals.total}</span>
+              </div>
             </div>
 
             {/* Payment Method Selection */}
@@ -179,12 +251,9 @@ export default function CartDrawer() {
               <p className="font-display font-bold text-sm">PAYMENT METHOD</p>
               <div className="grid grid-cols-2 gap-2">
                 <button
-                  onClick={() => setPaymentMethod("card")}
-                  className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
-                    paymentMethod === "card" 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-background hover:bg-secondary"
-                  }`}
+                  type="button"
+                  onClick={() => setCardPaypalInfoOpen(true)}
+                  className="p-4 brutalist-border flex flex-col items-center gap-2 transition-colors bg-background hover:bg-secondary"
                 >
                   <span className="text-sm font-bold">CREDIT CARD</span>
                 </button>
@@ -199,10 +268,14 @@ export default function CartDrawer() {
                   <span className="text-sm font-bold">ZELLE</span>
                 </button>
                 <button
-                  onClick={() => setPaymentMethod("bitcoin")}
+                  type="button"
+                  onClick={() => {
+                    setPaymentMethod("bitcoin");
+                    setBitcoinInfoOpen(true);
+                  }}
                   className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
-                    paymentMethod === "bitcoin" 
-                      ? "bg-primary text-primary-foreground" 
+                    paymentMethod === "bitcoin"
+                      ? "bg-primary text-primary-foreground"
                       : "bg-background hover:bg-secondary"
                   }`}
                 >
@@ -229,12 +302,15 @@ export default function CartDrawer() {
                 setIsCheckingOut(true);
                 try {
                   if (paymentMethod === "zelle") {
-                    // Navigate to Zelle checkout page using React Router (preserves state)
+                    if (deliveryMethod === "shipping") {
+                      sessionStorage.setItem(CHECKOUT_SHIPPING_ZIP_KEY, shippingZip.trim());
+                    } else {
+                      sessionStorage.removeItem(CHECKOUT_SHIPPING_ZIP_KEY);
+                    }
                     closeCart();
                     setLocation(`/zelle-checkout?delivery=${deliveryMethod}`);
                   } else if (paymentMethod === "bitcoin") {
-                    // Bitcoin payment - demo placeholder
-                    toast.info("Bitcoin payment is available upon request. Please contact us to arrange Bitcoin payment.");
+                    setBitcoinInfoOpen(true);
                     setIsCheckingOut(false);
                     return;
                   } else if (paymentMethod === "paypal") {
@@ -261,10 +337,14 @@ export default function CartDrawer() {
 
                     sessionStorage.setItem(
                       PAYPAL_CHECKOUT_STORAGE_KEY,
-                      JSON.stringify({ items: checkoutItems, deliveryMethod })
+                      JSON.stringify({
+                        items: checkoutItems,
+                        deliveryMethod,
+                        shippingCents: Math.round(shippingQuote.shippingAmount * 100),
+                      })
                     );
 
-                    const amount = cartTotal.toFixed(2);
+                    const amount = cartGrandTotal.toFixed(2);
                     const res = await fetch("/api/paypal/create-order", {
                       method: "POST",
                       headers: {
@@ -310,6 +390,7 @@ export default function CartDrawer() {
                     const session = await createCheckoutSession.mutateAsync({
                       items: checkoutItems,
                       deliveryMethod,
+                      shippingCents: Math.round(shippingQuote.shippingAmount * 100),
                     });
 
                     if (session.url) {
@@ -342,6 +423,109 @@ export default function CartDrawer() {
           </div>
         )}
       </div>
+
+      {bitcoinInfoOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setBitcoinInfoOpen(false)}
+          role="presentation"
+        >
+          <div
+            className="w-full max-w-lg bg-background border-3 border-border brutalist-border brutalist-shadow p-8"
+            onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cart-bitcoin-title"
+          >
+            <h3
+              id="cart-bitcoin-title"
+              className="font-display font-black text-xl md:text-2xl text-center mb-6 tracking-tight"
+            >
+              BITCOIN PAYMENT
+            </h3>
+            <div className="space-y-4 mb-8 text-sm leading-relaxed text-center text-foreground">
+              <p>
+                Bitcoin checkout is available <span className="font-bold">on request</span>. Reach out and
+                we&apos;ll send wallet details and a quote for your order total.
+              </p>
+              <p>
+                Call{" "}
+                <a href="tel:+13134066589" className="font-bold text-primary hover:underline">
+                  (313) 406-6589
+                </a>{" "}
+                or visit our{" "}
+                <Link href="/contact" className="font-bold text-primary hover:underline" onClick={closeCart}>
+                  Contact
+                </Link>{" "}
+                page to arrange payment.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <Button
+                type="button"
+                className="w-full h-14 brutalist-border brutalist-shadow bg-primary text-primary-foreground hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 text-lg font-black"
+                onClick={() => setBitcoinInfoOpen(false)}
+              >
+                GOT IT
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cardPaypalInfoOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setCardPaypalInfoOpen(false)}
+          role="presentation"
+        >
+          <div
+            className="w-full max-w-lg bg-background border-3 border-border brutalist-border brutalist-shadow p-8"
+            onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cart-card-paypal-title"
+          >
+            <h3
+              id="cart-card-paypal-title"
+              className="font-display font-black text-xl md:text-2xl text-center mb-6 tracking-tight"
+            >
+              PAY WITH DEBIT OR CREDIT CARD
+            </h3>
+            <div className="space-y-4 mb-8 text-sm leading-relaxed text-center text-foreground">
+              <p>
+                We take card payments through <span className="font-bold">PayPal</span>. You do not need a PayPal
+                balance. At checkout you can choose{" "}
+                <span className="font-bold">Debit or Credit Card</span> on PayPal&apos;s secure page.
+              </p>
+              <p>
+                Select <span className="font-bold">PAYPAL</span> in the payment options below, then tap{" "}
+                <span className="font-bold">CHECKOUT</span> to continue.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <Button
+                type="button"
+                className="w-full h-14 brutalist-border brutalist-shadow bg-primary text-primary-foreground hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 text-lg font-black"
+                onClick={() => {
+                  setPaymentMethod("paypal");
+                  setCardPaypalInfoOpen(false);
+                }}
+              >
+                SELECT PAYPAL
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-12 brutalist-border bg-background font-bold"
+                onClick={() => setCardPaypalInfoOpen(false)}
+              >
+                GOT IT
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

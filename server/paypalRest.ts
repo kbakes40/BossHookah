@@ -1,20 +1,23 @@
 /**
  * PayPal REST API — OAuth + Orders v2 (create + capture).
  */
-import { ENV } from "./_core/env";
+import { readPayPalRuntimeEnv } from "./_core/env";
 
-function apiBase(): string {
-  return ENV.paypalEnv === "live"
+function apiBase(apiMode: "live" | "sandbox"): string {
+  return apiMode === "live"
     ? "https://api-m.paypal.com"
     : "https://api-m.sandbox.paypal.com";
 }
 
 export async function getPayPalAccessToken(): Promise<string> {
-  if (!ENV.paypalClientId || !ENV.paypalSecret) {
-    throw new Error("PayPal is not configured (PAYPAL_CLIENT_ID / PAYPAL_SECRET)");
+  const { clientId, secret, apiMode } = readPayPalRuntimeEnv();
+  if (!clientId || !secret) {
+    throw new Error(
+      "PayPal is not configured: add PAYPAL_CLIENT_ID and PAYPAL_SECRET in Vercel → Settings → Environment Variables (Production), then redeploy. The client-only VITE_PAYPAL_CLIENT_ID is not enough."
+    );
   }
-  const auth = Buffer.from(`${ENV.paypalClientId}:${ENV.paypalSecret}`).toString("base64");
-  const res = await fetch(`${apiBase()}/v1/oauth2/token`, {
+  const auth = Buffer.from(`${clientId}:${secret}`).toString("base64");
+  const res = await fetch(`${apiBase(apiMode)}/v1/oauth2/token`, {
     method: "POST",
     headers: {
       Authorization: `Basic ${auth}`,
@@ -38,8 +41,9 @@ export async function paypalCreateOrder(params: {
   returnUrl: string;
   cancelUrl: string;
 }): Promise<{ id: string; approveUrl: string | undefined }> {
+  const { apiMode } = readPayPalRuntimeEnv();
   const accessToken = await getPayPalAccessToken();
-  const res = await fetch(`${apiBase()}/v2/checkout/orders`, {
+  const res = await fetch(`${apiBase(apiMode)}/v2/checkout/orders`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -91,14 +95,18 @@ export async function paypalCreateOrder(params: {
 /** Raw capture JSON from PayPal (used for payer + amounts). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function paypalCaptureOrder(orderID: string): Promise<any> {
+  const { apiMode } = readPayPalRuntimeEnv();
   const token = await getPayPalAccessToken();
-  const res = await fetch(`${apiBase()}/v2/checkout/orders/${encodeURIComponent(orderID)}/capture`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  const res = await fetch(
+    `${apiBase(apiMode)}/v2/checkout/orders/${encodeURIComponent(orderID)}/capture`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
   const data = await res.json();
   if (!res.ok) {

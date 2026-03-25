@@ -28,3 +28,19 @@ export const ENV = {
     return "sandbox";
   })(),
 };
+
+/** PayPal REST — read from `process.env` at call time (Vercel injects these at runtime, not from local `.env` in production). */
+export function readPayPalRuntimeEnv(): {
+  clientId: string;
+  secret: string;
+  apiMode: "live" | "sandbox";
+} {
+  const r = (process.env.PAYPAL_ENV ?? "sandbox").trim().toLowerCase();
+  const apiMode =
+    r === "live" || r === "production" || r === "prod" ? "live" : "sandbox";
+  return {
+    clientId: (process.env.PAYPAL_CLIENT_ID ?? "").trim(),
+    secret: (process.env.PAYPAL_SECRET ?? "").trim(),
+    apiMode,
+  };
+}

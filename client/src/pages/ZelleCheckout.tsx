@@ -1,7 +1,7 @@
 // Zelle Payment Instructions Page
 // Shows Zelle payment details and creates pending order
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,14 @@ import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Copy, CheckCircle2, MapPin, Phone, Mail } from "lucide-react";
+import { calculateShipping, orderGrandTotalUsd } from "@shared/shipping";
+import { CHECKOUT_SHIPPING_ZIP_KEY } from "@/lib/paypalCheckoutStorage";
+import { useShopCurrency } from "@/contexts/CurrencyContext";
 
 export default function ZelleCheckout() {
   const [, setLocation] = useLocation();
   const { items, cartTotal, clearCart } = useCart();
+  const { formatUsd, displayTotals } = useShopCurrency();
   const [orderId, setOrderId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [customerName, setCustomerName] = useState("");
@@ -48,6 +52,31 @@ export default function ZelleCheckout() {
   // Get delivery method from URL params
   const params = new URLSearchParams(window.location.search);
   const deliveryMethod = (params.get("delivery") as "shipping" | "pickup") || "shipping";
+
+  const shippingZip =
+    typeof window !== "undefined" ? sessionStorage.getItem(CHECKOUT_SHIPPING_ZIP_KEY) ?? "" : "";
+
+  const shippingQuote = useMemo(
+    () =>
+      calculateShipping({
+        subtotal: cartTotal,
+        deliveryMethod,
+        lines: items.map(i => ({
+          quantity: i.quantity,
+          weightLb: i.weightLb,
+        })),
+        address:
+          deliveryMethod === "shipping" && shippingZip.trim()
+            ? { zip: shippingZip.trim() }
+            : {},
+      }),
+    [cartTotal, deliveryMethod, items, shippingZip]
+  );
+
+  const orderGrandTotal = orderGrandTotalUsd(cartTotal, shippingQuote);
+  const shipUsd =
+    deliveryMethod === "pickup" ? 0 : shippingQuote.shippingAmount;
+  const checkoutTotals = displayTotals(cartTotal, shipUsd);
 
   useEffect(() => {
     // Redirect if cart is empty
@@ -88,7 +117,7 @@ export default function ZelleCheckout() {
         deliveryMethod,
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
-        totalAmount: Math.round(cartTotal * 100), // Convert to cents
+        totalAmount: Math.round(orderGrandTotal * 100),
       });
 
       setOrderId(result.orderId);
@@ -170,13 +199,29 @@ export default function ZelleCheckout() {
                         {item.name} {item.selectedVariantName && `- ${item.selectedVariantName}`} x {item.quantity}
                       </span>
                       <span className="font-bold">
-                        ${((item.salePrice || item.price) * item.quantity).toFixed(2)}
+                        {formatUsd((item.salePrice || item.price) * item.quantity)}
                       </span>
                     </div>
                   ))}
-                  <div className="border-t-3 border-border pt-2 flex justify-between font-display font-bold text-lg">
+                  <div className="border-t-3 border-border pt-2 mt-2 space-y-2 text-sm">
+                    <div className="flex justify-between font-semibold">
+                      <span className="font-display">SUBTOTAL</span>
+                      <span>{checkoutTotals.subtotal}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold">
+                      <span className="font-display">SHIPPING</span>
+                      <span>
+                        {deliveryMethod === "pickup"
+                          ? formatUsd(0)
+                          : shippingQuote.isFreeShipping
+                            ? "FREE"
+                            : checkoutTotals.shipping}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between font-display font-bold text-lg pt-2 border-t-3 border-border">
                     <span>TOTAL</span>
-                    <span className="text-primary">${cartTotal.toFixed(2)}</span>
+                    <span className="text-primary">{checkoutTotals.total}</span>
                   </div>
                 </div>
               </div>
@@ -247,7 +292,7 @@ export default function ZelleCheckout() {
               <h2 className="font-display font-bold text-lg">PAYMENT INSTRUCTIONS</h2>
               <ol className="list-decimal list-inside space-y-2 text-sm">
                 <li>Open your banking app and select Zelle</li>
-                <li>Send ${cartTotal.toFixed(2)} to one of the following:</li>
+                <li>Send {formatUsd(orderGrandTotal)} to one of the following:</li>
               </ol>
 
               {/* Zelle Email */}
@@ -298,13 +343,29 @@ export default function ZelleCheckout() {
                       {item.name} {item.selectedVariantName && `- ${item.selectedVariantName}`} x {item.quantity}
                     </span>
                     <span className="font-bold">
-                      ${((item.salePrice || item.price) * item.quantity).toFixed(2)}
+                      {formatUsd((item.salePrice || item.price) * item.quantity)}
                     </span>
                   </div>
                 ))}
-                <div className="border-t-3 border-border pt-2 flex justify-between font-display font-bold text-lg">
+                <div className="border-t-3 border-border pt-2 mt-1 space-y-2 text-sm">
+                  <div className="flex justify-between font-semibold">
+                    <span className="font-display">SUBTOTAL</span>
+                    <span>{checkoutTotals.subtotal}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold">
+                    <span className="font-display">SHIPPING</span>
+                    <span>
+                      {deliveryMethod === "pickup"
+                        ? formatUsd(0)
+                        : shippingQuote.isFreeShipping
+                          ? "FREE"
+                          : checkoutTotals.shipping}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex justify-between font-display font-bold text-lg pt-2 border-t-3 border-border">
                   <span>TOTAL</span>
-                  <span className="text-primary">${cartTotal.toFixed(2)}</span>
+                  <span className="text-primary">{checkoutTotals.total}</span>
                 </div>
               </div>
             </div>

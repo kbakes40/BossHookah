@@ -14,6 +14,8 @@ type StoredPayload = {
     image?: string;
   }>;
   deliveryMethod: "shipping" | "pickup";
+  /** Included in PayPal order total from cart (capture amount includes shipping). */
+  shippingCents?: number;
 };
 
 export default function CheckoutPayPalReturn() {

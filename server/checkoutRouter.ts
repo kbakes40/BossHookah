@@ -21,6 +21,8 @@ export const checkoutRouter = router({
           })
         ),
         deliveryMethod: z.enum(["shipping", "pickup"]).default("shipping"),
+        /** Shipping line item in cents (must match client `calculateShipping`). */
+        shippingCents: z.number().int().min(0).optional().default(0),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -42,6 +44,7 @@ export const checkoutRouter = router({
           userName: ctx.user?.name || "Guest",
           items: input.items,
           deliveryMethod: input.deliveryMethod,
+          shippingCents: input.shippingCents,
           successUrl: `${origin}/checkout/success`,
           cancelUrl: `${origin}/checkout/cancel`,
         });

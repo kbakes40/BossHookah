@@ -158,14 +158,22 @@ export default function MyAccount() {
                     <Button
                       variant="outline"
                       className="w-full justify-start brutalist-border"
-                      onClick={() => toast.info("Email preferences coming soon")}
+                      onClick={() =>
+                        toast.info(
+                          "Notification settings are tied to your sign-in provider. Contact us if you need help updating preferences.",
+                        )
+                      }
                     >
                       Email Preferences
                     </Button>
                     <Button
                       variant="outline"
                       className="w-full justify-start brutalist-border text-destructive"
-                      onClick={() => toast.info("Please contact support to delete your account")}
+                      onClick={() =>
+                        toast.info(
+                          "To close your account, reach out through our Contact page — we'll take care of the rest.",
+                        )
+                      }
                     >
                       Delete Account
                     </Button>

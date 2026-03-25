@@ -3,12 +3,15 @@
 
 import { Product } from "@/lib/products";
 import { Link } from "wouter";
+import { useShopCurrency } from "@/contexts/CurrencyContext";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const { formatUsd } = useShopCurrency();
+
   return (
     <div className="group relative">
       <Link href={`/product/${product.id}`} className="block">
@@ -40,16 +43,14 @@ export default function ProductCard({ product }: ProductCardProps) {
               {product.salePrice ? (
                 <>
                   <span className="price-tag text-muted-foreground line-through text-sm">
-                    ${product.price.toFixed(2)}
+                    {formatUsd(product.price)}
                   </span>
                   <span className="price-tag text-primary font-bold">
-                    ${product.salePrice.toFixed(2)}
+                    {formatUsd(product.salePrice)}
                   </span>
                 </>
               ) : (
-                <span className="price-tag font-bold">
-                  ${product.price.toFixed(2)} USD
-                </span>
+                <span className="price-tag font-bold">{formatUsd(product.price)}</span>
               )}
             </div>
           </div>

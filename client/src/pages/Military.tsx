@@ -9,10 +9,25 @@ export default function Military() {
         <div className="max-w-2xl mx-auto text-center">
           <h1 className="text-5xl font-display font-black mb-6">MILITARY DISCOUNT</h1>
           <div className="brutalist-border bg-secondary p-12">
-            <p className="text-2xl font-bold mb-4">Coming Soon</p>
-            <p className="mb-6">We're setting up our military verification system.</p>
-            <p>Active duty, veterans, and military families will receive exclusive discounts.</p>
-            <p className="mt-6 text-sm">Call us at <a href="tel:+13134066589" className="text-primary hover:underline">(313) 406-6589</a> for current offers.</p>
+            <p className="text-lg font-display font-black mb-4">Thank you for your service</p>
+            <p className="mb-6 text-left leading-relaxed">
+              Boss Hookah Wholesale is proud to support active duty service members, veterans, and
+              military families. Eligibility and <strong>military verification may be required</strong>{" "}
+              before a discount is applied — please have acceptable ID or verification materials ready
+              when asked.
+            </p>
+            <p className="mb-6 text-left leading-relaxed">
+              <strong>Discount terms, percentages, and eligible product categories may change without
+                notice</strong> and may not combine with other promotions. Age and shipping rules for
+              regulated products still apply in full.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              For current military offers and how to verify in-store or over the phone, call{" "}
+              <a href="tel:+13134066589" className="text-primary font-semibold hover:underline">
+                (313) 406-6589
+              </a>{" "}
+              or visit us at 6520 Greenfield Rd, Dearborn, MI 48126.
+            </p>
           </div>
         </div>
       </main>
