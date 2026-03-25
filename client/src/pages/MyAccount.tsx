@@ -30,7 +30,7 @@ export default function MyAccount() {
   const handleSaveProfile = () => {
     // Profile editing is read-only for OAuth users; just close edit mode
     setIsEditing(false);
-    toast.info("Profile is managed by your Google/Apple account.");
+    toast.info("Profile is managed by your Google account.");
   };
 
   const handleLogout = async () => {
