@@ -7,6 +7,11 @@ import { router, publicProcedure } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { supabaseAdmin } from "./_core/supabaseAdmin";
 import { mapStoreSettingsRow } from "./_core/supabaseMappers";
+import {
+  fetchAllBhProductRows,
+  getStorefrontProductById,
+  groupBhProductRowsToStorefrontProducts,
+} from "./storeCatalog";
 
 const defaultStoreSettings = () =>
   mapStoreSettingsRow({
@@ -41,6 +46,19 @@ export const storeRouter = router({
 
     return mapStoreSettingsRow((data ?? null) as Record<string, unknown> | null) ?? defaultStoreSettings();
   }),
+
+  /** Full storefront catalog from `bh_products` (grouped catalog SKUs → variants). */
+  listProducts: publicProcedure.query(async () => {
+    const rows = await fetchAllBhProductRows();
+    return groupBhProductRowsToStorefrontProducts(rows);
+  }),
+
+  /** Single product by storefront id (catalog parent key, e.g. `50`, or `bh_products.id` UUID). */
+  getProduct: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      return getStorefrontProductById(input.id);
+    }),
 
   getOrderBySessionId: publicProcedure
     .input(z.object({ sessionId: z.string() }))

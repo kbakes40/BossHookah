@@ -13,4 +13,16 @@ export const ENV = {
   // Admin emails - these users will always have admin role
   adminEmail: "kevin@bakerhub.com",
   adminEmails: ["kevin@bakerhub.com", "chillvibesss420@gmail.com"],
+  /** PayPal REST (server) — trimmed; use LIVE `.env` / PayPal dashboard (not VITE_*). */
+  paypalClientId: (process.env.PAYPAL_CLIENT_ID ?? "").trim(),
+  paypalSecret: (process.env.PAYPAL_SECRET ?? "").trim(),
+  /**
+   * `live` → api-m.paypal.com; everything else → sandbox.
+   * Accepts: live, production, prod (case-insensitive).
+   */
+  paypalEnv: (() => {
+    const r = (process.env.PAYPAL_ENV ?? "sandbox").trim().toLowerCase();
+    if (r === "live" || r === "production" || r === "prod") return "live";
+    return "sandbox";
+  })(),
 };

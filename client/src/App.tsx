@@ -15,6 +15,7 @@ import Collection from "./pages/Collection";
 import ProductDetail from "./pages/ProductDetail";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutCancel from "./pages/CheckoutCancel";
+import CheckoutPayPalReturn from "./pages/CheckoutPayPalReturn";
 import SignIn from "./pages/SignIn";
 import CreateAccount from "./pages/CreateAccount";
 import MyAccount from "./pages/MyAccount";
@@ -53,6 +54,7 @@ function Router() {
       <Route path={"/collections/:category"} component={Collection} />
       <Route path={"/product/:id"} component={ProductDetail} />
       <Route path={"/checkout/success"} component={CheckoutSuccess} />
+      <Route path={"/checkout/paypal-return"} component={CheckoutPayPalReturn} />
       <Route path={"/checkout/cancel"} component={CheckoutCancel} />
       <Route path={"/zelle-checkout"} component={ZelleCheckout} />
       <Route path={"/sign-in"} component={SignIn} />

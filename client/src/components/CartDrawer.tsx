@@ -9,6 +9,8 @@ import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { PAYPAL_CHECKOUT_STORAGE_KEY } from "@/lib/paypalCheckoutStorage";
 
 export default function CartDrawer() {
   const { items, cartTotal, cartCount, isOpen, closeCart, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -236,9 +238,59 @@ export default function CartDrawer() {
                     setIsCheckingOut(false);
                     return;
                   } else if (paymentMethod === "paypal") {
-                    // PayPal payment - demo placeholder
-                    toast.info("PayPal payment is available upon request. Please contact us to arrange PayPal payment.");
-                    setIsCheckingOut(false);
+                    const {
+                      data: { session },
+                    } = await supabase.auth.getSession();
+                    if (!session?.access_token) {
+                      toast.error("Please log in to checkout");
+                      setIsCheckingOut(false);
+                      return;
+                    }
+
+                    const checkoutItems = items.map(item => {
+                      const itemName = item.selectedVariantName
+                        ? `${item.brand} - ${item.name} - ${item.selectedVariantName}`
+                        : `${item.brand} - ${item.name}`;
+                      return {
+                        name: itemName,
+                        priceInCents: Math.round((item.salePrice || item.price) * 100),
+                        quantity: item.quantity,
+                        image: item.image,
+                      };
+                    });
+
+                    sessionStorage.setItem(
+                      PAYPAL_CHECKOUT_STORAGE_KEY,
+                      JSON.stringify({ items: checkoutItems, deliveryMethod })
+                    );
+
+                    const amount = cartTotal.toFixed(2);
+                    const res = await fetch("/api/paypal/create-order", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${session.access_token}`,
+                      },
+                      body: JSON.stringify({ amount }),
+                      credentials: "include",
+                    });
+                    const data = (await res.json().catch(() => ({}))) as {
+                      message?: string;
+                      approveUrl?: string;
+                    };
+                    if (!res.ok) {
+                      sessionStorage.removeItem(PAYPAL_CHECKOUT_STORAGE_KEY);
+                      throw new Error(data.message || "PayPal create order failed");
+                    }
+                    if (!data.approveUrl) {
+                      sessionStorage.removeItem(PAYPAL_CHECKOUT_STORAGE_KEY);
+                      toast.error("PayPal did not return a redirect URL");
+                      setIsCheckingOut(false);
+                      return;
+                    }
+                    toast.success("Redirecting to PayPal…");
+                    closeCart();
+                    window.location.assign(data.approveUrl);
                     return;
                   } else {
                     // Stripe checkout
@@ -266,9 +318,13 @@ export default function CartDrawer() {
                       closeCart();
                     }
                   }
-                } catch (error: any) {
-                  if (error.message?.includes("login")) {
+                } catch (error: unknown) {
+                  const message =
+                    error instanceof Error ? error.message : "Failed to create checkout session";
+                  if (message.includes("login")) {
                     toast.error("Please log in to checkout");
+                  } else if (message.includes("PayPal") || paymentMethod === "paypal") {
+                    toast.error(message);
                   } else {
                     toast.error("Failed to create checkout session");
                   }

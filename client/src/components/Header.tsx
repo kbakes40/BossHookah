@@ -5,10 +5,10 @@ import { ShoppingCart, Search, Menu, User, X, ChevronDown, LogOut } from "lucide
 import { Link, useLocation } from "wouter";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useCart } from "@/contexts/CartContext";
 import PromoBar from "./PromoBar";
-import { getBrandsByCategory } from "@/lib/products";
+import { useStorefrontCatalog } from "@/hooks/useStorefrontCatalog";
 import { useSupabaseAuth } from "@/lib/SupabaseAuthProvider";
 
 export default function Header() {
@@ -21,6 +21,24 @@ export default function Header() {
   const { cartCount, openCart } = useCart();
   const [, setLocation] = useLocation();
   const { user, isAuthenticated, signInWithGoogle, logout } = useSupabaseAuth();
+  const { products: catalogProducts } = useStorefrontCatalog();
+
+  const brandsByCategory = useMemo(() => {
+    const forCat = (cat: string) =>
+      Array.from(
+        new Set(
+          catalogProducts
+            .filter(p => p.category === cat)
+            .map(p => p.brand)
+            .filter(Boolean)
+        )
+      ).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+    return {
+      shisha: forCat("shisha"),
+      charcoal: forCat("charcoal"),
+      vapes: forCat("vapes"),
+    };
+  }, [catalogProducts]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,7 +261,7 @@ export default function Header() {
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-background border-3 border-border brutalist-shadow z-50">
                   <div className="p-4">
                     <div className="font-bold text-sm mb-2 text-primary">SHOP BY BRAND</div>
-                    {getBrandsByCategory('shisha').map((brand) => (
+                    {brandsByCategory.shisha.map((brand) => (
                       <Link
                         key={brand}
                         href={`/shisha/${brand.toLowerCase().replace(/\s+/g, '-')}`}
@@ -274,7 +292,7 @@ export default function Header() {
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-background border-3 border-border brutalist-shadow z-50">
                   <div className="p-4">
                     <div className="font-bold text-sm mb-2 text-primary">SHOP BY BRAND</div>
-                    {getBrandsByCategory('charcoal').map((brand) => (
+                    {brandsByCategory.charcoal.map((brand) => (
                       <Link
                         key={brand}
                         href={`/charcoal/${brand.toLowerCase().replace(/\s+/g, '-')}`}
@@ -305,7 +323,7 @@ export default function Header() {
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-background border-3 border-border brutalist-shadow z-50">
                   <div className="p-4">
                     <div className="font-bold text-sm mb-2 text-primary">SHOP BY BRAND</div>
-                    {getBrandsByCategory('vapes').map((brand) => (
+                    {brandsByCategory.vapes.map((brand) => (
                       <Link
                         key={brand}
                         href={`/vapes/${brand.toLowerCase().replace(/\s+/g, '-')}`}

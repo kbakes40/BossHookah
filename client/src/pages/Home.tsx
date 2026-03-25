@@ -1,19 +1,26 @@
 // Home Page - Neo-Brutalism meets Luxury Retail
 // Design Philosophy: Bold typography, stark contrasts, emerald green accents, asymmetric layouts
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
-import { getTrendingProducts, getFeaturedProducts } from "@/lib/products";
+import { useStorefrontCatalog } from "@/hooks/useStorefrontCatalog";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const trendingProducts = getTrendingProducts();
-  const featuredProducts = getFeaturedProducts();
+  const { products: catalog } = useStorefrontCatalog();
+  const trendingProducts = useMemo(
+    () => catalog.filter(p => p.trending),
+    [catalog]
+  );
+  const featuredProducts = useMemo(
+    () => catalog.filter(p => p.featured),
+    [catalog]
+  );
 
   // Set page title for SEO (30-60 characters)
   useEffect(() => {

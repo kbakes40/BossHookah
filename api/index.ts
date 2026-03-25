@@ -1,9 +1,15 @@
 import "dotenv/config";
 import express, { type Request, type Response } from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-// Pre-compiled in Vercel `buildCommand`; no .d.ts for `.mjs` output.
-// @ts-expect-error TS7016 — intentional; see server/_vercel_exports.ts
-import { appRouter, createContext, stripe, handleWebhookEvent, ENV } from "./_server.mjs";
+// Bundled from `server/_vercel_exports.ts` → `api/_server.mjs` (see `api/_server.d.ts`).
+import {
+  appRouter,
+  createContext,
+  stripe,
+  handleWebhookEvent,
+  ENV,
+  registerPayPalRoutes,
+} from "./_server.mjs";
 
 const app = express();
 
@@ -35,6 +41,8 @@ app.post(
 // Configure body parser
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+registerPayPalRoutes(app);
 
 // tRPC API
 app.use(

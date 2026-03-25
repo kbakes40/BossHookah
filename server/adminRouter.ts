@@ -2,6 +2,7 @@
  * Admin Router — Supabase bh_* tables (service role).
  */
 import { z } from "zod";
+import { ADMIN_INVENTORY_PAGE_SIZE } from "@shared/const";
 import { TRPCError } from "@trpc/server";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { router, adminProcedure } from "./_core/trpc";
@@ -323,12 +324,21 @@ export const adminRouter = router({
       })
     )
     .query(async ({ input }) => {
-      const offset = (input.page - 1) * input.pageSize;
+      const page = Math.max(1, Math.floor(input.page));
+      const rawPs = Number(input.pageSize);
+      const pageSize = Math.min(
+        200,
+        Math.max(
+          ADMIN_INVENTORY_PAGE_SIZE,
+          Number.isFinite(rawPs) && rawPs > 0 ? Math.floor(rawPs) : ADMIN_INVENTORY_PAGE_SIZE
+        )
+      );
+      const offset = (page - 1) * pageSize;
       let query = supabaseAdmin
         .from("bh_products")
         .select("*", { count: "exact" })
         .order("name", { ascending: true })
-        .range(offset, offset + input.pageSize - 1);
+        .range(offset, offset + pageSize - 1);
 
       if (input.category) {
         query = query.eq("category", input.category);
@@ -346,8 +356,8 @@ export const adminRouter = router({
       return {
         items: (data || []).map(row => mapProductInventoryRow(row as Record<string, unknown>)),
         total: count || 0,
-        page: input.page,
-        pageSize: input.pageSize,
+        page,
+        pageSize,
       };
     }),
 

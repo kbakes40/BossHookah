@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { ADMIN_INVENTORY_PAGE_SIZE } from "@shared/const";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,7 @@ export default function AdminInventory() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
   const [categoryFilter, setCategoryFilter] = useState<string | undefined>(undefined);
+  const [invPage, setInvPage] = useState(1);
   const [editingStock, setEditingStock] = useState<{ id: string; quantity: number } | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [newItem, setNewItem] = useState({
@@ -54,10 +56,14 @@ export default function AdminInventory() {
   });
 
   const { data: inventoryData, isLoading, refetch } = trpc.admin.getInventory.useQuery({
-    page: 1,
-    pageSize: 100,
+    page: invPage,
+    pageSize: ADMIN_INVENTORY_PAGE_SIZE,
     category: categoryFilter,
   });
+
+  useEffect(() => {
+    setInvPage(1);
+  }, [categoryFilter]);
 
   const updateStock = trpc.admin.updateInventoryStock.useMutation({
     onSuccess: () => {
@@ -131,6 +137,9 @@ export default function AdminInventory() {
   }
 
   const inventoryItems = inventoryData?.items ?? [];
+  const invTotal = inventoryData?.total ?? 0;
+  const invPageSize = inventoryData?.pageSize ?? ADMIN_INVENTORY_PAGE_SIZE;
+  const invTotalPages = Math.max(1, Math.ceil(invTotal / invPageSize));
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
@@ -514,6 +523,38 @@ export default function AdminInventory() {
                 </tbody>
               </table>
             </div>
+            {invTotal > 0 && (
+              <div className="px-6 py-3 border-t border-gray-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-sm text-gray-600">
+                <span>
+                  Showing {Math.min((invPage - 1) * invPageSize + 1, invTotal)}–
+                  {Math.min(invPage * invPageSize, invTotal)} of {invTotal}{" "}
+                  <span className="text-gray-400">({invPageSize} per page)</span>
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={invPage <= 1}
+                    onClick={() => setInvPage(p => Math.max(1, p - 1))}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-xs tabular-nums px-2">
+                    Page {invPage} of {invTotalPages}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={invPage >= invTotalPages}
+                    onClick={() => setInvPage(p => Math.min(invTotalPages, p + 1))}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -3,12 +3,14 @@ import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
-import { products, Product, ProductVariant } from "@/lib/products";
+import { Product, ProductVariant } from "@/lib/products";
+import { useStorefrontCatalog } from "@/hooks/useStorefrontCatalog";
 
 export default function SearchResults() {
   const [location] = useLocation();
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const { products: catalog } = useStorefrontCatalog();
 
   useEffect(() => {
     // Extract search query from URL
@@ -18,7 +20,7 @@ export default function SearchResults() {
 
     if (query.trim()) {
       // Search across all products
-      const results = products.filter((product: Product) => {
+      const results = catalog.filter((product: Product) => {
         const searchTerm = query.toLowerCase();
         return (
           product.name.toLowerCase().includes(searchTerm) ||
@@ -38,7 +40,7 @@ export default function SearchResults() {
     } else {
       setSearchResults([]);
     }
-  }, [location]);
+  }, [location, catalog]);
 
   return (
     <div className="min-h-screen flex flex-col">

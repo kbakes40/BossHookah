@@ -1,26 +1,68 @@
 // Product Detail Page - Neo-Brutalism meets Luxury Retail
 // Features: Image gallery, product info, add to cart, related products
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRoute, Link } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
-import { getProductById, products } from "@/lib/products";
+import { getProductById as staticGetProductById, type Product } from "@/lib/products";
 import { Button } from "@/components/ui/button";
 import { Heart, Share2, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
+import { trpc } from "@/lib/trpc";
+import { useStorefrontCatalog } from "@/hooks/useStorefrontCatalog";
 
 export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
-  const product = getProductById(params?.id || "");
+  const productId = params?.id || "";
+  const productQuery = trpc.store.getProduct.useQuery(
+    { id: productId },
+    { enabled: Boolean(productId) }
+  );
+
+  const product: Product | null | undefined =
+    productQuery.error
+      ? staticGetProductById(productId) ?? null
+      : productQuery.isLoading
+        ? undefined
+        : productQuery.data ?? null;
+
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedVariant, setSelectedVariant] = useState(
-    product?.variants?.[0]?.id || ""
-  );
+  const [selectedVariant, setSelectedVariant] = useState("");
   const { addToCart } = useCart();
+  const { products: catalog } = useStorefrontCatalog();
+
+  useEffect(() => {
+    if (product?.variants?.length) {
+      setSelectedVariant(product.variants[0]!.id);
+    } else {
+      setSelectedVariant("");
+    }
+    setSelectedImage(0);
+  }, [product?.id, product?.variants]);
+
+  const relatedProducts = useMemo(
+    () =>
+      product
+        ? catalog.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4)
+        : [],
+    [catalog, product]
+  );
+
+  if (product === undefined) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <p className="text-muted-foreground">Loading product…</p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -38,10 +80,6 @@ export default function ProductDetail() {
       </div>
     );
   }
-
-  const relatedProducts = products.filter(p => 
-    p.category === product.category && p.id !== product.id
-  ).slice(0, 4);
 
   // Get current variant image or use product default image
   const currentVariant = product.variants?.find(v => v.id === selectedVariant);
@@ -245,9 +283,15 @@ export default function ProductDetail() {
               <div className="mt-8 pt-8 border-t-3 border-border">
                 <h3 className="font-display font-bold text-lg mb-4">Product Description</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  Experience premium quality with this carefully crafted product. 
-                  Designed for enthusiasts who demand the best, featuring superior materials 
-                  and expert craftsmanship. Perfect for both beginners and experienced users.
+                  {product.description?.trim() ? (
+                    product.description
+                  ) : (
+                    <>
+                      Experience premium quality with this carefully crafted product. Designed for enthusiasts
+                      who demand the best, featuring superior materials and expert craftsmanship. Perfect for both
+                      beginners and experienced users.
+                    </>
+                  )}
                 </p>
               </div>
 

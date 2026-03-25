@@ -1,13 +1,13 @@
 // Collection Page - Neo-Brutalism meets Luxury Retail
 // Features: Product grid, filters, sorting
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRoute, useLocation, Link } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
-import { getProductsByCategory, products } from "@/lib/products";
 import { Button } from "@/components/ui/button";
+import { useStorefrontCatalog } from "@/hooks/useStorefrontCatalog";
 
 export default function Collection() {
   const [location] = useLocation();
@@ -27,9 +27,13 @@ export default function Collection() {
   const [showInStock, setShowInStock] = useState(false);
   const [showOutOfStock, setShowOutOfStock] = useState(false);
 
-  const displayProducts = category === "all" 
-    ? products 
-    : getProductsByCategory(category);
+  const { products: catalog, query: catalogQuery } = useStorefrontCatalog();
+
+  const displayProducts = useMemo(() => {
+    return category === "all"
+      ? catalog
+      : catalog.filter(p => p.category === category);
+  }, [catalog, category]);
 
   const filteredProducts = displayProducts.filter(p => {
     const price = p.salePrice || p.price;
@@ -158,7 +162,9 @@ export default function Collection() {
             <div className="flex-1">
               <div className="mb-6 flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  {filteredProducts.length} products
+                  {catalogQuery.isLoading && catalog.length === 0
+                    ? "Loading products…"
+                    : `${filteredProducts.length} products`}
                 </p>
               </div>
 

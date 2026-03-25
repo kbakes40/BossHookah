@@ -1,12 +1,12 @@
 // Brand Collection Page - Shows products filtered by category and brand
-import { useParams, useLocation } from "wouter";
-import { getProductsByCategoryAndBrand } from "@/lib/products";
+import { useMemo } from "react";
+import { useLocation } from "wouter";
 import ProductCard from "@/components/ProductCard";
+import { useStorefrontCatalog } from "@/hooks/useStorefrontCatalog";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 export default function BrandCollection() {
-  const params = useParams();
   const [location] = useLocation();
   
   // Extract category and brand from URL
@@ -20,8 +20,17 @@ export default function BrandCollection() {
     ?.split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
-  
-  const products = getProductsByCategoryAndBrand(category, brandName || '');
+
+  const { products: catalog } = useStorefrontCatalog();
+
+  const products = useMemo(() => {
+    const b = (brandName || "").toLowerCase();
+    return catalog.filter(
+      p =>
+        p.category === category &&
+        p.brand.toLowerCase() === b
+    );
+  }, [catalog, category, brandName]);
   
   const categoryTitles: Record<string, string> = {
     'shisha': 'Shisha',

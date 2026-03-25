@@ -4,6 +4,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { ADMIN_INVENTORY_PAGE_SIZE } from "@shared/const";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
@@ -101,7 +102,6 @@ export default function AdminDashboard() {
   const [ordPage, setOrdPage] = useState(1);
   const [custPage, setCustPage] = useState(1);
   const ORDERS_PER = 10;
-  const PRODUCTS_PER = 50;
   const PROFILES_PER = 50;
 
   const [inventorySearch, setInventorySearch] = useState("");
@@ -152,7 +152,7 @@ export default function AdminDashboard() {
   const productsQuery = trpc.admin.getInventory.useQuery(
     {
       page: prodPage,
-      pageSize: PRODUCTS_PER,
+      pageSize: ADMIN_INVENTORY_PAGE_SIZE,
       search: debouncedInventorySearch.trim() || undefined,
     },
     { enabled: adminReady && section === "products" }
@@ -222,6 +222,9 @@ export default function AdminDashboard() {
   const productTotalCount = productsQuery.data?.total ?? 0;
   const profileRows = profilesQuery.data?.profiles ?? [];
   const profileTotalCount = profilesQuery.data?.total ?? 0;
+
+  const inventoryPageSize =
+    productsQuery.data?.pageSize ?? ADMIN_INVENTORY_PAGE_SIZE;
 
   const totalRevenue = stats?.totalRevenue ?? 0;
   const pendingOrders = stats?.pendingOrders ?? 0;
@@ -399,7 +402,20 @@ export default function AdminDashboard() {
                 {section === "products" && (
                   <div className="rounded-2xl border border-zinc-900/80 bg-zinc-950/60 overflow-hidden">
                     <div className="px-4 py-3 border-b border-zinc-900/80 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="text-xs font-medium text-zinc-300">Inventory <span className="text-zinc-600">({productTotalCount})</span></p>
+                      <div>
+                        <p className="text-xs font-medium text-zinc-300">
+                          Inventory <span className="text-zinc-600">({productTotalCount})</span>
+                        </p>
+                        {productTotalCount > 0 && (
+                          <p className="text-[10px] text-zinc-600 mt-1">
+                            Showing{" "}
+                            {Math.min((prodPage - 1) * inventoryPageSize + 1, productTotalCount)}–
+                            {Math.min(prodPage * inventoryPageSize, productTotalCount)} of{" "}
+                            {productTotalCount}{" "}
+                            <span className="text-zinc-500">({inventoryPageSize} per page)</span>
+                          </p>
+                        )}
+                      </div>
                       <div className="w-full sm:max-w-xs">
                         <Input
                           value={inventorySearch}
@@ -444,7 +460,7 @@ export default function AdminDashboard() {
                             ))}
                           </tbody>
                         </table>
-                        <div className="px-4 pb-4"><Pagination page={prodPage} total={productTotalCount} perPage={PRODUCTS_PER} onChange={setProdPage} /></div>
+                        <div className="px-4 pb-4"><Pagination page={prodPage} total={productTotalCount} perPage={inventoryPageSize} onChange={setProdPage} /></div>
                       </>
                     )}
                   </div>
