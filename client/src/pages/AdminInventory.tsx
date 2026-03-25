@@ -1,19 +1,6 @@
-// Admin Inventory Page - Manage product stock levels
-import { useAuth } from "@/_core/hooks/useAuth";
+// Admin Inventory — stock, pricing, unit cost (for margin reporting)
 import { useEffect, useState } from "react";
-import { useLocation, Link } from "wouter";
-import { 
-  LayoutDashboard, 
-  ShoppingCart, 
-  Users, 
-  Package, 
-  LogOut,
-  ChevronLeft,
-  Upload,
-  Search,
-  AlertTriangle,
-  Plus
-} from "lucide-react";
+import { Upload, Search, AlertTriangle, Plus, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
@@ -35,13 +22,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { AdminShell } from "@/components/admin/AdminShell";
 
 export default function AdminInventory() {
-  const { user, loading, isAuthenticated } = useAuth();
-  const [, setLocation] = useLocation();
   const [categoryFilter, setCategoryFilter] = useState<string | undefined>(undefined);
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [invPage, setInvPage] = useState(1);
   const [editingStock, setEditingStock] = useState<{ id: string; quantity: number } | null>(null);
+  const [editingCost, setEditingCost] = useState<{ id: string; raw: string } | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [newItem, setNewItem] = useState({
     productId: "",
@@ -51,19 +40,25 @@ export default function AdminInventory() {
     stockQuantity: 0,
     lowStockThreshold: 10,
     price: 0,
-    cost: 0,
+    cost: "" as string | number,
     sku: "",
   });
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  useEffect(() => {
+    setInvPage(1);
+  }, [categoryFilter, debouncedSearch]);
 
   const { data: inventoryData, isLoading, refetch } = trpc.admin.getInventory.useQuery({
     page: invPage,
     pageSize: ADMIN_INVENTORY_PAGE_SIZE,
     category: categoryFilter,
+    search: debouncedSearch || undefined,
   });
-
-  useEffect(() => {
-    setInvPage(1);
-  }, [categoryFilter]);
 
   const updateStock = trpc.admin.updateInventoryStock.useMutation({
     onSuccess: () => {
@@ -71,14 +66,19 @@ export default function AdminInventory() {
       setEditingStock(null);
       refetch();
     },
-    onError: () => {
-      toast.error("Failed to update stock");
-    },
+    onError: () => toast.error("Failed to update stock"),
   });
 
-  const { data: catalogSkuInfo } = trpc.admin.siteCatalogSkuCount.useQuery(undefined, {
-    enabled: Boolean(user?.role === "admin"),
+  const updateCost = trpc.admin.updateProductCost.useMutation({
+    onSuccess: () => {
+      toast.success("Cost updated");
+      setEditingCost(null);
+      refetch();
+    },
+    onError: () => toast.error("Failed to update cost"),
   });
+
+  const { data: catalogSkuInfo } = trpc.admin.siteCatalogSkuCount.useQuery();
 
   const syncSiteCatalog = trpc.admin.syncSiteCatalog.useMutation({
     onSuccess: result => {
@@ -103,50 +103,18 @@ export default function AdminInventory() {
         stockQuantity: 0,
         lowStockThreshold: 10,
         price: 0,
-        cost: 0,
+        cost: "",
         sku: "",
       });
       refetch();
     },
-    onError: () => {
-      toast.error("Failed to add item");
-    },
+    onError: () => toast.error("Failed to add item"),
   });
-
-  // Redirect if not authenticated or not admin
-  useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) {
-        setLocation("/admin");
-      } else if (user?.role !== "admin") {
-        setLocation("/");
-      }
-    }
-  }, [loading, isAuthenticated, user, setLocation]);
-
-  if (loading || isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!user || user.role !== "admin") {
-    return null;
-  }
 
   const inventoryItems = inventoryData?.items ?? [];
   const invTotal = inventoryData?.total ?? 0;
   const invPageSize = inventoryData?.pageSize ?? ADMIN_INVENTORY_PAGE_SIZE;
   const invTotalPages = Math.max(1, Math.ceil(invTotal / invPageSize));
-
-  const navItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
-    { icon: ShoppingCart, label: "Orders", path: "/admin/orders" },
-    { icon: Users, label: "Customers", path: "/admin/customers" },
-    { icon: Package, label: "Inventory", path: "/admin/inventory" },
-  ];
 
   const handleStockUpdate = (id: string) => {
     if (editingStock && editingStock.id === id) {
@@ -157,332 +125,303 @@ export default function AdminInventory() {
     }
   };
 
+  const parseCost = (raw: string): number | null => {
+    const t = raw.trim();
+    if (t === "") return null;
+    const n = Number(t);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
+
+  const commitCost = (productId: string) => {
+    if (!editingCost || editingCost.id !== productId) return;
+    const cost = parseCost(editingCost.raw);
+    if (cost === null && editingCost.raw.trim() !== "") {
+      toast.error("Invalid cost");
+      return;
+    }
+    updateCost.mutate({
+      productId,
+      cost: cost,
+    });
+  };
+
   const handleAddItem = () => {
+    const costVal =
+      typeof newItem.cost === "string"
+        ? parseCost(newItem.cost)
+        : Number.isFinite(newItem.cost)
+          ? Math.max(0, Number(newItem.cost))
+          : null;
     addItem.mutate({
       name: newItem.productName,
       brand: newItem.brand || undefined,
       category: newItem.category,
       price: newItem.price,
+      cost: costVal,
       stock: newItem.stockQuantity,
       sku: newItem.sku || undefined,
       in_stock: true,
     });
   };
 
-  return (
-    <div className="min-h-screen bg-gray-100 flex">
-      {/* Sidebar */}
-      <div className="w-64 bg-gray-900 text-white flex flex-col">
-        <div className="p-6 border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <img src="/favicon-96x96.png" alt="5 Star Hookah" className="w-10 h-10" />
-            <div>
-              <h1 className="font-bold text-lg">5 Star Hookah</h1>
-              <p className="text-xs text-gray-400">Admin Panel</p>
-            </div>
-          </div>
-        </div>
-
-        <nav className="flex-1 p-4">
-          <div className="space-y-2">
-            {navItems.map((item) => (
-              <Link key={item.path} href={item.path}>
-                <a className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  item.path === "/admin/inventory" ? "bg-gray-800" : "hover:bg-gray-800"
-                }`}>
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </a>
-              </Link>
-            ))}
-          </div>
-        </nav>
-
-        <div className="p-4 border-t border-gray-800">
-          <div className="mb-3 px-4">
-            <p className="text-sm font-medium">{user.name}</p>
-            <p className="text-xs text-gray-400">{user.email}</p>
-          </div>
-          <Button
-            variant="outline"
-            className="w-full justify-start gap-2 bg-transparent border-gray-700 hover:bg-gray-800 text-white"
-            onClick={() => setLocation("/")}
-          >
-            <LogOut className="w-4 h-4" />
-            Back to Store
+  const toolbar = (
+    <div className="flex flex-wrap items-center gap-2 justify-end">
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        className="bg-zinc-800 text-zinc-200 border border-zinc-700 hover:bg-zinc-700"
+        disabled={syncSiteCatalog.isPending}
+        onClick={() => {
+          const n = catalogSkuInfo?.count ?? 0;
+          if (
+            !window.confirm(
+              `Replace all imported catalog items (SKU starts with "catalog:") with the latest site list? About ${n} SKUs. Default stock 50.`
+            )
+          )
+            return;
+          syncSiteCatalog.mutate({ mode: "replace", defaultStock: 50 });
+        }}
+      >
+        <Upload className="w-4 h-4" />
+        Import catalog{typeof catalogSkuInfo?.count === "number" ? ` (${catalogSkuInfo.count})` : ""}
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="border-zinc-700 bg-zinc-900 text-zinc-200"
+        disabled={syncSiteCatalog.isPending}
+        onClick={() => {
+          if (!window.confirm("Merge new catalog SKUs only? Existing stock unchanged.")) return;
+          syncSiteCatalog.mutate({ mode: "merge" });
+        }}
+      >
+        Merge new
+      </Button>
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogTrigger asChild>
+          <Button size="sm" className="bg-[#3f6212] hover:bg-[#4d7c0f] text-[#ecfccb] gap-1.5">
+            <Plus className="w-4 h-4" />
+            Add item
           </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl bg-zinc-950 border-zinc-800 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle>Add product</DialogTitle>
+            <DialogDescription className="text-zinc-500">Tracked in bh_products · set cost for margin reports</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <div>
+              <Label htmlFor="productId">Internal note</Label>
+              <Input
+                id="productId"
+                value={newItem.productId}
+                onChange={e => setNewItem({ ...newItem, productId: e.target.value })}
+                className="bg-zinc-900 border-zinc-700"
+                placeholder="optional"
+              />
+            </div>
+            <div>
+              <Label htmlFor="productName">Name</Label>
+              <Input
+                id="productName"
+                value={newItem.productName}
+                onChange={e => setNewItem({ ...newItem, productName: e.target.value })}
+                className="bg-zinc-900 border-zinc-700"
+              />
+            </div>
+            <div>
+              <Label htmlFor="brand">Brand</Label>
+              <Input
+                id="brand"
+                value={newItem.brand}
+                onChange={e => setNewItem({ ...newItem, brand: e.target.value })}
+                className="bg-zinc-900 border-zinc-700"
+              />
+            </div>
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Select value={newItem.category} onValueChange={value => setNewItem({ ...newItem, category: value })}>
+                <SelectTrigger className="bg-zinc-900 border-zinc-700">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hookahs">Hookahs</SelectItem>
+                  <SelectItem value="shisha">Shisha</SelectItem>
+                  <SelectItem value="vapes">Vapes</SelectItem>
+                  <SelectItem value="charcoal">Charcoal</SelectItem>
+                  <SelectItem value="accessories">Accessories</SelectItem>
+                  <SelectItem value="bowls">Bowls</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="stockQuantity">Stock</Label>
+              <Input
+                id="stockQuantity"
+                type="number"
+                value={newItem.stockQuantity}
+                onChange={e => setNewItem({ ...newItem, stockQuantity: parseInt(e.target.value, 10) || 0 })}
+                className="bg-zinc-900 border-zinc-700"
+              />
+            </div>
+            <div>
+              <Label htmlFor="lowStockThreshold">Low stock alert</Label>
+              <Input
+                id="lowStockThreshold"
+                type="number"
+                value={newItem.lowStockThreshold}
+                onChange={e => setNewItem({ ...newItem, lowStockThreshold: parseInt(e.target.value, 10) || 10 })}
+                className="bg-zinc-900 border-zinc-700"
+              />
+            </div>
+            <div>
+              <Label htmlFor="price">Retail ($)</Label>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                value={newItem.price}
+                onChange={e => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })}
+                className="bg-zinc-900 border-zinc-700"
+              />
+            </div>
+            <div>
+              <Label htmlFor="cost">Unit cost ($)</Label>
+              <Input
+                id="cost"
+                type="number"
+                step="0.01"
+                value={newItem.cost}
+                onChange={e => setNewItem({ ...newItem, cost: e.target.value })}
+                placeholder="for profit reports"
+                className="bg-zinc-900 border-zinc-700"
+              />
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor="sku">SKU</Label>
+              <Input
+                id="sku"
+                value={newItem.sku}
+                onChange={e => setNewItem({ ...newItem, sku: e.target.value })}
+                className="bg-zinc-900 border-zinc-700"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" className="border-zinc-700" onClick={() => setAddDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button className="bg-[#3f6212] hover:bg-[#4d7c0f] text-[#ecfccb]" onClick={handleAddItem}>
+              Add
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+
+  return (
+    <AdminShell
+      title="Products"
+      subtitle="Inventory, pricing, and landed unit cost"
+      actions={toolbar}
+      showInventorySearch={false}
+    >
+      <div className="max-w-7xl mx-auto space-y-4">
+        <div className="rounded-xl border border-zinc-800/90 bg-[#121214] p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] uppercase tracking-wide text-zinc-500 mb-1">Category</label>
+              <Select
+                value={categoryFilter || "all"}
+                onValueChange={value => setCategoryFilter(value === "all" ? undefined : value)}
+              >
+                <SelectTrigger className="h-9 bg-zinc-900 border-zinc-700 text-zinc-200 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="hookahs">Hookahs</SelectItem>
+                  <SelectItem value="shisha">Shisha</SelectItem>
+                  <SelectItem value="vapes">Vapes</SelectItem>
+                  <SelectItem value="charcoal">Charcoal</SelectItem>
+                  <SelectItem value="accessories">Accessories</SelectItem>
+                  <SelectItem value="bowls">Bowls</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="block text-[10px] uppercase tracking-wide text-zinc-500 mb-1">Search</label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
+                <Input
+                  value={searchInput}
+                  onChange={e => setSearchInput(e.target.value)}
+                  placeholder="Name, SKU, brand…"
+                  className="h-9 pl-8 text-xs bg-zinc-900 border-zinc-700 text-zinc-200"
+                />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 p-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="mb-6">
-            <Link href="/admin/dashboard">
-              <a className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4">
-                <ChevronLeft className="w-4 h-4" />
-                Back to Dashboard
-              </a>
-            </Link>
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <h2 className="text-3xl font-bold">Inventory Management</h2>
-                <p className="text-gray-600 mt-1">Manage product stock levels and pricing</p>
-              </div>
-              <div className="flex flex-col items-stretch gap-2 sm:items-end">
-                <div className="flex flex-wrap gap-2 justify-end">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="gap-2"
-                    disabled={syncSiteCatalog.isPending}
-                    onClick={() => {
-                      const n = catalogSkuInfo?.count ?? 0;
-                      if (
-                        !window.confirm(
-                          `Replace all imported catalog items (SKU starts with "catalog:") with the latest bosshookah.site product list? This will delete those rows and insert about ${n} SKUs (variants count as separate rows). Default stock will be set to 50.`
-                        )
-                      ) {
-                        return;
-                      }
-                      syncSiteCatalog.mutate({ mode: "replace", defaultStock: 50 });
-                    }}
-                  >
-                    <Upload className="w-4 h-4" />
-                    Import site catalog{typeof catalogSkuInfo?.count === "number" ? ` (${catalogSkuInfo.count})` : ""}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={syncSiteCatalog.isPending}
-                    onClick={() => {
-                      if (
-                        !window.confirm(
-                          "Add only new catalog SKUs that are not already in the database? Existing rows and stock are left unchanged."
-                        )
-                      ) {
-                        return;
-                      }
-                      syncSiteCatalog.mutate({ mode: "merge" });
-                    }}
-                  >
-                    Merge new only
-                  </Button>
-                  <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="gap-2">
-                    <Plus className="w-4 h-4" />
-                    Add Item
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Add Inventory Item</DialogTitle>
-                    <DialogDescription>
-                      Add a new product to inventory tracking
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid grid-cols-2 gap-4 py-4">
-                    <div>
-                      <Label htmlFor="productId">Product ID</Label>
-                      <Input
-                        id="productId"
-                        value={newItem.productId}
-                        onChange={(e) => setNewItem({...newItem, productId: e.target.value})}
-                        placeholder="e.g., hookah-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="productName">Product Name</Label>
-                      <Input
-                        id="productName"
-                        value={newItem.productName}
-                        onChange={(e) => setNewItem({...newItem, productName: e.target.value})}
-                        placeholder="e.g., Premium Hookah"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="brand">Brand</Label>
-                      <Input
-                        id="brand"
-                        value={newItem.brand}
-                        onChange={(e) => setNewItem({...newItem, brand: e.target.value})}
-                        placeholder="e.g., Khalil Mamoon"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="category">Category</Label>
-                      <Select value={newItem.category} onValueChange={(value) => setNewItem({...newItem, category: value})}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="hookahs">Hookahs</SelectItem>
-                          <SelectItem value="shisha">Shisha</SelectItem>
-                          <SelectItem value="vapes">Vapes</SelectItem>
-                          <SelectItem value="charcoal">Charcoal</SelectItem>
-                          <SelectItem value="accessories">Accessories</SelectItem>
-                          <SelectItem value="bowls">Bowls</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="stockQuantity">Stock Quantity</Label>
-                      <Input
-                        id="stockQuantity"
-                        type="number"
-                        value={newItem.stockQuantity}
-                        onChange={(e) => setNewItem({...newItem, stockQuantity: parseInt(e.target.value) || 0})}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="lowStockThreshold">Low Stock Alert</Label>
-                      <Input
-                        id="lowStockThreshold"
-                        type="number"
-                        value={newItem.lowStockThreshold}
-                        onChange={(e) => setNewItem({...newItem, lowStockThreshold: parseInt(e.target.value) || 10})}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="price">Price ($)</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        step="0.01"
-                        value={newItem.price}
-                        onChange={(e) => setNewItem({...newItem, price: parseFloat(e.target.value) || 0})}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="cost">Cost ($)</Label>
-                      <Input
-                        id="cost"
-                        type="number"
-                        step="0.01"
-                        value={newItem.cost}
-                        onChange={(e) => setNewItem({...newItem, cost: parseFloat(e.target.value) || 0})}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Label htmlFor="sku">SKU (Optional)</Label>
-                      <Input
-                        id="sku"
-                        value={newItem.sku}
-                        onChange={(e) => setNewItem({...newItem, sku: e.target.value})}
-                        placeholder="e.g., KM-001"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleAddItem}>
-                      Add Item
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-                </div>
-                <p className="text-xs text-gray-500 text-right max-w-md">
-                  If import fails, open Supabase → SQL and run{" "}
-                  <code className="text-gray-700">003_bh_products_sku_unique_fix.sql</code> (and ensure{" "}
-                  <code className="text-gray-700">Vercel</code> has the real <code className="text-gray-700">SUPABASE_SERVICE_ROLE_KEY</code>,
-                  not the anon key).
-                </p>
-              </div>
-            </div>
-          </div>
+        <p className="text-[11px] text-zinc-500">
+          Catalog import issues: run <code className="text-zinc-400">003_bh_products_sku_unique_fix.sql</code> in Supabase
+          and confirm <code className="text-zinc-400">SUPABASE_SERVICE_ROLE_KEY</code> on the server.
+        </p>
 
-          {/* Filters */}
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Category</label>
-                <Select value={categoryFilter || "all"} onValueChange={(value) => setCategoryFilter(value === "all" ? undefined : value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    <SelectItem value="hookahs">Hookahs</SelectItem>
-                    <SelectItem value="shisha">Shisha</SelectItem>
-                    <SelectItem value="vapes">Vapes</SelectItem>
-                    <SelectItem value="charcoal">Charcoal</SelectItem>
-                    <SelectItem value="accessories">Accessories</SelectItem>
-                    <SelectItem value="bowls">Bowls</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Search Products</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input placeholder="Product name, SKU..." className="pl-10" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Inventory Table */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+        {isLoading ? (
+          <div className="h-40 flex items-center justify-center text-zinc-500 text-sm">Loading inventory…</div>
+        ) : (
+          <div className="rounded-xl border border-zinc-800/90 bg-[#121214] overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-[#0c0c0e] border-b border-zinc-800/80">
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
                       Product
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
                       Category
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
                       SKU
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
                       Stock
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
                       Price
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
+                      Cost
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {inventoryItems && inventoryItems.length > 0 ? (
-                    inventoryItems.map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {item.productName}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {item.brand}
-                            </div>
-                          </div>
+                <tbody className="divide-y divide-zinc-800/70">
+                  {inventoryItems.length > 0 ? (
+                    inventoryItems.map(item => (
+                      <tr key={item.id} className="hover:bg-zinc-900/35 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="text-sm font-medium text-zinc-200">{item.productName}</div>
+                          <div className="text-[11px] text-zinc-500">{item.brand}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {item.category}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {item.sku || "—"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-3 text-zinc-400">{item.category}</td>
+                        <td className="px-4 py-3 text-zinc-500 font-mono">{item.sku || "—"}</td>
+                        <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             {editingStock?.id === item.id ? (
                               <Input
                                 type="number"
                                 value={editingStock.quantity}
-                                onChange={(e) => setEditingStock({id: item.id, quantity: parseInt(e.target.value) || 0})}
-                                className="w-20"
+                                onChange={e =>
+                                  setEditingStock({ id: item.id, quantity: parseInt(e.target.value, 10) || 0 })
+                                }
+                                className="w-16 h-8 bg-zinc-900 border-zinc-700 text-zinc-100"
                                 onBlur={() => handleStockUpdate(item.id)}
-                                onKeyDown={(e) => {
+                                onKeyDown={e => {
                                   if (e.key === "Enter") handleStockUpdate(item.id);
                                   if (e.key === "Escape") setEditingStock(null);
                                 }}
@@ -490,33 +429,59 @@ export default function AdminInventory() {
                               />
                             ) : (
                               <button
-                                onClick={() => setEditingStock({id: item.id, quantity: item.stockQuantity})}
-                                className="text-sm font-medium hover:underline"
+                                type="button"
+                                onClick={() => setEditingStock({ id: item.id, quantity: item.stockQuantity })}
+                                className="text-sm font-medium text-zinc-200 hover:text-white tabular-nums"
                               >
                                 {item.stockQuantity}
                               </button>
                             )}
                             {item.stockQuantity <= item.lowStockThreshold && (
-                              <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                              <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${Number(item.price).toFixed(2)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <Button variant="ghost" size="sm">
-                            Edit
-                          </Button>
+                        <td className="px-4 py-3 text-zinc-200 tabular-nums">${Number(item.price).toFixed(2)}</td>
+                        <td className="px-4 py-3">
+                          {editingCost?.id === item.id ? (
+                            <Input
+                              type="text"
+                              inputMode="decimal"
+                              value={editingCost.raw}
+                              onChange={e => setEditingCost({ id: item.id, raw: e.target.value })}
+                              className="w-24 h-8 bg-zinc-900 border-zinc-700 text-zinc-100"
+                              placeholder="—"
+                              onBlur={() => commitCost(item.id)}
+                              onKeyDown={e => {
+                                if (e.key === "Enter") commitCost(item.id);
+                                if (e.key === "Escape") setEditingCost(null);
+                              }}
+                              autoFocus
+                            />
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditingCost({
+                                  id: item.id,
+                                  raw: item.cost != null ? String(item.cost) : "",
+                                })
+                              }
+                              className={`tabular-nums text-left ${
+                                item.cost != null ? "text-[#bef264]" : "text-zinc-500"
+                              } hover:text-white`}
+                            >
+                              {item.cost != null ? `$${item.cost.toFixed(2)}` : "Set cost"}
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                        <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                        <p className="text-lg font-medium mb-2">No inventory items</p>
-                        <p className="text-sm">Add your first product to start tracking inventory</p>
+                      <td colSpan={6} className="px-4 py-14 text-center text-zinc-500">
+                        <Package className="w-10 h-10 mx-auto mb-3 text-zinc-600" />
+                        <p className="text-sm">No products match.</p>
                       </td>
                     </tr>
                   )}
@@ -524,29 +489,30 @@ export default function AdminInventory() {
               </table>
             </div>
             {invTotal > 0 && (
-              <div className="px-6 py-3 border-t border-gray-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-sm text-gray-600">
+              <div className="px-4 py-3 border-t border-zinc-800/80 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-zinc-400">
                 <span>
-                  Showing {Math.min((invPage - 1) * invPageSize + 1, invTotal)}–
-                  {Math.min(invPage * invPageSize, invTotal)} of {invTotal}{" "}
-                  <span className="text-gray-400">({invPageSize} per page)</span>
+                  Showing {Math.min((invPage - 1) * invPageSize + 1, invTotal)}–{Math.min(invPage * invPageSize, invTotal)}{" "}
+                  of {invTotal} ({invPageSize}/page)
                 </span>
-                <div className="flex items-center gap-2">
+                <div className="flex gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
+                    className="border-zinc-700 h-8"
                     disabled={invPage <= 1}
                     onClick={() => setInvPage(p => Math.max(1, p - 1))}
                   >
                     Previous
                   </Button>
-                  <span className="text-xs tabular-nums px-2">
-                    Page {invPage} of {invTotalPages}
+                  <span className="self-center tabular-nums px-2">
+                    {invPage} / {invTotalPages}
                   </span>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
+                    className="border-zinc-700 h-8"
                     disabled={invPage >= invTotalPages}
                     onClick={() => setInvPage(p => Math.min(invTotalPages, p + 1))}
                   >
@@ -556,8 +522,8 @@ export default function AdminInventory() {
               </div>
             )}
           </div>
-        </div>
+        )}
       </div>
-    </div>
+    </AdminShell>
   );
 }

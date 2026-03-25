@@ -1,10 +1,16 @@
 import { ShoppingBag, Heart, X } from "lucide-react";
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "./ui/button";
 
 export default function FloatingRewardsButton() {
+  const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+
+  /** Storefront-only: hide on wholesale admin so reports and tables stay clean. */
+  if (location.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <>

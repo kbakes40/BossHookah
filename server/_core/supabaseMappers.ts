@@ -66,6 +66,8 @@ export function mapProductInventoryRow(o: Record<string, unknown>) {
     salePrice: o.sale_price != null ? Number(o.sale_price) : null,
     inStock: o.in_stock !== false,
     badge: (o.badge as string) ?? null,
+    /** Unit cost USD for margin reporting; null if not set */
+    cost: o.cost != null && o.cost !== "" ? Number(o.cost) : null,
   };
 }
 

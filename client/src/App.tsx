@@ -39,6 +39,8 @@ import AdminOrders from "./pages/AdminOrders";
 import AdminCustomers from "./pages/AdminCustomers";
 import AdminInventory from "./pages/AdminInventory";
 import AdminStoreSettings from "./pages/AdminStoreSettings";
+import AdminSales from "./pages/AdminSales";
+import AdminPlaceholder from "./pages/AdminPlaceholder";
 import ZelleCheckout from "./pages/ZelleCheckout";
 function Router() {
   const [location] = useLocation();
@@ -114,6 +116,11 @@ function Router() {
       <Route path={"/admin/orders"} component={AdminOrders} />
       <Route path={"/admin/customers"} component={AdminCustomers} />
       <Route path={"/admin/inventory"} component={AdminInventory} />
+      <Route path={"/admin/sales"} component={AdminSales} />
+      <Route path={"/admin/content"} component={AdminPlaceholder} />
+      <Route path={"/admin/discounts"} component={AdminPlaceholder} />
+      <Route path={"/admin/analytics"} component={AdminPlaceholder} />
+      <Route path={"/admin/marketing"} component={AdminPlaceholder} />
       <Route path={"/admin/store-settings"} component={AdminStoreSettings} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

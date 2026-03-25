@@ -29,6 +29,7 @@ export type BhProductInsert = {
   brand: string;
   category: string;
   price: number;
+  cost: number | null;
   sale_price: number | null;
   stock: number;
   low_stock_threshold: number;
@@ -63,6 +64,7 @@ export function siteProductsToBhRows(
         brand: p.brand,
         category: p.category,
         price: p.price,
+        cost: null,
         sale_price: p.salePrice ?? null,
         stock: defaultStock,
         low_stock_threshold: 10,
@@ -87,6 +89,7 @@ export function siteProductsToBhRows(
         brand: p.brand,
         category: p.category,
         price: p.price,
+        cost: null,
         sale_price: p.salePrice ?? null,
         stock: defaultStock,
         low_stock_threshold: 10,

@@ -1,21 +1,6 @@
 // Admin Orders Page - View and manage customer orders
-import { useAuth } from "@/_core/hooks/useAuth";
-import { useEffect, useState } from "react";
-import { useLocation, Link } from "wouter";
-import { 
-  LayoutDashboard, 
-  ShoppingCart, 
-  Users, 
-  Package, 
-  LogOut,
-  Shield,
-  ChevronLeft,
-  Search,
-  Trash2
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { trpc } from "@/lib/trpc";
+import { useState } from "react";
+import { AdminShell } from "@/components/admin/AdminShell";
 import {
   Select,
   SelectContent,
@@ -23,14 +8,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { Search, Trash2 } from "lucide-react";
+
+function payBadge(status: string) {
+  const st = (status || "").toLowerCase();
+  if (st === "paid") return "bg-[#1a2312] text-[#bef264] border border-[#3f6212]/45";
+  if (st === "pending") return "bg-amber-950/55 text-amber-200 border border-amber-900/45";
+  if (st === "failed") return "bg-red-950/50 text-red-200 border border-red-900/50";
+  if (st === "refunded") return "bg-zinc-800 text-zinc-300 border border-zinc-700";
+  return "bg-zinc-800 text-zinc-400 border border-zinc-700";
+}
 
 export default function AdminOrders() {
-  const { user, loading, isAuthenticated } = useAuth();
-  const [, setLocation] = useLocation();
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid" | "failed" | "refunded">("all");
-  const [fulfillmentFilter, setFulfillmentFilter] = useState<"all" | "pending" | "ready_to_ship" | "shipped" | "delivered">("all");
+  const [fulfillmentFilter, setFulfillmentFilter] = useState<
+    "all" | "pending" | "ready_to_ship" | "shipped" | "delivered"
+  >("all");
   const [deliveryFilter, setDeliveryFilter] = useState<"all" | "shipping" | "pickup">("all");
+  const [search, setSearch] = useState("");
 
   const { data: ordersData, isLoading, refetch } = trpc.admin.getOrders.useQuery({
     page: 1,
@@ -45,9 +44,7 @@ export default function AdminOrders() {
       toast.success("Order status updated");
       refetch();
     },
-    onError: () => {
-      toast.error("Failed to update order status");
-    },
+    onError: () => toast.error("Failed to update order status"),
   });
 
   const deleteOrder = trpc.admin.deleteOrder.useMutation({
@@ -55,9 +52,7 @@ export default function AdminOrders() {
       toast.success("Order deleted successfully");
       refetch();
     },
-    onError: () => {
-      toast.error("Failed to delete order");
-    },
+    onError: () => toast.error("Failed to delete order"),
   });
 
   const confirmZellePayment = trpc.admin.confirmZellePayment.useMutation({
@@ -65,314 +60,217 @@ export default function AdminOrders() {
       toast.success("Payment confirmed successfully");
       refetch();
     },
-    onError: (error) => {
+    onError: (error: { message?: string }) => {
       toast.error(error.message || "Failed to confirm payment");
     },
   });
 
-  // Redirect if not authenticated or not admin
-  useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) {
-        setLocation("/admin");
-      } else if (user?.role !== "admin") {
-        setLocation("/");
-      }
-    }
-  }, [loading, isAuthenticated, user, setLocation]);
+  const ordersRaw = ordersData?.orders ?? [];
+  const q = search.trim().toLowerCase();
+  const orders = q
+    ? ordersRaw.filter(o => {
+        const id = String(o.id).toLowerCase();
+        const name = (o.customerName || "").toLowerCase();
+        const email = (o.customerEmail || "").toLowerCase();
+        const phone = (o.customerPhone || "").toLowerCase();
+        return id.includes(q) || name.includes(q) || email.includes(q) || phone.includes(q);
+      })
+    : ordersRaw;
 
-  if (loading || isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+  const filters = (
+    <div className="rounded-xl border border-zinc-800/90 bg-[#121214] p-4 w-full max-w-4xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div>
+          <label className="block text-[10px] uppercase tracking-wide text-zinc-500 mb-1">Payment</label>
+          <Select value={statusFilter} onValueChange={(v: typeof statusFilter) => setStatusFilter(v)}>
+            <SelectTrigger className="h-9 text-xs bg-zinc-900 border-zinc-700 text-zinc-200">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+              <SelectItem value="refunded">Refunded</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="block text-[10px] uppercase tracking-wide text-zinc-500 mb-1">Fulfillment</label>
+          <Select value={fulfillmentFilter} onValueChange={(v: typeof fulfillmentFilter) => setFulfillmentFilter(v)}>
+            <SelectTrigger className="h-9 text-xs bg-zinc-900 border-zinc-700 text-zinc-200">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="ready_to_ship">Ready to ship</SelectItem>
+              <SelectItem value="shipped">Shipped</SelectItem>
+              <SelectItem value="delivered">Delivered</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="block text-[10px] uppercase tracking-wide text-zinc-500 mb-1">Delivery</label>
+          <Select value={deliveryFilter} onValueChange={(v: typeof deliveryFilter) => setDeliveryFilter(v)}>
+            <SelectTrigger className="h-9 text-xs bg-zinc-900 border-zinc-700 text-zinc-200">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="shipping">Shipping</SelectItem>
+              <SelectItem value="pickup">Pickup</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="block text-[10px] uppercase tracking-wide text-zinc-500 mb-1">Search</label>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
+            <Input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Order id, customer…"
+              className="h-9 pl-8 text-xs bg-zinc-900 border-zinc-700 text-zinc-200"
+            />
+          </div>
+        </div>
       </div>
-    );
-  }
-
-  if (!user || user.role !== "admin") {
-    return null;
-  }
-
-  const orders = ordersData?.orders ?? [];
-
-  const navItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
-    { icon: ShoppingCart, label: "Orders", path: "/admin/orders" },
-    { icon: Users, label: "Customers", path: "/admin/customers" },
-    { icon: Package, label: "Inventory", path: "/admin/inventory" },
-  ];
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case "paid": return "bg-green-100 text-green-800";
-      case "pending": return "bg-yellow-100 text-yellow-800";
-      case "failed": return "bg-red-100 text-red-800";
-      case "refunded": return "bg-gray-100 text-gray-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getFulfillmentBadgeColor = (status: string) => {
-    switch (status) {
-      case "delivered": return "bg-green-100 text-green-800";
-      case "shipped": return "bg-blue-100 text-blue-800";
-      case "ready_to_ship": return "bg-purple-100 text-purple-800";
-      case "pending": return "bg-yellow-100 text-yellow-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      {/* Sidebar */}
-      <div className="w-64 bg-gray-900 text-white flex flex-col">
-        <div className="p-6 border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <img src="/favicon-96x96.png" alt="5 Star Hookah" className="w-10 h-10" />
-            <div>
-              <h1 className="font-bold text-lg">5 Star Hookah</h1>
-              <p className="text-xs text-gray-400">Admin Panel</p>
-            </div>
-          </div>
-        </div>
-
-        <nav className="flex-1 p-4">
-          <div className="space-y-2">
-            {navItems.map((item) => (
-              <Link key={item.path} href={item.path}>
-                <a className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  item.path === "/admin/orders" ? "bg-gray-800" : "hover:bg-gray-800"
-                }`}>
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </a>
-              </Link>
-            ))}
-          </div>
-        </nav>
-
-        <div className="p-4 border-t border-gray-800">
-          <div className="mb-3 px-4">
-            <p className="text-sm font-medium">{user.name}</p>
-            <p className="text-xs text-gray-400">{user.email}</p>
-          </div>
-          <Button
-            variant="outline"
-            className="w-full justify-start gap-2 bg-transparent border-gray-700 hover:bg-gray-800 text-white"
-            onClick={() => setLocation("/")}
-          >
-            <LogOut className="w-4 h-4" />
-            Back to Store
-          </Button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 p-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="mb-6">
-            <Link href="/admin/dashboard">
-              <a className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4">
-                <ChevronLeft className="w-4 h-4" />
-                Back to Dashboard
-              </a>
-            </Link>
-            <h2 className="text-3xl font-bold">Order Management</h2>
-            <p className="text-gray-600 mt-1">View and manage customer orders</p>
-          </div>
-
-          {/* Filters */}
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Payment Status</label>
-                <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Payments</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
-                    <SelectItem value="refunded">Refunded</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Fulfillment Status</label>
-                <Select value={fulfillmentFilter} onValueChange={(value: any) => setFulfillmentFilter(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Fulfillment</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="ready_to_ship">Ready to Ship</SelectItem>
-                    <SelectItem value="shipped">Shipped</SelectItem>
-                    <SelectItem value="delivered">Delivered</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Delivery Method</label>
-                <Select value={deliveryFilter} onValueChange={(value: any) => setDeliveryFilter(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Methods</SelectItem>
-                    <SelectItem value="shipping">Shipping</SelectItem>
-                    <SelectItem value="pickup">In-Store Pickup</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Search Orders</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input placeholder="Order ID, customer..." className="pl-10" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Orders Table */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+    <AdminShell title="Orders" subtitle="Payment, fulfillment, and delivery" actions={filters}>
+      <div className="max-w-7xl mx-auto space-y-4">
+        {isLoading ? (
+          <div className="h-40 flex items-center justify-center text-zinc-500 text-sm">Loading orders…</div>
+        ) : (
+          <div className="rounded-xl border border-zinc-800/90 bg-[#121214] overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Order ID
+              <table className="w-full text-xs min-w-[960px]">
+                <thead>
+                  <tr className="bg-[#0c0c0e] border-b border-zinc-800/80">
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
+                      Order
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
                       Customer
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
                       Date
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
                       Amount
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Payment Status
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
+                      Payment
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Payment Method
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
+                      Method
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
                       Fulfillment
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
                       Delivery
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {orders && orders.length > 0 ? (
-                    orders.map((order) => (
-                      <tr key={order.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          #{order.id}
+                <tbody className="divide-y divide-zinc-800/70">
+                  {orders.length > 0 ? (
+                    orders.map(order => (
+                      <tr key={order.id} className="hover:bg-zinc-900/35 transition-colors">
+                        <td className="px-4 py-3 font-mono text-zinc-300">#{order.id}</td>
+                        <td className="px-4 py-3 text-zinc-200">
+                          <div className="font-medium">{order.customerName || "Guest"}</div>
+                          {order.customerPhone && (
+                            <div className="text-zinc-500 text-[11px]">{order.customerPhone}</div>
+                          )}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          <div>
-                            <div className="font-medium">{order.customerName || 'Guest'}</div>
-                            {order.customerPhone && (
-                              <div className="text-gray-500 text-xs">{order.customerPhone}</div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-4 py-3 text-zinc-500 tabular-nums">
                           {new Date(order.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-4 py-3 text-zinc-100 tabular-nums font-medium">
                           ${(order.totalAmount / 100).toFixed(2)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(order.status)}`}>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold capitalize ${payBadge(order.status)}`}>
                             {order.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            order.paymentMethod === "zelle" 
-                              ? "bg-indigo-100 text-indigo-800" 
-                              : "bg-blue-100 text-blue-800"
-                          }`}>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-medium border ${
+                              order.paymentMethod === "zelle"
+                                ? "bg-indigo-950/50 text-indigo-200 border-indigo-900/50"
+                                : "bg-zinc-800 text-zinc-300 border-zinc-700"
+                            }`}
+                          >
                             {order.paymentMethod === "zelle" ? "Zelle" : "Card"}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-3">
                           <Select
                             value={order.fulfillmentStatus}
-                            onValueChange={(value: any) => {
+                            onValueChange={(value: string) => {
                               updateStatus.mutate({
                                 orderId: order.id,
                                 fulfillmentStatus: value,
                               });
                             }}
                           >
-                            <SelectTrigger className="w-40">
-                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getFulfillmentBadgeColor(order.fulfillmentStatus)}`}>
-                                {order.fulfillmentStatus.replace("_", " ")}
-                              </span>
+                            <SelectTrigger className="h-8 w-[9.5rem] text-[11px] bg-zinc-900 border-zinc-700">
+                              <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="ready_to_ship">Ready to Ship</SelectItem>
+                              <SelectItem value="ready_to_ship">Ready to ship</SelectItem>
                               <SelectItem value="shipped">Shipped</SelectItem>
                               <SelectItem value="delivered">Delivered</SelectItem>
                             </SelectContent>
                           </Select>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            order.deliveryMethod === "pickup" 
-                              ? "bg-purple-100 text-purple-800" 
-                              : "bg-blue-100 text-blue-800"
-                          }`}>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-medium border ${
+                              order.deliveryMethod === "pickup"
+                                ? "bg-violet-950/45 text-violet-200 border-violet-900/45"
+                                : "bg-zinc-800/90 text-zinc-300 border-zinc-700"
+                            }`}
+                          >
                             {order.deliveryMethod === "pickup" ? "Pickup" : "Shipping"}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <div className="flex gap-2">
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1.5">
                             {order.paymentMethod === "zelle" && order.status === "pending" && (
-                              <Button 
-                                variant="default" 
+                              <Button
+                                variant="default"
                                 size="sm"
+                                className="h-7 text-[11px] bg-[#3f6212] hover:bg-[#4d7c0f] text-[#ecfccb]"
                                 onClick={() => {
                                   if (confirm(`Confirm Zelle payment received for order #${order.id}?`)) {
                                     confirmZellePayment.mutate({ orderId: order.id });
                                   }
                                 }}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
                               >
-                                Confirm Payment
+                                Confirm
                               </Button>
                             )}
-                            <Button variant="ghost" size="sm">
-                              View Details
-                            </Button>
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="sm"
+                              className="h-7 text-zinc-400 hover:text-red-300"
                               onClick={() => {
-                                if (confirm(`Are you sure you want to delete order #${order.id}?`)) {
+                                if (confirm(`Delete order #${order.id}?`)) {
                                   deleteOrder.mutate({ orderId: order.id });
                                 }
                               }}
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         </td>
@@ -380,8 +278,8 @@ export default function AdminOrders() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                        No orders found
+                      <td colSpan={9} className="px-4 py-14 text-center text-zinc-500">
+                        No orders match these filters.
                       </td>
                     </tr>
                   )}
@@ -389,8 +287,8 @@ export default function AdminOrders() {
               </table>
             </div>
           </div>
-        </div>
+        )}
       </div>
-    </div>
+    </AdminShell>
   );
 }

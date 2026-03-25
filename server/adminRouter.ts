@@ -16,6 +16,11 @@ import {
   storeSettingsToSnake,
 } from "./_core/supabaseMappers";
 import { countSiteCatalogSkus, siteProductsToBhRows } from "./siteCatalogSync";
+import {
+  buildSalesReport,
+  type OrderForAnalytics,
+  type ProductCostRow,
+} from "./salesAnalytics";
 
 function formatSupabaseErr(err: PostgrestError): string {
   return [err.message, err.details, err.hint, err.code ? `(${err.code})` : ""]
@@ -321,6 +326,8 @@ export const adminRouter = router({
         pageSize: z.number().default(50),
         category: z.string().optional(),
         search: z.string().optional(),
+        /** When true, only products with stock below 5 (same threshold as dashboard low-stock count). */
+        lowStockOnly: z.boolean().optional(),
       })
     )
     .query(async ({ input }) => {
@@ -342,6 +349,9 @@ export const adminRouter = router({
 
       if (input.category) {
         query = query.eq("category", input.category);
+      }
+      if (input.lowStockOnly) {
+        query = query.lt("stock", 5);
       }
 
       const term = input.search ? sanitizeIlikeTerm(input.search) : "";
@@ -385,6 +395,7 @@ export const adminRouter = router({
         brand: z.string().optional(),
         category: z.string(),
         price: z.number(),
+        cost: z.number().min(0).optional().nullable(),
         stock: z.number(),
         sku: z.string().optional(),
         badge: z.string().optional(),
@@ -397,6 +408,7 @@ export const adminRouter = router({
         brand: input.brand || null,
         category: input.category,
         price: input.price,
+        cost: input.cost ?? null,
         stock: input.stock,
         sku: input.sku || null,
         badge: input.badge || null,
@@ -405,6 +417,91 @@ export const adminRouter = router({
 
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       return { success: true };
+    }),
+
+  updateProductCost: adminProcedure
+    .input(
+      z.object({
+        productId: z.string(),
+        cost: z.number().min(0).nullable(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { error } = await supabaseAdmin
+        .from("bh_products")
+        .update({ cost: input.cost, updated_at: new Date().toISOString() })
+        .eq("id", input.productId);
+
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+      return { success: true };
+    }),
+
+  getSalesReport: adminProcedure
+    .input(
+      z.object({
+        dateFrom: z.string().min(8),
+        dateTo: z.string().min(8),
+        deliveryMethod: z.enum(["all", "shipping", "pickup"]).default("all"),
+      })
+    )
+    .query(async ({ input }) => {
+      const from = input.dateFrom.includes("T")
+        ? input.dateFrom
+        : `${input.dateFrom}T00:00:00.000Z`;
+      const to = input.dateTo.includes("T") ? input.dateTo : `${input.dateTo}T23:59:59.999Z`;
+
+      let oq = supabaseAdmin
+        .from("bh_orders")
+        .select("id, created_at, status, delivery_method, total_amount, items")
+        .gte("created_at", from)
+        .lte("created_at", to)
+        .order("created_at", { ascending: true })
+        .range(0, 9999);
+
+      if (input.deliveryMethod !== "all") {
+        oq = oq.eq("delivery_method", input.deliveryMethod);
+      }
+
+      const { data: orderRows, error: oe } = await oq;
+      if (oe)
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: oe.message });
+
+      const { data: prodRows, error: pe } = await supabaseAdmin
+        .from("bh_products")
+        .select("id, name, brand, sku, cost");
+
+      if (pe)
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: pe.message });
+
+      const products: ProductCostRow[] = (prodRows ?? []).map(
+        (r: Record<string, unknown>) => ({
+          id: String(r.id ?? ""),
+          name: String(r.name ?? ""),
+          brand: String(r.brand ?? ""),
+          sku: r.sku != null ? String(r.sku) : null,
+          cost: r.cost != null && r.cost !== "" ? Number(r.cost) : null,
+        })
+      );
+
+      const orders: OrderForAnalytics[] = (orderRows ?? []).map(
+        (row: Record<string, unknown>) => ({
+          id: String(row.id ?? ""),
+          createdAt: String(row.created_at ?? ""),
+          status: String(row.status ?? ""),
+          deliveryMethod: String(row.delivery_method ?? "shipping"),
+          totalAmount: Number(row.total_amount) || 0,
+          items: row.items,
+        })
+      );
+
+      const report = buildSalesReport({ orders, products });
+
+      return {
+        ...report,
+        dateFrom: input.dateFrom,
+        dateTo: input.dateTo,
+        deliveryMethod: input.deliveryMethod,
+      };
     }),
 
   getStoreSettings: adminProcedure.query(async () => {
