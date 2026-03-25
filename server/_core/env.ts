@@ -29,6 +29,24 @@ export const ENV = {
   })(),
 };
 
+/** GA4 Data API (service account). Server-side only; never send to the client. */
+export function readGa4Env(): {
+  propertyId: string;
+  clientEmail: string;
+  privateKey: string;
+} {
+  return {
+    propertyId: (process.env.GA4_PROPERTY_ID ?? "").trim(),
+    clientEmail: (process.env.GA4_CLIENT_EMAIL ?? "").trim(),
+    privateKey: process.env.GA4_PRIVATE_KEY?.replace(/\\n/g, "\n") ?? "",
+  };
+}
+
+export function isGa4EnvConfigured(): boolean {
+  const e = readGa4Env();
+  return Boolean(e.propertyId && e.clientEmail && e.privateKey);
+}
+
 /** PayPal REST — read from `process.env` at call time (Vercel injects these at runtime, not from local `.env` in production). */
 export function readPayPalRuntimeEnv(): {
   clientId: string;

@@ -2,7 +2,14 @@
 // Manages shopping cart state across the application
 
 import { createContext, useContext, useState, ReactNode } from "react";
+import { toast } from "sonner";
 import { Product } from "@/lib/products";
+
+/** Matches Tailwind `md` (768px): viewports below this are treated as mobile for cart UX. */
+function isMobileViewport(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(max-width: 767px)").matches;
+}
 
 interface CartItem extends Product {
   quantity: number;
@@ -57,11 +64,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
     
     // Haptic vibration feedback
-    if ('vibrate' in navigator) {
-      navigator.vibrate(50); // 50ms vibration
+    if ("vibrate" in navigator) {
+      navigator.vibrate(50);
     }
-    
-    setIsOpen(true);
+
+    if (isMobileViewport()) {
+      const line =
+        quantity > 1 ? `${quantity} × ${product.name}` : product.name;
+      const description = line.length > 52 ? `${line.slice(0, 49)}…` : line;
+      toast.success("Added to cart", {
+        description,
+        duration: 2200,
+      });
+    } else {
+      setIsOpen(true);
+    }
   };
 
   const removeFromCart = (productId: string, variantId?: string) => {

@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { FileText, Tag, BarChart3, Megaphone } from "lucide-react";
+import { FileText, Tag, Megaphone } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const PLACEHOLDER: Record<
@@ -20,13 +20,6 @@ const PLACEHOLDER: Record<
     body:
       "Placeholder for discount rules, coupon codes, and promotional pricing. Connect to checkout when discount logic is implemented.",
     Icon: Tag,
-  },
-  "/admin/analytics": {
-    title: "Analytics",
-    subtitle: "Traffic and conversion (coming soon)",
-    body:
-      "Use Sales for revenue and margin. Broader analytics (sessions, funnels) can be added later without changing the main reporting model.",
-    Icon: BarChart3,
   },
   "/admin/marketing": {
     title: "Marketing",

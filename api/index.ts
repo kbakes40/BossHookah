@@ -9,6 +9,8 @@ import {
   handleWebhookEvent,
   ENV,
   registerPayPalRoutes,
+  handleAdminAnalyticsOverview,
+  handleAdminAnalyticsTest,
 } from "./_server.mjs";
 
 const app = express();
@@ -45,6 +47,14 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 registerPayPalRoutes(app);
+
+app.get("/api/admin/analytics/overview", (req, res) => {
+  void handleAdminAnalyticsOverview(req, res);
+});
+
+app.get("/api/admin/analytics/test", (req, res) => {
+  void handleAdminAnalyticsTest(req, res);
+});
 
 // tRPC API
 app.use(

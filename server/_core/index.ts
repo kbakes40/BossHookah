@@ -68,6 +68,14 @@ async function startServer() {
   const { registerPayPalRoutes } = await import("../paypalRoutes");
   registerPayPalRoutes(app);
 
+  const { handleAdminAnalyticsOverview, handleAdminAnalyticsTest } = await import("../adminAnalyticsHttp");
+  app.get("/api/admin/analytics/overview", (req, res) => {
+    void handleAdminAnalyticsOverview(req, res);
+  });
+  app.get("/api/admin/analytics/test", (req, res) => {
+    void handleAdminAnalyticsTest(req, res);
+  });
+
   // Manus OAuth removed - Supabase handles auth client-side
   // tRPC API
   app.use(

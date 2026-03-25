@@ -14,4 +14,12 @@ declare module "./_server.mjs" {
   ): Promise<unknown>;
   export const ENV: Record<string, string | boolean>;
   export function registerPayPalRoutes(app: Express): void;
+  export function handleAdminAnalyticsOverview(
+    req: unknown,
+    res: unknown
+  ): Promise<void>;
+  export function handleAdminAnalyticsTest(
+    req: unknown,
+    res: unknown
+  ): Promise<void>;
 }

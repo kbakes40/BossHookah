@@ -12,10 +12,29 @@ export type TrpcContext = {
 /**
  * Extract the Supabase access token from the Authorization: Bearer header.
  */
-function extractBearerToken(req: CreateExpressContextOptions["req"]): string | null {
-  const authHeader = req.headers.authorization;
+export function extractBearerTokenFromHeaders(headers: {
+  authorization?: string | undefined;
+}): string | null {
+  const authHeader = headers.authorization;
   if (authHeader && authHeader.startsWith("Bearer ")) {
     return authHeader.slice(7);
+  }
+  return null;
+}
+
+export async function getTrpcUserFromExpressRequest(
+  req: Pick<CreateExpressContextOptions["req"], "headers">
+): Promise<TrpcUser | null> {
+  try {
+    const token = extractBearerTokenFromHeaders(req.headers);
+    if (!token) return null;
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    if (!error && data?.user) {
+      await syncProfileFromAuthUser(data.user);
+      return await getTrpcUserById(data.user.id);
+    }
+  } catch {
+    return null;
   }
   return null;
 }
@@ -23,20 +42,7 @@ function extractBearerToken(req: CreateExpressContextOptions["req"]): string | n
 export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
-  let user: TrpcUser | null = null;
-
-  try {
-    const token = extractBearerToken(opts.req);
-    if (token) {
-      const { data, error } = await supabaseAdmin.auth.getUser(token);
-      if (!error && data?.user) {
-        await syncProfileFromAuthUser(data.user);
-        user = await getTrpcUserById(data.user.id);
-      }
-    }
-  } catch {
-    user = null;
-  }
+  const user = await getTrpcUserFromExpressRequest(opts.req);
 
   return {
     req: opts.req,
