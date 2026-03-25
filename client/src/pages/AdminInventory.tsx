@@ -8,8 +8,8 @@ import {
   Users, 
   Package, 
   LogOut,
-  Shield,
   ChevronLeft,
+  Upload,
   Search,
   AlertTriangle,
   Plus
@@ -67,6 +67,20 @@ export default function AdminInventory() {
     },
     onError: () => {
       toast.error("Failed to update stock");
+    },
+  });
+
+  const { data: catalogSkuInfo } = trpc.admin.siteCatalogSkuCount.useQuery(undefined, {
+    enabled: Boolean(user?.role === "admin"),
+  });
+
+  const syncSiteCatalog = trpc.admin.syncSiteCatalog.useMutation({
+    onSuccess: result => {
+      toast.success(`Imported ${result.count} SKUs (${result.mode}).`);
+      refetch();
+    },
+    onError: err => {
+      toast.error(err.message || "Catalog import failed");
     },
   });
 
@@ -201,12 +215,51 @@ export default function AdminInventory() {
                 Back to Dashboard
               </a>
             </Link>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <h2 className="text-3xl font-bold">Inventory Management</h2>
                 <p className="text-gray-600 mt-1">Manage product stock levels and pricing</p>
               </div>
-              <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+              <div className="flex flex-col items-stretch gap-2 sm:items-end">
+                <div className="flex flex-wrap gap-2 justify-end">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="gap-2"
+                    disabled={syncSiteCatalog.isPending}
+                    onClick={() => {
+                      const n = catalogSkuInfo?.count ?? 0;
+                      if (
+                        !window.confirm(
+                          `Replace all imported catalog items (SKU starts with "catalog:") with the latest bosshookah.site product list? This will delete those rows and insert about ${n} SKUs (variants count as separate rows). Default stock will be set to 50.`
+                        )
+                      ) {
+                        return;
+                      }
+                      syncSiteCatalog.mutate({ mode: "replace", defaultStock: 50 });
+                    }}
+                  >
+                    <Upload className="w-4 h-4" />
+                    Import site catalog{typeof catalogSkuInfo?.count === "number" ? ` (${catalogSkuInfo.count})` : ""}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={syncSiteCatalog.isPending}
+                    onClick={() => {
+                      if (
+                        !window.confirm(
+                          "Add only new catalog SKUs that are not already in the database? Existing rows and stock are left unchanged."
+                        )
+                      ) {
+                        return;
+                      }
+                      syncSiteCatalog.mutate({ mode: "merge" });
+                    }}
+                  >
+                    Merge new only
+                  </Button>
+                  <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="gap-2">
                     <Plus className="w-4 h-4" />
@@ -322,6 +375,12 @@ export default function AdminInventory() {
                   </div>
                 </DialogContent>
               </Dialog>
+                </div>
+                <p className="text-xs text-gray-500 text-right max-w-md">
+                  Run migration <code className="text-gray-700">002_bh_products_sku_unique.sql</code> in Supabase so
+                  catalog sync can upsert by SKU.
+                </p>
+              </div>
             </div>
           </div>
 

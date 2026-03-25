@@ -12,6 +12,7 @@ import {
   mapStoreSettingsRow,
   storeSettingsToSnake,
 } from "./_core/supabaseMappers";
+import { countSiteCatalogSkus, siteProductsToBhRows } from "./siteCatalogSync";
 
 export const adminRouter = router({
   getStats: adminProcedure.query(async () => {
@@ -182,6 +183,56 @@ export const adminRouter = router({
 
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       return { success: true };
+    }),
+
+  /** Rows that would be synced from client `products` (incl. variant SKUs). */
+  siteCatalogSkuCount: adminProcedure.query(() => ({
+    count: countSiteCatalogSkus(),
+  })),
+
+  /**
+   * Copies storefront catalog (client/src/lib/products.ts) into bh_products.
+   * SKUs use prefix `catalog:` — replace mode deletes only those rows, then inserts.
+   */
+  syncSiteCatalog: adminProcedure
+    .input(
+      z.object({
+        mode: z.enum(["replace", "merge"]).default("replace"),
+        defaultStock: z.number().int().min(0).max(999999).optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const rows = siteProductsToBhRows(undefined, {
+        defaultStock: input.defaultStock ?? 50,
+      });
+      const chunk = 120;
+
+      if (input.mode === "replace") {
+        const { error: delErr } = await supabaseAdmin.from("bh_products").delete().like("sku", "catalog:%");
+        if (delErr) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: delErr.message });
+        }
+        for (let i = 0; i < rows.length; i += chunk) {
+          const batch = rows.slice(i, i + chunk);
+          const { error } = await supabaseAdmin.from("bh_products").insert(batch);
+          if (error) {
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+          }
+        }
+        return { success: true as const, mode: input.mode, count: rows.length };
+      }
+
+      for (let i = 0; i < rows.length; i += chunk) {
+        const batch = rows.slice(i, i + chunk);
+        const { error } = await supabaseAdmin.from("bh_products").upsert(batch, {
+          onConflict: "sku",
+          ignoreDuplicates: true,
+        });
+        if (error) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+        }
+      }
+      return { success: true as const, mode: input.mode, count: rows.length };
     }),
 
   getInventory: adminProcedure
