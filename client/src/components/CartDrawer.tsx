@@ -81,6 +81,360 @@ export default function CartDrawer() {
 
   if (!isOpen) return null;
 
+  const cartItemsSection =
+    items.length === 0 ? (
+      <div className="text-center py-16">
+        <p className="text-xl font-display font-bold mb-4">Your cart is empty</p>
+        <Button
+          onClick={closeCart}
+          className="brutalist-border bg-primary text-primary-foreground"
+        >
+          CONTINUE SHOPPING
+        </Button>
+      </div>
+    ) : (
+      <div className="space-y-6">
+        {items.map((item) => (
+          <div
+            key={`${item.id}-${item.selectedVariantId || "default"}`}
+            className="flex gap-4 pb-6 border-b-3 border-border last:border-0"
+          >
+            <Link href={`/product/${item.id}`} onClick={closeCart}>
+              <div className="w-24 h-24 bg-secondary brutalist-border flex-shrink-0">
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </Link>
+
+            <div className="flex-1 min-w-0">
+              <Link href={`/product/${item.id}`} onClick={closeCart}>
+                <h3 className="font-semibold text-sm mb-1 line-clamp-2 hover:text-primary">
+                  {item.name}
+                  {item.selectedVariantName && (
+                    <span className="text-primary"> - {item.selectedVariantName}</span>
+                  )}
+                </h3>
+              </Link>
+              <p className="text-xs text-muted-foreground mb-3">{item.brand}</p>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center brutalist-border">
+                  <button
+                    onClick={() =>
+                      updateQuantity(item.id, item.quantity - 1, item.selectedVariantId)
+                    }
+                    className="w-8 h-8 flex items-center justify-center hover:bg-secondary"
+                  >
+                    <Minus className="h-3 w-3" />
+                  </button>
+                  <span className="w-10 h-8 flex items-center justify-center border-x-3 border-border text-sm font-bold">
+                    {item.quantity}
+                  </span>
+                  <button
+                    onClick={() =>
+                      updateQuantity(item.id, item.quantity + 1, item.selectedVariantId)
+                    }
+                    className="w-8 h-8 flex items-center justify-center hover:bg-secondary"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => removeFromCart(item.id, item.selectedVariantId)}
+                  className="text-destructive hover:text-destructive/80"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="text-right">
+              <p className="price-tag font-bold">
+                {formatUsd((item.salePrice || item.price) * item.quantity)}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+
+  const checkoutFooter =
+    items.length > 0 ? (
+      <div className="shrink-0 border-t-3 border-border p-6 space-y-4">
+        {/* Shipping Notice */}
+        <div className="bg-secondary brutalist-border p-4 text-sm">
+          <p className="font-semibold">
+            {cartTotal >= FREE_SHIPPING_THRESHOLD_USD ? (
+              <span className="text-primary">You unlocked FREE SHIPPING</span>
+            ) : (
+              <>
+                Spend {formatUsd(shippingQuote.remainingForFreeShipping)} more for FREE
+                SHIPPING
+              </>
+            )}
+          </p>
+        </div>
+
+        {/* Subtotal */}
+        <div className="flex items-center justify-between text-base">
+          <span className="font-display font-bold">SUBTOTAL</span>
+          <span className="price-tag font-bold">{checkoutTotals.subtotal}</span>
+        </div>
+
+        {/* Delivery Method Selection */}
+        <div className="space-y-2">
+          <p className="font-display font-bold text-sm">DELIVERY METHOD</p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setDeliveryMethod("shipping")}
+              className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
+                deliveryMethod === "shipping"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background hover:bg-secondary"
+              }`}
+            >
+              <Truck className="h-5 w-5" />
+              <span className="text-sm font-bold">SHIPPING</span>
+            </button>
+            <button
+              onClick={() => setDeliveryMethod("pickup")}
+              className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
+                deliveryMethod === "pickup"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background hover:bg-secondary"
+              }`}
+            >
+              <Store className="h-5 w-5" />
+              <span className="text-sm font-bold">PICKUP</span>
+            </button>
+          </div>
+          {deliveryMethod === "shipping" && (
+            <div className="space-y-1 pt-1">
+              <label
+                htmlFor="cart-shipping-zip"
+                className="text-[10px] font-bold uppercase text-muted-foreground"
+              >
+                ZIP code (optional — refines estimate)
+              </label>
+              <Input
+                id="cart-shipping-zip"
+                value={shippingZip}
+                onChange={e => setShippingZip(e.target.value)}
+                placeholder="e.g. 48124"
+                className="h-9 brutalist-border text-sm"
+                inputMode="numeric"
+                autoComplete="postal-code"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Shipping + total (after delivery method so pickup zeros shipping correctly) */}
+        <div className="space-y-2 border-t-3 border-border pt-3">
+          <div className="flex items-center justify-between text-base">
+            <span className="font-display font-bold">SHIPPING</span>
+            <span className="price-tag font-bold">
+              {deliveryMethod === "pickup"
+                ? formatUsd(0)
+                : shippingQuote.isFreeShipping
+                  ? "FREE"
+                  : checkoutTotals.shipping}
+            </span>
+          </div>
+          {deliveryMethod === "shipping" &&
+            shippingQuote.isEstimated &&
+            shippingQuote.estimatedShippingText && (
+              <p className="text-[10px] text-muted-foreground leading-snug">
+                {shippingQuote.estimatedShippingText}
+              </p>
+            )}
+          <div className="flex items-center justify-between text-lg pt-1">
+            <span className="font-display font-bold">TOTAL</span>
+            <span className="price-tag font-black text-2xl">{checkoutTotals.total}</span>
+          </div>
+        </div>
+
+        {/* Payment Method Selection */}
+        <div className="space-y-2">
+          <p className="font-display font-bold text-sm">PAYMENT METHOD</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setCardPaypalInfoOpen(true)}
+              className="p-4 brutalist-border flex flex-col items-center gap-2 transition-colors bg-background hover:bg-secondary"
+            >
+              <span className="text-sm font-bold">CREDIT CARD</span>
+            </button>
+            <button
+              onClick={() => setPaymentMethod("zelle")}
+              className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
+                paymentMethod === "zelle"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background hover:bg-secondary"
+              }`}
+            >
+              <span className="text-sm font-bold">ZELLE</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPaymentMethod("bitcoin");
+                setBitcoinInfoOpen(true);
+              }}
+              className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
+                paymentMethod === "bitcoin"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background hover:bg-secondary"
+              }`}
+            >
+              <span className="text-sm font-bold">BITCOIN</span>
+            </button>
+            <button
+              onClick={() => setPaymentMethod("paypal")}
+              className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
+                paymentMethod === "paypal"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background hover:bg-secondary"
+              }`}
+            >
+              <span className="text-sm font-bold">PAYPAL</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Checkout Button */}
+        <Button
+          className="w-full h-14 brutalist-border brutalist-shadow bg-primary text-primary-foreground hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 text-lg font-black"
+          disabled={isCheckingOut}
+          onClick={async () => {
+            setIsCheckingOut(true);
+            try {
+              if (paymentMethod === "zelle") {
+                if (deliveryMethod === "shipping") {
+                  sessionStorage.setItem(CHECKOUT_SHIPPING_ZIP_KEY, shippingZip.trim());
+                } else {
+                  sessionStorage.removeItem(CHECKOUT_SHIPPING_ZIP_KEY);
+                }
+                closeCart();
+                setLocation(`/zelle-checkout?delivery=${deliveryMethod}`);
+              } else if (paymentMethod === "bitcoin") {
+                setBitcoinInfoOpen(true);
+                setIsCheckingOut(false);
+                return;
+              } else if (paymentMethod === "paypal") {
+                const {
+                  data: { session },
+                } = await supabase.auth.getSession();
+                if (!session?.access_token) {
+                  toast.error("Please log in to checkout");
+                  setIsCheckingOut(false);
+                  return;
+                }
+
+                const checkoutItems = items.map(item => {
+                  const itemName = item.selectedVariantName
+                    ? `${item.brand} - ${item.name} - ${item.selectedVariantName}`
+                    : `${item.brand} - ${item.name}`;
+                  return {
+                    name: itemName,
+                    priceInCents: Math.round((item.salePrice || item.price) * 100),
+                    quantity: item.quantity,
+                    image: item.image,
+                  };
+                });
+
+                sessionStorage.setItem(
+                  PAYPAL_CHECKOUT_STORAGE_KEY,
+                  JSON.stringify({
+                    items: checkoutItems,
+                    deliveryMethod,
+                    shippingCents: Math.round(shippingQuote.shippingAmount * 100),
+                  })
+                );
+
+                const amount = cartGrandTotal.toFixed(2);
+                const res = await fetch("/api/paypal/create-order", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${session.access_token}`,
+                  },
+                  body: JSON.stringify({ amount }),
+                  credentials: "include",
+                });
+                const data = (await res.json().catch(() => ({}))) as {
+                  message?: string;
+                  approveUrl?: string;
+                };
+                if (!res.ok) {
+                  sessionStorage.removeItem(PAYPAL_CHECKOUT_STORAGE_KEY);
+                  throw new Error(data.message || "PayPal create order failed");
+                }
+                if (!data.approveUrl) {
+                  sessionStorage.removeItem(PAYPAL_CHECKOUT_STORAGE_KEY);
+                  toast.error("PayPal did not return a redirect URL");
+                  setIsCheckingOut(false);
+                  return;
+                }
+                toast.success("Redirecting to PayPal…");
+                closeCart();
+                window.location.assign(data.approveUrl);
+                return;
+              } else {
+                // Stripe checkout
+                const checkoutItems = items.map(item => {
+                  const itemName = item.selectedVariantName
+                    ? `${item.brand} - ${item.name} - ${item.selectedVariantName}`
+                    : `${item.brand} - ${item.name}`;
+
+                  return {
+                    name: itemName,
+                    priceInCents: Math.round((item.salePrice || item.price) * 100),
+                    quantity: item.quantity,
+                    image: item.image,
+                  };
+                });
+
+                const session = await createCheckoutSession.mutateAsync({
+                  items: checkoutItems,
+                  deliveryMethod,
+                  shippingCents: Math.round(shippingQuote.shippingAmount * 100),
+                });
+
+                if (session.url) {
+                  toast.success("Redirecting to checkout...");
+                  window.open(session.url, "_blank");
+                  closeCart();
+                }
+              }
+            } catch (error: unknown) {
+              const message =
+                error instanceof Error ? error.message : "Failed to create checkout session";
+              if (message.includes("login")) {
+                toast.error("Please log in to checkout");
+              } else if (message.includes("PayPal") || paymentMethod === "paypal") {
+                toast.error(message);
+              } else {
+                toast.error("Failed to create checkout session");
+              }
+            } finally {
+              setIsCheckingOut(false);
+            }
+          }}
+        >
+          {isCheckingOut ? "PROCESSING..." : "CHECKOUT"}
+        </Button>
+
+        <p className="text-xs text-center text-muted-foreground">
+          Shipping and taxes calculated at checkout
+        </p>
+      </div>
+    ) : null;
+
   return (
     <>
       {/* Mobile: fixed layer below cart — blocks taps/scroll reaching the page (cart sits at z-[60]) */}
@@ -121,359 +475,31 @@ export default function CartDrawer() {
           </button>
         </div>
 
-        {/* Cart items — only this region scrolls on mobile */}
-        <div
-          className={cn(
-            "flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-auto p-6",
-            "[-webkit-overflow-scrolling:touch]"
-          )}
-        >
-          {items.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-xl font-display font-bold mb-4">Your cart is empty</p>
-              <Button 
-                onClick={closeCart}
-                className="brutalist-border bg-primary text-primary-foreground"
-              >
-                CONTINUE SHOPPING
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {items.map((item) => (
-                <div key={`${item.id}-${item.selectedVariantId || 'default'}`} className="flex gap-4 pb-6 border-b-3 border-border last:border-0">
-                  {/* Product Image */}
-                  <Link href={`/product/${item.id}`} onClick={closeCart}>
-                    <div className="w-24 h-24 bg-secondary brutalist-border flex-shrink-0">
-                      <img 
-                        src={item.image} 
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </Link>
-
-                  {/* Product Info */}
-                  <div className="flex-1 min-w-0">
-                    <Link href={`/product/${item.id}`} onClick={closeCart}>
-                      <h3 className="font-semibold text-sm mb-1 line-clamp-2 hover:text-primary">
-                        {item.name}
-                        {item.selectedVariantName && (
-                          <span className="text-primary"> - {item.selectedVariantName}</span>
-                        )}
-                      </h3>
-                    </Link>
-                    <p className="text-xs text-muted-foreground mb-3">{item.brand}</p>
-                    
-                    {/* Quantity Controls */}
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center brutalist-border">
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.selectedVariantId)}
-                          className="w-8 h-8 flex items-center justify-center hover:bg-secondary"
-                        >
-                          <Minus className="h-3 w-3" />
-                        </button>
-                        <span className="w-10 h-8 flex items-center justify-center border-x-3 border-border text-sm font-bold">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1, item.selectedVariantId)}
-                          className="w-8 h-8 flex items-center justify-center hover:bg-secondary"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </button>
-                      </div>
-
-                      <button
-                        onClick={() => removeFromCart(item.id, item.selectedVariantId)}
-                        className="text-destructive hover:text-destructive/80"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Price */}
-                  <div className="text-right">
-                    <p className="price-tag font-bold">
-                      {formatUsd((item.salePrice || item.price) * item.quantity)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Footer (sticky bottom on mobile via flex shrink-0) */}
-        {items.length > 0 && (
-          <div className="shrink-0 border-t-3 border-border p-6 space-y-4">
-            {/* Shipping Notice */}
-            <div className="bg-secondary brutalist-border p-4 text-sm">
-              <p className="font-semibold">
-                {cartTotal >= FREE_SHIPPING_THRESHOLD_USD ? (
-                  <span className="text-primary">You unlocked FREE SHIPPING</span>
-                ) : (
-                  <>
-                    Spend {formatUsd(shippingQuote.remainingForFreeShipping)} more for FREE SHIPPING
-                  </>
-                )}
-              </p>
-            </div>
-
-            {/* Subtotal */}
-            <div className="flex items-center justify-between text-base">
-              <span className="font-display font-bold">SUBTOTAL</span>
-              <span className="price-tag font-bold">{checkoutTotals.subtotal}</span>
-            </div>
-
-            {/* Delivery Method Selection */}
-            <div className="space-y-2">
-              <p className="font-display font-bold text-sm">DELIVERY METHOD</p>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setDeliveryMethod("shipping")}
-                  className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
-                    deliveryMethod === "shipping" 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-background hover:bg-secondary"
-                  }`}
-                >
-                  <Truck className="h-5 w-5" />
-                  <span className="text-sm font-bold">SHIPPING</span>
-                </button>
-                <button
-                  onClick={() => setDeliveryMethod("pickup")}
-                  className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
-                    deliveryMethod === "pickup" 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-background hover:bg-secondary"
-                  }`}
-                >
-                  <Store className="h-5 w-5" />
-                  <span className="text-sm font-bold">PICKUP</span>
-                </button>
-              </div>
-              {deliveryMethod === "shipping" && (
-                <div className="space-y-1 pt-1">
-                  <label htmlFor="cart-shipping-zip" className="text-[10px] font-bold uppercase text-muted-foreground">
-                    ZIP code (optional — refines estimate)
-                  </label>
-                  <Input
-                    id="cart-shipping-zip"
-                    value={shippingZip}
-                    onChange={e => setShippingZip(e.target.value)}
-                    placeholder="e.g. 48124"
-                    className="h-9 brutalist-border text-sm"
-                    inputMode="numeric"
-                    autoComplete="postal-code"
-                  />
-                </div>
+        {/*
+          One DOM tree (no duplicate inputs): mobile = single scroll (items + checkout);
+          md+ = outer clips, line items scroll, checkout pinned to drawer bottom.
+        */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div
+            className={cn(
+              "flex min-h-0 flex-1 flex-col",
+              "overflow-y-auto overscroll-y-contain touch-auto",
+              "[-webkit-overflow-scrolling:touch]",
+              "pb-[max(2.25rem,env(safe-area-inset-bottom,0px))]",
+              "md:overflow-hidden md:pb-0"
+            )}
+          >
+            <div
+              className={cn(
+                "px-6 pt-6",
+                "md:min-h-0 md:flex-1 md:overflow-y-auto md:pb-6"
               )}
-            </div>
-
-            {/* Shipping + total (after delivery method so pickup zeros shipping correctly) */}
-            <div className="space-y-2 border-t-3 border-border pt-3">
-              <div className="flex items-center justify-between text-base">
-                <span className="font-display font-bold">SHIPPING</span>
-                <span className="price-tag font-bold">
-                  {deliveryMethod === "pickup"
-                    ? formatUsd(0)
-                    : shippingQuote.isFreeShipping
-                      ? "FREE"
-                      : checkoutTotals.shipping}
-                </span>
-              </div>
-              {deliveryMethod === "shipping" &&
-                shippingQuote.isEstimated &&
-                shippingQuote.estimatedShippingText && (
-                  <p className="text-[10px] text-muted-foreground leading-snug">
-                    {shippingQuote.estimatedShippingText}
-                  </p>
-                )}
-              <div className="flex items-center justify-between text-lg pt-1">
-                <span className="font-display font-bold">TOTAL</span>
-                <span className="price-tag font-black text-2xl">{checkoutTotals.total}</span>
-              </div>
-            </div>
-
-            {/* Payment Method Selection */}
-            <div className="space-y-2">
-              <p className="font-display font-bold text-sm">PAYMENT METHOD</p>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCardPaypalInfoOpen(true)}
-                  className="p-4 brutalist-border flex flex-col items-center gap-2 transition-colors bg-background hover:bg-secondary"
-                >
-                  <span className="text-sm font-bold">CREDIT CARD</span>
-                </button>
-                <button
-                  onClick={() => setPaymentMethod("zelle")}
-                  className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
-                    paymentMethod === "zelle" 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-background hover:bg-secondary"
-                  }`}
-                >
-                  <span className="text-sm font-bold">ZELLE</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPaymentMethod("bitcoin");
-                    setBitcoinInfoOpen(true);
-                  }}
-                  className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
-                    paymentMethod === "bitcoin"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-background hover:bg-secondary"
-                  }`}
-                >
-                  <span className="text-sm font-bold">BITCOIN</span>
-                </button>
-                <button
-                  onClick={() => setPaymentMethod("paypal")}
-                  className={`p-4 brutalist-border flex flex-col items-center gap-2 transition-colors ${
-                    paymentMethod === "paypal" 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-background hover:bg-secondary"
-                  }`}
-                >
-                  <span className="text-sm font-bold">PAYPAL</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Checkout Button */}
-            <Button 
-              className="w-full h-14 brutalist-border brutalist-shadow bg-primary text-primary-foreground hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-150 text-lg font-black"
-              disabled={isCheckingOut}
-              onClick={async () => {
-                setIsCheckingOut(true);
-                try {
-                  if (paymentMethod === "zelle") {
-                    if (deliveryMethod === "shipping") {
-                      sessionStorage.setItem(CHECKOUT_SHIPPING_ZIP_KEY, shippingZip.trim());
-                    } else {
-                      sessionStorage.removeItem(CHECKOUT_SHIPPING_ZIP_KEY);
-                    }
-                    closeCart();
-                    setLocation(`/zelle-checkout?delivery=${deliveryMethod}`);
-                  } else if (paymentMethod === "bitcoin") {
-                    setBitcoinInfoOpen(true);
-                    setIsCheckingOut(false);
-                    return;
-                  } else if (paymentMethod === "paypal") {
-                    const {
-                      data: { session },
-                    } = await supabase.auth.getSession();
-                    if (!session?.access_token) {
-                      toast.error("Please log in to checkout");
-                      setIsCheckingOut(false);
-                      return;
-                    }
-
-                    const checkoutItems = items.map(item => {
-                      const itemName = item.selectedVariantName
-                        ? `${item.brand} - ${item.name} - ${item.selectedVariantName}`
-                        : `${item.brand} - ${item.name}`;
-                      return {
-                        name: itemName,
-                        priceInCents: Math.round((item.salePrice || item.price) * 100),
-                        quantity: item.quantity,
-                        image: item.image,
-                      };
-                    });
-
-                    sessionStorage.setItem(
-                      PAYPAL_CHECKOUT_STORAGE_KEY,
-                      JSON.stringify({
-                        items: checkoutItems,
-                        deliveryMethod,
-                        shippingCents: Math.round(shippingQuote.shippingAmount * 100),
-                      })
-                    );
-
-                    const amount = cartGrandTotal.toFixed(2);
-                    const res = await fetch("/api/paypal/create-order", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${session.access_token}`,
-                      },
-                      body: JSON.stringify({ amount }),
-                      credentials: "include",
-                    });
-                    const data = (await res.json().catch(() => ({}))) as {
-                      message?: string;
-                      approveUrl?: string;
-                    };
-                    if (!res.ok) {
-                      sessionStorage.removeItem(PAYPAL_CHECKOUT_STORAGE_KEY);
-                      throw new Error(data.message || "PayPal create order failed");
-                    }
-                    if (!data.approveUrl) {
-                      sessionStorage.removeItem(PAYPAL_CHECKOUT_STORAGE_KEY);
-                      toast.error("PayPal did not return a redirect URL");
-                      setIsCheckingOut(false);
-                      return;
-                    }
-                    toast.success("Redirecting to PayPal…");
-                    closeCart();
-                    window.location.assign(data.approveUrl);
-                    return;
-                  } else {
-                    // Stripe checkout
-                    const checkoutItems = items.map(item => {
-                      const itemName = item.selectedVariantName 
-                        ? `${item.brand} - ${item.name} - ${item.selectedVariantName}`
-                        : `${item.brand} - ${item.name}`;
-                      
-                      return {
-                        name: itemName,
-                        priceInCents: Math.round((item.salePrice || item.price) * 100),
-                        quantity: item.quantity,
-                        image: item.image,
-                      };
-                    });
-
-                    const session = await createCheckoutSession.mutateAsync({
-                      items: checkoutItems,
-                      deliveryMethod,
-                      shippingCents: Math.round(shippingQuote.shippingAmount * 100),
-                    });
-
-                    if (session.url) {
-                      toast.success("Redirecting to checkout...");
-                      window.open(session.url, "_blank");
-                      closeCart();
-                    }
-                  }
-                } catch (error: unknown) {
-                  const message =
-                    error instanceof Error ? error.message : "Failed to create checkout session";
-                  if (message.includes("login")) {
-                    toast.error("Please log in to checkout");
-                  } else if (message.includes("PayPal") || paymentMethod === "paypal") {
-                    toast.error(message);
-                  } else {
-                    toast.error("Failed to create checkout session");
-                  }
-                } finally {
-                  setIsCheckingOut(false);
-                }
-              }}
             >
-              {isCheckingOut ? "PROCESSING..." : "CHECKOUT"}
-            </Button>
-
-            <p className="text-xs text-center text-muted-foreground">
-              Shipping and taxes calculated at checkout
-            </p>
+              {cartItemsSection}
+            </div>
+            {checkoutFooter}
           </div>
-        )}
+        </div>
       </div>
 
       {bitcoinInfoOpen && (
