@@ -12,6 +12,8 @@ import {
 } from "./_server.mjs";
 
 const app = express();
+/** So `req.secure` / forwarded headers match the visitor’s URL on Vercel & other proxies. */
+app.set("trust proxy", 1);
 
 // Stripe webhook MUST be registered BEFORE express.json() to preserve raw body
 app.post(

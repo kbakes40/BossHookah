@@ -13,7 +13,9 @@ export const ENV = {
   // Admin emails - these users will always have admin role
   adminEmail: "kevin@bakerhub.com",
   adminEmails: ["kevin@bakerhub.com", "chillvibesss420@gmail.com"],
-  /** PayPal REST (server) — trimmed; use LIVE `.env` / PayPal dashboard (not VITE_*). */
+  /**
+   * PayPal REST (server). On Vercel, set `PUBLIC_SITE_URL` (or `VITE_SITE_ORIGIN`) to the canonical https storefront so PayPal return URLs match the tab where checkout started.
+   */
   paypalClientId: (process.env.PAYPAL_CLIENT_ID ?? "").trim(),
   paypalSecret: (process.env.PAYPAL_SECRET ?? "").trim(),
   /**

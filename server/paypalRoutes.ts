@@ -12,10 +12,49 @@ function extractBearer(req: Request): string | null {
   return null;
 }
 
+function firstForwarded(value: string | undefined): string | undefined {
+  return value?.split(",")[0]?.trim();
+}
+
+/** Full origin (no trailing path) for PayPal return/cancel — must match the storefront domain or sessionStorage is wrong. */
+function normalizeConfiguredOrigin(raw: string | undefined): string | null {
+  if (!raw?.trim()) return null;
+  const t = raw.trim().replace(/\/+$/, "");
+  try {
+    const withScheme = /^https?:\/\//i.test(t) ? t : `https://${t}`;
+    const u = new URL(withScheme);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return null;
+  }
+}
+
 function publicOrigin(req: Request): string {
-  const proto = req.get("x-forwarded-proto") || req.protocol || "https";
-  const host = req.get("x-forwarded-host") || req.get("host") || "localhost:3000";
-  return `${proto}://${host}`;
+  const fromEnv =
+    normalizeConfiguredOrigin(process.env.PUBLIC_SITE_URL) ||
+    normalizeConfiguredOrigin(process.env.VITE_SITE_ORIGIN);
+  if (fromEnv) return fromEnv;
+
+  const xfHost =
+    firstForwarded(req.get("x-forwarded-host")) || firstForwarded(req.get("host"));
+  let xfProto = firstForwarded(req.get("x-forwarded-proto"));
+
+  if (!xfProto && xfHost && !xfHost.includes("localhost") && !xfHost.startsWith("127.")) {
+    xfProto = "https";
+  }
+  const proto =
+    xfProto || (req.secure ? "https" : req.protocol === "https" ? "https" : "http");
+
+  if (xfHost) {
+    return `${proto}://${xfHost}`;
+  }
+
+  const vu = process.env.VERCEL_URL?.trim();
+  if (vu) {
+    return `https://${vu.replace(/^https?:\/\//i, "")}`;
+  }
+
+  return "http://localhost:3000";
 }
 
 const AMOUNT_RE = /^\d+\.\d{2}$/;
