@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 export default function AdminLogin() {
   const { signInWithEmail, signInWithGoogle, loading: sessionLoading, isAuthenticated: hasSession } = useSupabaseAuth();
-  const { user, loading: userLoading, isAuthenticated } = useAuth();
+  const { user, loading: userLoading, isAuthenticated, profileLoadError } = useAuth();
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -100,6 +100,14 @@ export default function AdminLogin() {
           </div>
           {error && (
             <p className="text-xs text-red-400 bg-red-900/20 rounded-lg px-3 py-2">{error}</p>
+          )}
+          {hasSession && profileLoadError && (
+            <p className="text-xs text-amber-300 bg-amber-900/30 rounded-lg px-3 py-2">
+              Could not load your admin profile from the API (check you are on{" "}
+              <strong className="text-white">www.bosshookah.site</strong> and that Vercel has{" "}
+              <code className="text-zinc-200">SUPABASE_SERVICE_ROLE_KEY</code>).{" "}
+              {profileLoadError.message}
+            </p>
           )}
           <button
             type="submit"

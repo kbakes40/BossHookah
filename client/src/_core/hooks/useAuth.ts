@@ -15,11 +15,14 @@ export function useAuth() {
   // Only fetch the DB user when we have a Supabase session
   const meQuery = trpc.auth.me.useQuery(undefined, {
     enabled: Boolean(session),
-    retry: false,
+    retry: 1,
     refetchOnWindowFocus: false,
   });
 
   const loading = sessionLoading || (Boolean(session) && meQuery.isLoading);
+
+  /** Set when session exists but tRPC could not load the profile (API, env, or schema issues). */
+  const profileLoadError = Boolean(session) && !meQuery.isLoading ? meQuery.error ?? null : null;
 
   // The DB user has role, name, email fields used by admin pages
   const dbUser = meQuery.data ?? null;
@@ -45,6 +48,7 @@ export function useAuth() {
     user,
     loading,
     isAuthenticated: Boolean(session && user),
+    profileLoadError,
     signInWithGoogle,
     signOut,
     logout,
