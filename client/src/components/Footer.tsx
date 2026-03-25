@@ -131,12 +131,24 @@ export default function Footer() {
             </select>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap justify-center">
             <span className="text-sm">Payment Methods:</span>
-            <div className="flex gap-2">
-              <div className="w-10 h-6 brutalist-border bg-secondary flex items-center justify-center text-xs font-bold">VISA</div>
-              <div className="w-10 h-6 brutalist-border bg-secondary flex items-center justify-center text-xs font-bold">MC</div>
-              <div className="w-10 h-6 brutalist-border bg-secondary flex items-center justify-center text-xs font-bold">AMEX</div>
+            <div className="flex gap-2 flex-wrap justify-center">
+              <div className="w-10 h-6 brutalist-border bg-secondary flex items-center justify-center text-xs font-bold">
+                VISA
+              </div>
+              <div className="w-10 h-6 brutalist-border bg-secondary flex items-center justify-center text-xs font-bold">
+                MC
+              </div>
+              <div className="w-10 h-6 brutalist-border bg-secondary flex items-center justify-center text-xs font-bold">
+                AMEX
+              </div>
+              <div className="w-10 h-6 brutalist-border bg-secondary flex items-center justify-center text-xs font-bold">
+                DISC
+              </div>
+              <div className="w-10 h-6 brutalist-border bg-secondary flex items-center justify-center text-xs font-bold">
+                TRVL
+              </div>
             </div>
           </div>
 

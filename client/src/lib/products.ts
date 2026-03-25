@@ -46,7 +46,7 @@ export const products: Product[] = [
   { id: '3', name: 'Blonde Leaf Tobacco 250g', brand: 'Premium', price: 17.99, category: 'shisha', image: '/images/5RRmLYAQuT6v.png', badge: 'TRENDING', inStock: true, trending: true },
   { id: '4', name: 'Signature Tobacco 250g', brand: 'Elite', price: 19.99, category: 'shisha', image: '/images/hWG7feLP4G9A.webp', badge: 'TRENDING', inStock: true, trending: true },
   { id: '5', name: 'Traditional Tobacco 250g', brand: 'Classic', price: 17.99, category: 'shisha', image: '/images/PICmJfphbkW2.jpg', badge: 'TRENDING', inStock: true, trending: true },
-  { id: '6', name: 'Light Tobacco 100g', brand: 'Smooth', price: 10.99, salePrice: 9.99, category: 'shisha', image: '/images/5RRmLYAQuT6v.png', badge: 'SALE', inStock: true, trending: true },
+  { id: '6', name: 'Light Tobacco 100g', brand: 'Smooth', price: 0.01, category: 'shisha', image: '/images/5RRmLYAQuT6v.png', inStock: true, trending: true },
   
   // Snoop x Al Fakher - Consolidated with flavor variants
   { 
