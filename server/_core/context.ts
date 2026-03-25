@@ -1,12 +1,12 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
-import type { User } from "../../drizzle/schema";
-import { verifySupabaseToken } from "./supabaseAdmin";
-import * as db from "../db";
+import type { TrpcUser } from "@shared/trpcUser";
+import { getTrpcUserById, syncProfileFromAuthUser } from "./profiles";
+import { supabaseAdmin } from "./supabaseAdmin";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
   res: CreateExpressContextOptions["res"];
-  user: User | null;
+  user: TrpcUser | null;
 };
 
 /**
@@ -23,25 +23,18 @@ function extractBearerToken(req: CreateExpressContextOptions["req"]): string | n
 export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
-  let user: User | null = null;
+  let user: TrpcUser | null = null;
 
   try {
     const token = extractBearerToken(opts.req);
     if (token) {
-      const supabaseUser = await verifySupabaseToken(token);
-      if (supabaseUser) {
-        // Upsert the user in our DB using their Supabase UID as the openId key
-        await db.upsertUser({
-          openId: supabaseUser.id,
-          email: supabaseUser.email,
-          loginMethod: "google",
-          lastSignedIn: new Date(),
-        });
-        user = (await db.getUserByOpenId(supabaseUser.id)) ?? null;
+      const { data, error } = await supabaseAdmin.auth.getUser(token);
+      if (!error && data?.user) {
+        await syncProfileFromAuthUser(data.user);
+        user = await getTrpcUserById(data.user.id);
       }
     }
-  } catch (error) {
-    // Authentication is optional for public procedures.
+  } catch {
     user = null;
   }
 

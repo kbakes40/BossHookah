@@ -23,7 +23,7 @@ export default function AdminCustomers() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
 
-  const { data: customers, isLoading, refetch } = trpc.admin.getCustomers.useQuery({
+  const { data: customersData, isLoading, refetch } = trpc.admin.getCustomers.useQuery({
     page: 1,
     pageSize: 50,
   });
@@ -34,7 +34,7 @@ export default function AdminCustomers() {
     },
   });
 
-  const handleDelete = (customerId: number, customerName: string) => {
+  const handleDelete = (customerId: string, customerName: string) => {
     if (window.confirm(`Are you sure you want to delete customer "${customerName}"? This action cannot be undone.`)) {
       deleteCustomer.mutate({ customerId });
     }
@@ -62,6 +62,8 @@ export default function AdminCustomers() {
   if (!user || user.role !== "admin") {
     return null;
   }
+
+  const customers = customersData?.customers ?? [];
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
@@ -190,11 +192,7 @@ export default function AdminCustomers() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            customer.role === "admin" 
-                              ? "bg-purple-100 text-purple-800" 
-                              : "bg-gray-100 text-gray-800"
-                          }`}>
+                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
                             {customer.role}
                           </span>
                         </td>

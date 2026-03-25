@@ -1,14 +1,19 @@
 /**
- * Admin Router — All data operations use Supabase (bh_* tables)
- * MySQL/Drizzle has been fully replaced with Supabase REST API.
+ * Admin Router — Supabase bh_* tables (service role).
  */
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, adminProcedure } from "./_core/trpc";
 import { supabaseAdmin } from "./_core/supabaseAdmin";
+import {
+  mapOrderRow,
+  mapCustomerRow,
+  mapProductInventoryRow,
+  mapStoreSettingsRow,
+  storeSettingsToSnake,
+} from "./_core/supabaseMappers";
 
 export const adminRouter = router({
-  // ─── Dashboard Stats ───────────────────────────────────────────────────────
   getStats: adminProcedure.query(async () => {
     const [
       { count: totalOrders },
@@ -16,16 +21,18 @@ export const adminRouter = router({
       { count: totalProducts },
       { data: revenueData },
       { count: pendingOrders },
+      { count: lowStockProducts },
     ] = await Promise.all([
       supabaseAdmin.from("bh_orders").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("bh_customers").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("bh_products").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("bh_orders").select("total_amount").eq("status", "paid"),
-      supabaseAdmin.from("bh_orders").select("*", { count: "exact", head: true }).eq("fulfillment_status", "pending"),
+      supabaseAdmin.from("bh_orders").select("*", { count: "exact", head: true }).eq("status", "pending"),
+      supabaseAdmin.from("bh_products").select("*", { count: "exact", head: true }).lt("stock", 5),
     ]);
 
-    const totalRevenue = (revenueData || []).reduce(
-      (sum: number, o: any) => sum + (o.total_amount || 0),
+    const totalRevenueCents = (revenueData || []).reduce(
+      (sum: number, o: { total_amount?: number }) => sum + (o.total_amount || 0),
       0
     );
 
@@ -33,18 +40,22 @@ export const adminRouter = router({
       totalOrders: totalOrders || 0,
       totalCustomers: totalCustomers || 0,
       totalProducts: totalProducts || 0,
-      totalRevenue,
+      totalRevenueCents,
+      /** Paid orders only; dollars for dashboard display */
+      totalRevenue: totalRevenueCents / 100,
       pendingOrders: pendingOrders || 0,
+      lowStockProducts: lowStockProducts || 0,
     };
   }),
 
-  // ─── Orders ────────────────────────────────────────────────────────────────
   getOrders: adminProcedure
     .input(
       z.object({
         page: z.number().default(1),
         pageSize: z.number().default(20),
-        status: z.string().optional(),
+        status: z.string().optional().default("all"),
+        fulfillmentStatus: z.string().optional().default("all"),
+        deliveryMethod: z.string().optional().default("all"),
       })
     )
     .query(async ({ input }) => {
@@ -58,12 +69,18 @@ export const adminRouter = router({
       if (input.status && input.status !== "all") {
         query = query.eq("status", input.status);
       }
+      if (input.fulfillmentStatus && input.fulfillmentStatus !== "all") {
+        query = query.eq("fulfillment_status", input.fulfillmentStatus);
+      }
+      if (input.deliveryMethod && input.deliveryMethod !== "all") {
+        query = query.eq("delivery_method", input.deliveryMethod);
+      }
 
       const { data, count, error } = await query;
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
 
       return {
-        orders: data || [],
+        orders: (data || []).map(row => mapOrderRow(row as Record<string, unknown>)),
         total: count || 0,
         page: input.page,
         pageSize: input.pageSize,
@@ -79,13 +96,39 @@ export const adminRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const update: any = { updated_at: new Date().toISOString() };
+      const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
       if (input.status) update.status = input.status;
       if (input.fulfillmentStatus) update.fulfillment_status = input.fulfillmentStatus;
 
+      const { error } = await supabaseAdmin.from("bh_orders").update(update).eq("id", input.orderId);
+
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+      return { success: true };
+    }),
+
+  confirmZellePayment: adminProcedure
+    .input(z.object({ orderId: z.string() }))
+    .mutation(async ({ input }) => {
+      const { data: row, error: fetchError } = await supabaseAdmin
+        .from("bh_orders")
+        .select("id, payment_method, status")
+        .eq("id", input.orderId)
+        .maybeSingle();
+
+      if (fetchError) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: fetchError.message });
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
+
+      const r = row as { payment_method?: string; status?: string };
+      if (r.payment_method !== "zelle") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Not a Zelle order" });
+      }
+      if (r.status !== "pending") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Order is not pending payment" });
+      }
+
       const { error } = await supabaseAdmin
         .from("bh_orders")
-        .update(update)
+        .update({ status: "paid", updated_at: new Date().toISOString() })
         .eq("id", input.orderId);
 
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
@@ -95,16 +138,12 @@ export const adminRouter = router({
   deleteOrder: adminProcedure
     .input(z.object({ orderId: z.string() }))
     .mutation(async ({ input }) => {
-      const { error } = await supabaseAdmin
-        .from("bh_orders")
-        .delete()
-        .eq("id", input.orderId);
+      const { error } = await supabaseAdmin.from("bh_orders").delete().eq("id", input.orderId);
 
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       return { success: true };
     }),
 
-  // ─── Customers ─────────────────────────────────────────────────────────────
   getCustomers: adminProcedure
     .input(
       z.object({
@@ -122,16 +161,14 @@ export const adminRouter = router({
         .range(offset, offset + input.pageSize - 1);
 
       if (input.search) {
-        query = query.or(
-          `name.ilike.%${input.search}%,email.ilike.%${input.search}%`
-        );
+        query = query.or(`name.ilike.%${input.search}%,email.ilike.%${input.search}%`);
       }
 
       const { data, count, error } = await query;
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
 
       return {
-        customers: data || [],
+        customers: (data || []).map(row => mapCustomerRow(row as Record<string, unknown>)),
         total: count || 0,
         page: input.page,
         pageSize: input.pageSize,
@@ -141,16 +178,12 @@ export const adminRouter = router({
   deleteCustomer: adminProcedure
     .input(z.object({ customerId: z.string() }))
     .mutation(async ({ input }) => {
-      const { error } = await supabaseAdmin
-        .from("bh_customers")
-        .delete()
-        .eq("id", input.customerId);
+      const { error } = await supabaseAdmin.from("bh_customers").delete().eq("id", input.customerId);
 
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       return { success: true };
     }),
 
-  // ─── Products / Inventory ──────────────────────────────────────────────────
   getInventory: adminProcedure
     .input(
       z.object({
@@ -175,7 +208,7 @@ export const adminRouter = router({
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
 
       return {
-        items: data || [],
+        items: (data || []).map(row => mapProductInventoryRow(row as Record<string, unknown>)),
         total: count || 0,
         page: input.page,
         pageSize: input.pageSize,
@@ -228,14 +261,11 @@ export const adminRouter = router({
       return { success: true };
     }),
 
-  // ─── Store Settings ────────────────────────────────────────────────────────
   getStoreSettings: adminProcedure.query(async () => {
-    const { data } = await supabaseAdmin
-      .from("bh_store_settings")
-      .select("*")
-      .limit(1)
-      .single();
-    return data || null;
+    const { data, error } = await supabaseAdmin.from("bh_store_settings").select("*").limit(1).maybeSingle();
+
+    if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+    return mapStoreSettingsRow((data ?? null) as Record<string, unknown> | null);
   }),
 
   updateStoreSettings: adminProcedure
@@ -255,20 +285,31 @@ export const adminRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const { data: existing } = await supabaseAdmin
+      const updatedAt = new Date().toISOString();
+      const payload = storeSettingsToSnake(input, updatedAt);
+
+      const { data: existing, error: findError } = await supabaseAdmin
         .from("bh_store_settings")
         .select("id")
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (existing) {
-        await supabaseAdmin
+      if (findError) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: findError.message });
+
+      if (existing && (existing as { id?: string }).id) {
+        const { error } = await supabaseAdmin
           .from("bh_store_settings")
-          .update({ ...input, updated_at: new Date().toISOString() })
-          .eq("id", existing.id);
+          .update(payload)
+          .eq("id", (existing as { id: string }).id);
+        if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       } else {
-        await supabaseAdmin.from("bh_store_settings").insert(input);
+        const { error } = await supabaseAdmin.from("bh_store_settings").insert({
+          ...payload,
+          created_at: updatedAt,
+        });
+        if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       }
+
       return { success: true };
     }),
 });

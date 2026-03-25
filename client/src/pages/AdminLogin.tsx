@@ -1,20 +1,36 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSupabaseAuth } from "@/lib/SupabaseAuthProvider";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
+import { toast } from "sonner";
 
 export default function AdminLogin() {
-  const { signInWithEmail, signInWithGoogle, loading, isAuthenticated } = useSupabaseAuth();
+  const { signInWithEmail, signInWithGoogle, loading: sessionLoading, isAuthenticated: hasSession } = useSupabaseAuth();
+  const { user, loading: userLoading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const rejectedRef = useRef(false);
 
   useEffect(() => {
-    if (!loading && isAuthenticated) {
+    if (!hasSession) rejectedRef.current = false;
+  }, [hasSession]);
+
+  useEffect(() => {
+    if (sessionLoading || userLoading) return;
+    if (!hasSession || !isAuthenticated || !user) return;
+    if (user.role === "admin") {
       setLocation("/admin/dashboard");
+      return;
     }
-  }, [loading, isAuthenticated, setLocation]);
+    if (!rejectedRef.current) {
+      rejectedRef.current = true;
+      toast.error("This account does not have admin access.");
+      setLocation("/");
+    }
+  }, [sessionLoading, userLoading, hasSession, isAuthenticated, user, setLocation]);
 
   async function handleEmailLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -24,8 +40,6 @@ export default function AdminLogin() {
     setSubmitting(false);
     if (result.error) {
       setError(result.error);
-    } else {
-      setLocation("/admin/dashboard");
     }
   }
 
@@ -42,7 +56,7 @@ export default function AdminLogin() {
         {/* Google */}
         <button
           onClick={() => signInWithGoogle()}
-          disabled={loading}
+            disabled={sessionLoading}
           className="w-full flex items-center justify-center gap-3 rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-3 text-sm font-medium text-zinc-200 hover:border-[#d7ff3f] hover:text-[#d7ff3f] transition-colors mb-6"
         >
           <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
@@ -89,7 +103,7 @@ export default function AdminLogin() {
           )}
           <button
             type="submit"
-            disabled={submitting || loading}
+            disabled={submitting || sessionLoading}
             className="w-full rounded-xl bg-[#d7ff3f] text-zinc-900 font-semibold py-3 text-sm hover:bg-[#c8f030] transition-colors disabled:opacity-50 mt-2"
           >
             {submitting ? "Signing in…" : "Sign In"}

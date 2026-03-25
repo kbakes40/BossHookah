@@ -1,12 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
-import { DEFAULT_SUPABASE_URL } from "@shared/const";
-import { useSupabaseAuth } from "@/lib/SupabaseAuthProvider";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface Product { id: string; name: string; brand?: string; category: string; price: number; sale_price?: number; stock: number; sku: string; image_url?: string; badge?: string; in_stock?: boolean; featured?: boolean; trending?: boolean; description?: string; created_at: string; }
-interface Order { id: string; customer_name: string; customer_email: string; total: number; status: string; fulfillment_status: string; created_at: string; }
-interface Customer { id: string; name: string; email: string; phone: string; total_spent: number; order_count: number; created_at: string; }
+import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
@@ -95,63 +90,64 @@ function Td({ children, muted }: { children: React.ReactNode; muted?: boolean })
 type Section = "overview" | "orders" | "products" | "customers";
 
 export default function AdminDashboard() {
-  const { isAuthenticated, loading: authLoading, signOut, session } = useSupabaseAuth();
+  const { isAuthenticated, loading: authLoading, user, signOut } = useAuth();
   const [, setLocation] = useLocation();
 
   const [section, setSection] = useState<Section>("overview");
-  const [products, setProducts] = useState<Product[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [dataLoading, setDataLoading] = useState(true);
 
   const [prodPage, setProdPage] = useState(1);
   const [ordPage, setOrdPage] = useState(1);
   const [custPage, setCustPage] = useState(1);
   const PER = 10;
 
-  // Redirect if not authenticated
+  const adminReady = Boolean(isAuthenticated && user?.role === "admin");
+
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
+    if (authLoading) return;
+    if (!isAuthenticated) {
       setLocation("/admin");
+      return;
     }
-  }, [authLoading, isAuthenticated, setLocation]);
+    if (user && user.role !== "admin") {
+      setLocation("/");
+    }
+  }, [authLoading, isAuthenticated, user, setLocation]);
 
-  const fetchData = useCallback(async () => {
-    if (!session) return;
-    setDataLoading(true);
-    const anon =
-      (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim() ??
-      "";
-    const base =
-      (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() ||
-      DEFAULT_SUPABASE_URL;
-    const headers = {
-      Authorization: `Bearer ${session.access_token}`,
-      apikey: anon,
-      "Content-Type": "application/json",
-    };
+  const statsQuery = trpc.admin.getStats.useQuery(undefined, { enabled: adminReady });
+  const recentOrdersQuery = trpc.admin.getOrders.useQuery(
+    { page: 1, pageSize: 6, status: "all", fulfillmentStatus: "all", deliveryMethod: "all" },
+    { enabled: adminReady && section === "overview" }
+  );
+  const ordersListQuery = trpc.admin.getOrders.useQuery(
+    { page: ordPage, pageSize: PER, status: "all", fulfillmentStatus: "all", deliveryMethod: "all" },
+    { enabled: adminReady && section === "orders" }
+  );
+  const productsQuery = trpc.admin.getInventory.useQuery(
+    { page: prodPage, pageSize: PER },
+    { enabled: adminReady && section === "products" }
+  );
+  const customersQuery = trpc.admin.getCustomers.useQuery(
+    { page: custPage, pageSize: PER },
+    { enabled: adminReady && section === "customers" }
+  );
 
-    const [pRes, oRes, cRes] = await Promise.all([
-      fetch(`${base}/rest/v1/bh_products?select=*&order=created_at.desc`, { headers }),
-      fetch(`${base}/rest/v1/bh_orders?select=*&order=created_at.desc`, { headers }),
-      fetch(`${base}/rest/v1/bh_customers?select=*&order=created_at.desc`, { headers }),
-    ]);
-
-    const [p, o, c] = await Promise.all([
-      pRes.ok ? pRes.json() : [],
-      oRes.ok ? oRes.json() : [],
-      cRes.ok ? cRes.json() : [],
-    ]);
-
-    setProducts(p);
-    setOrders(o);
-    setCustomers(c);
-    setDataLoading(false);
-  }, [session]);
-
-  useEffect(() => {
-    if (isAuthenticated) fetchData();
-  }, [isAuthenticated, fetchData]);
+  const dataLoading = useMemo(() => {
+    if (!adminReady) return true;
+    if (statsQuery.isLoading) return true;
+    if (section === "overview" && recentOrdersQuery.isLoading) return true;
+    if (section === "orders" && ordersListQuery.isLoading) return true;
+    if (section === "products" && productsQuery.isLoading) return true;
+    if (section === "customers" && customersQuery.isLoading) return true;
+    return false;
+  }, [
+    adminReady,
+    statsQuery.isLoading,
+    section,
+    recentOrdersQuery.isLoading,
+    ordersListQuery.isLoading,
+    productsQuery.isLoading,
+    customersQuery.isLoading,
+  ]);
 
   if (authLoading) {
     return (
@@ -161,13 +157,30 @@ export default function AdminDashboard() {
     );
   }
 
-  const totalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
-  const pendingOrders = orders.filter(o => o.status === "pending").length;
-  const lowStock = products.filter(p => p.stock < 5).length;
+  if (!adminReady) {
+    return (
+      <main className="min-h-screen bg-[#d7ff3f] flex items-center justify-center px-4">
+        <div className="rounded-[28px] bg-[#050505] px-8 py-6 text-zinc-400 text-sm text-center max-w-md">
+          Checking admin access… If this lasts more than a few seconds, confirm your Supabase{" "}
+          <code className="text-zinc-300">profiles</code> table matches the migration and that{" "}
+          <code className="text-zinc-300">SUPABASE_SERVICE_ROLE_KEY</code> is set on the server.
+        </div>
+      </main>
+    );
+  }
 
-  const prodSlice = products.slice((prodPage - 1) * PER, prodPage * PER);
-  const ordSlice = orders.slice((ordPage - 1) * PER, ordPage * PER);
-  const custSlice = customers.slice((custPage - 1) * PER, custPage * PER);
+  const stats = statsQuery.data;
+  const overviewOrders = recentOrdersQuery.data?.orders ?? [];
+  const listOrders = ordersListQuery.data?.orders ?? [];
+  const orderTotalCount = ordersListQuery.data?.total ?? 0;
+  const prodItems = productsQuery.data?.items ?? [];
+  const productTotalCount = productsQuery.data?.total ?? 0;
+  const custRows = customersQuery.data?.customers ?? [];
+  const customerTotalCount = customersQuery.data?.total ?? 0;
+
+  const totalRevenue = stats?.totalRevenue ?? 0;
+  const pendingOrders = stats?.pendingOrders ?? 0;
+  const lowStock = stats?.lowStockProducts ?? 0;
 
   const now = new Date();
 
@@ -228,26 +241,26 @@ export default function AdminDashboard() {
                 {section === "overview" && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                      <StatCard label="Products" value={products.length} sub="in catalog" />
-                      <StatCard label="Orders" value={orders.length} sub={`${pendingOrders} pending`} />
+                      <StatCard label="Products" value={stats?.totalProducts ?? 0} sub="in catalog" />
+                      <StatCard label="Orders" value={stats?.totalOrders ?? 0} sub={`${pendingOrders} pending`} />
                       <StatCard label="Revenue" value={`$${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} sub="all time" />
-                      <StatCard label="Customers" value={customers.length} sub={`${lowStock} low stock`} />
+                      <StatCard label="Customers" value={stats?.totalCustomers ?? 0} sub={`${lowStock} low stock`} />
                     </div>
                     <div className="rounded-2xl border border-zinc-900/80 bg-zinc-950/60 overflow-hidden">
                       <div className="px-4 py-3 border-b border-zinc-900/80 flex items-center justify-between">
                         <p className="text-xs font-medium text-zinc-300">Recent Orders</p>
                         <button onClick={() => setSection("orders")} className="text-[11px] text-[#d7ff3f] hover:underline">View all</button>
                       </div>
-                      {orders.length === 0 ? <EmptyState msg="No orders yet." /> : (
+                      {overviewOrders.length === 0 ? <EmptyState msg="No orders yet." /> : (
                         <table className="w-full text-xs">
                           <thead><tr><Th>Customer</Th><Th>Total</Th><Th>Status</Th><Th>Date</Th></tr></thead>
                           <tbody className="divide-y divide-zinc-900/60">
-                            {orders.slice(0, 6).map(o => (
+                            {overviewOrders.map(o => (
                               <tr key={o.id} className="hover:bg-zinc-900/30 transition-colors">
-                                <Td>{o.customer_name || "—"}</Td>
-                                <Td>${(o.total || 0).toFixed(2)}</Td>
+                                <Td>{o.customerName || "—"}</Td>
+                                <Td>${((o.totalAmount || 0) / 100).toFixed(2)}</Td>
                                 <Td><StatusBadge status={o.status} /></Td>
-                                <Td muted>{new Date(o.created_at).toLocaleDateString()}</Td>
+                                <Td muted>{new Date(o.createdAt).toLocaleDateString()}</Td>
                               </tr>
                             ))}
                           </tbody>
@@ -274,26 +287,26 @@ export default function AdminDashboard() {
                 {section === "orders" && (
                   <div className="rounded-2xl border border-zinc-900/80 bg-zinc-950/60 overflow-hidden">
                     <div className="px-4 py-3 border-b border-zinc-900/80">
-                      <p className="text-xs font-medium text-zinc-300">All Orders <span className="text-zinc-600">({orders.length})</span></p>
+                      <p className="text-xs font-medium text-zinc-300">All Orders <span className="text-zinc-600">({orderTotalCount})</span></p>
                     </div>
-                    {orders.length === 0 ? <EmptyState msg="No orders yet." /> : (
+                    {listOrders.length === 0 ? <EmptyState msg="No orders yet." /> : (
                       <>
                         <table className="w-full text-xs">
                           <thead><tr><Th>Customer</Th><Th>Email</Th><Th>Total</Th><Th>Status</Th><Th>Fulfillment</Th><Th>Date</Th></tr></thead>
                           <tbody className="divide-y divide-zinc-900/60">
-                            {ordSlice.map(o => (
+                            {listOrders.map(o => (
                               <tr key={o.id} className="hover:bg-zinc-900/30 transition-colors">
-                                <Td>{o.customer_name || "—"}</Td>
-                                <Td muted>{o.customer_email || "—"}</Td>
-                                <Td>${(o.total || 0).toFixed(2)}</Td>
+                                <Td>{o.customerName || "—"}</Td>
+                                <Td muted>{o.customerEmail || "—"}</Td>
+                                <Td>${((o.totalAmount || 0) / 100).toFixed(2)}</Td>
                                 <Td><StatusBadge status={o.status} /></Td>
-                                <Td><StatusBadge status={o.fulfillment_status || "pending"} /></Td>
-                                <Td muted>{new Date(o.created_at).toLocaleDateString()}</Td>
+                                <Td><StatusBadge status={o.fulfillmentStatus || "pending"} /></Td>
+                                <Td muted>{new Date(o.createdAt).toLocaleDateString()}</Td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
-                        <div className="px-4 pb-4"><Pagination page={ordPage} total={orders.length} perPage={PER} onChange={setOrdPage} /></div>
+                        <div className="px-4 pb-4"><Pagination page={ordPage} total={orderTotalCount} perPage={PER} onChange={setOrdPage} /></div>
                       </>
                     )}
                   </div>
@@ -303,18 +316,18 @@ export default function AdminDashboard() {
                 {section === "products" && (
                   <div className="rounded-2xl border border-zinc-900/80 bg-zinc-950/60 overflow-hidden">
                     <div className="px-4 py-3 border-b border-zinc-900/80">
-                      <p className="text-xs font-medium text-zinc-300">Products <span className="text-zinc-600">({products.length})</span></p>
+                      <p className="text-xs font-medium text-zinc-300">Products <span className="text-zinc-600">({productTotalCount})</span></p>
                     </div>
-                    {products.length === 0 ? <EmptyState msg="No products yet." /> : (
+                    {prodItems.length === 0 ? <EmptyState msg="No products yet." /> : (
                       <>
                         <table className="w-full text-xs">
                           <thead><tr><Th>Product</Th><Th>Brand</Th><Th>Category</Th><Th>Price</Th><Th>Stock</Th><Th>Status</Th><Th>SKU</Th></tr></thead>
                           <tbody className="divide-y divide-zinc-900/60">
-                            {prodSlice.map(p => (
+                            {prodItems.map(p => (
                               <tr key={p.id} className="hover:bg-zinc-900/30 transition-colors">
                                 <Td>
                                   <div className="flex items-center gap-2">
-                                    {p.image_url && <img src={p.image_url} alt={p.name} className="w-8 h-8 rounded-lg object-cover bg-zinc-800" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
+                                    {p.imageUrl && <img src={p.imageUrl} alt={p.name} className="w-8 h-8 rounded-lg object-cover bg-zinc-800" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
                                     <div>
                                       <p className="text-zinc-200 font-medium">{p.name}</p>
                                       {p.badge && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#1f2619] text-[#d7ff3f] font-semibold">{p.badge}</span>}
@@ -325,12 +338,14 @@ export default function AdminDashboard() {
                                 <Td muted>{p.category || "—"}</Td>
                                 <Td>
                                   <span className="text-zinc-200">${(p.price || 0).toFixed(2)}</span>
-                                  {p.sale_price && <span className="ml-1 text-[10px] text-[#d7ff3f]">→ ${p.sale_price.toFixed(2)}</span>}
+                                  {p.salePrice != null && p.salePrice > 0 && (
+                                    <span className="ml-1 text-[10px] text-[#d7ff3f]">→ ${p.salePrice.toFixed(2)}</span>
+                                  )}
                                 </Td>
-                                <Td><span className={p.stock < 5 ? "text-red-400 font-medium" : "text-zinc-200"}>{p.stock}</span></Td>
+                                <Td><span className={p.stockQuantity < 5 ? "text-red-400 font-medium" : "text-zinc-200"}>{p.stockQuantity}</span></Td>
                                 <Td>
-                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${p.in_stock !== false ? 'bg-[#1f2619] text-[#d7ff3f]' : 'bg-red-900/60 text-red-300'}`}>
-                                    {p.in_stock !== false ? 'In Stock' : 'Out of Stock'}
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${p.inStock ? 'bg-[#1f2619] text-[#d7ff3f]' : 'bg-red-900/60 text-red-300'}`}>
+                                    {p.inStock ? 'In Stock' : 'Out of Stock'}
                                   </span>
                                 </Td>
                                 <Td muted>{p.sku || "—"}</Td>
@@ -338,7 +353,7 @@ export default function AdminDashboard() {
                             ))}
                           </tbody>
                         </table>
-                        <div className="px-4 pb-4"><Pagination page={prodPage} total={products.length} perPage={PER} onChange={setProdPage} /></div>
+                        <div className="px-4 pb-4"><Pagination page={prodPage} total={productTotalCount} perPage={PER} onChange={setProdPage} /></div>
                       </>
                     )}
                   </div>
@@ -348,25 +363,25 @@ export default function AdminDashboard() {
                 {section === "customers" && (
                   <div className="rounded-2xl border border-zinc-900/80 bg-zinc-950/60 overflow-hidden">
                     <div className="px-4 py-3 border-b border-zinc-900/80">
-                      <p className="text-xs font-medium text-zinc-300">Customers <span className="text-zinc-600">({customers.length})</span></p>
+                      <p className="text-xs font-medium text-zinc-300">Customers <span className="text-zinc-600">({customerTotalCount})</span></p>
                     </div>
-                    {customers.length === 0 ? <EmptyState msg="No customers yet." /> : (
+                    {custRows.length === 0 ? <EmptyState msg="No customers yet." /> : (
                       <>
                         <table className="w-full text-xs">
                           <thead><tr><Th>Name</Th><Th>Email</Th><Th>Phone</Th><Th>Orders</Th><Th>Total Spent</Th></tr></thead>
                           <tbody className="divide-y divide-zinc-900/60">
-                            {custSlice.map(c => (
+                            {custRows.map(c => (
                               <tr key={c.id} className="hover:bg-zinc-900/30 transition-colors">
                                 <Td>{c.name || "—"}</Td>
                                 <Td muted>{c.email || "—"}</Td>
                                 <Td muted>{c.phone || "—"}</Td>
-                                <Td>{c.order_count}</Td>
-                                <Td>${(c.total_spent || 0).toFixed(2)}</Td>
+                                <Td>{c.orderCount}</Td>
+                                <Td>${(c.totalSpent || 0).toFixed(2)}</Td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
-                        <div className="px-4 pb-4"><Pagination page={custPage} total={customers.length} perPage={PER} onChange={setCustPage} /></div>
+                        <div className="px-4 pb-4"><Pagination page={custPage} total={customerTotalCount} perPage={PER} onChange={setCustPage} /></div>
                       </>
                     )}
                   </div>

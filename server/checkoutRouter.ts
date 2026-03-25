@@ -1,10 +1,12 @@
 /**
- * Checkout Router - Handles Stripe checkout session creation
+ * Checkout Router - Stripe checkout session + Zelle orders (Supabase bh_orders)
  */
 
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "./_core/trpc";
 import { createCheckoutSession } from "./stripe";
+import { supabaseAdmin } from "./_core/supabaseAdmin";
 
 export const checkoutRouter = router({
   createSession: publicProcedure
@@ -24,17 +26,18 @@ export const checkoutRouter = router({
     .mutation(async ({ ctx, input }) => {
       try {
         const origin = ctx.req.headers.origin || "http://localhost:3000";
-        console.log('[Checkout] Creating session with:', {
+        const userId = ctx.user?.id ?? "anonymous";
+        console.log("[Checkout] Creating session with:", {
           origin,
-          userId: ctx.user?.id || 0,
+          userId,
           userEmail: ctx.user?.email || "",
           userName: ctx.user?.name || "Guest",
           deliveryMethod: input.deliveryMethod,
           itemCount: input.items.length,
         });
-        
+
         const session = await createCheckoutSession({
-          userId: ctx.user?.id || 0,
+          userId,
           userEmail: ctx.user?.email || "",
           userName: ctx.user?.name || "Guest",
           items: input.items,
@@ -43,20 +46,20 @@ export const checkoutRouter = router({
           cancelUrl: `${origin}/checkout/cancel`,
         });
 
-        console.log('[Checkout] Session created successfully:', session.sessionId);
+        console.log("[Checkout] Session created successfully:", session.sessionId);
         return session;
-      } catch (error: any) {
-        console.error('[Checkout] Error creating session:', {
-          message: error?.message,
-          type: error?.type,
-          code: error?.code,
-          stack: error?.stack,
+      } catch (error: unknown) {
+        const err = error as { message?: string; type?: string; code?: string; stack?: string };
+        console.error("[Checkout] Error creating session:", {
+          message: err?.message,
+          type: err?.type,
+          code: err?.code,
+          stack: err?.stack,
         });
         throw error;
       }
     }),
 
-  // Create Zelle order (pending payment confirmation)
   createZelleOrder: publicProcedure
     .input(
       z.object({
@@ -71,59 +74,59 @@ export const checkoutRouter = router({
         deliveryMethod: z.enum(["shipping", "pickup"]).default("shipping"),
         customerName: z.string(),
         customerPhone: z.string(),
+        /** Cart total in cents (matches Stripe `amount_total`) */
         totalAmount: z.number(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { getDb } = await import("./db");
-      const { orders } = await import("../drizzle/schema");
-      const { TRPCError } = await import("@trpc/server");
+      const now = new Date().toISOString();
+      const zelleRef = `zelle_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      console.log("[Zelle Checkout] Creating order with:", {
+        userId: ctx.user?.id ?? null,
+        customerName: input.customerName,
+        customerPhone: input.customerPhone,
+        deliveryMethod: input.deliveryMethod,
+        totalAmount: input.totalAmount,
+        itemCount: input.items.length,
+      });
 
-      try {
-        console.log('[Zelle Checkout] Creating order with:', {
-          userId: ctx.user?.id || 0,
-          customerName: input.customerName,
-          customerPhone: input.customerPhone,
-          deliveryMethod: input.deliveryMethod,
-          totalAmount: input.totalAmount,
-          itemCount: input.items.length,
-        });
-
-        // Create order with pending status
-        const [order] = await db.insert(orders).values({
-          userId: ctx.user?.id || 0,
-          stripePaymentIntentId: `zelle_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // Unique ID for Zelle orders
-          stripeCheckoutSessionId: null,
-          customerName: input.customerName,
-          customerPhone: input.customerPhone,
-          deliveryMethod: input.deliveryMethod,
-          paymentMethod: "zelle",
+      const { data: inserted, error } = await supabaseAdmin
+        .from("bh_orders")
+        .insert({
           status: "pending",
-          fulfillmentStatus: "pending",
-          totalAmount: input.totalAmount,
+          fulfillment_status: "pending",
+          total_amount: input.totalAmount,
           currency: "usd",
-          items: JSON.stringify(input.items),
-          shippingAddress: null,
-        }).$returningId();
+          customer_name: input.customerName,
+          customer_email: ctx.user?.email?.trim() || null,
+          customer_phone: input.customerPhone,
+          stripe_session_id: null,
+          stripe_payment_intent: zelleRef,
+          payment_method: "zelle",
+          delivery_method: input.deliveryMethod,
+          items: input.items,
+          shipping_address: null,
+          created_at: now,
+          updated_at: now,
+        })
+        .select("id")
+        .single();
 
-        console.log('[Zelle Checkout] Order created successfully:', order.id);
-
-        return {
-          orderId: order.id,
-          success: true,
-        };
-      } catch (error: any) {
-        console.error('[Zelle Checkout] Error creating order:', {
-          message: error?.message,
-          stack: error?.stack,
-        });
+      if (error) {
+        console.error("[Zelle Checkout] Supabase error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create Zelle order",
+          message: error.message || "Failed to create Zelle order",
         });
       }
+
+      const orderId = String((inserted as { id: string })?.id ?? "");
+      console.log("[Zelle Checkout] Order created successfully:", orderId);
+
+      return {
+        orderId,
+        success: true,
+      };
     }),
 });

@@ -13,7 +13,7 @@ import { Copy, CheckCircle2, MapPin, Phone, Mail } from "lucide-react";
 export default function ZelleCheckout() {
   const [, setLocation] = useLocation();
   const { items, cartTotal, clearCart } = useCart();
-  const [orderId, setOrderId] = useState<number | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");

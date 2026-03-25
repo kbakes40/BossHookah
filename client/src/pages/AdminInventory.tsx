@@ -39,7 +39,7 @@ export default function AdminInventory() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
   const [categoryFilter, setCategoryFilter] = useState<string | undefined>(undefined);
-  const [editingStock, setEditingStock] = useState<{id: number, quantity: number} | null>(null);
+  const [editingStock, setEditingStock] = useState<{ id: string; quantity: number } | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [newItem, setNewItem] = useState({
     productId: "",
@@ -53,7 +53,7 @@ export default function AdminInventory() {
     sku: "",
   });
 
-  const { data: inventoryItems, isLoading, refetch } = trpc.admin.getInventory.useQuery({
+  const { data: inventoryData, isLoading, refetch } = trpc.admin.getInventory.useQuery({
     page: 1,
     pageSize: 100,
     category: categoryFilter,
@@ -115,6 +115,8 @@ export default function AdminInventory() {
     return null;
   }
 
+  const inventoryItems = inventoryData?.items ?? [];
+
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
     { icon: ShoppingCart, label: "Orders", path: "/admin/orders" },
@@ -122,17 +124,25 @@ export default function AdminInventory() {
     { icon: Package, label: "Inventory", path: "/admin/inventory" },
   ];
 
-  const handleStockUpdate = (id: number) => {
+  const handleStockUpdate = (id: string) => {
     if (editingStock && editingStock.id === id) {
       updateStock.mutate({
-        inventoryId: id,
-        stockQuantity: editingStock.quantity,
+        productId: id,
+        stock: editingStock.quantity,
       });
     }
   };
 
   const handleAddItem = () => {
-    addItem.mutate(newItem);
+    addItem.mutate({
+      name: newItem.productName,
+      brand: newItem.brand || undefined,
+      category: newItem.category,
+      price: newItem.price,
+      stock: newItem.stockQuantity,
+      sku: newItem.sku || undefined,
+      in_stock: true,
+    });
   };
 
   return (
@@ -421,7 +431,7 @@ export default function AdminInventory() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${(item.price / 100).toFixed(2)}
+                          ${Number(item.price).toFixed(2)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           <Button variant="ghost" size="sm">

@@ -1,68 +1,75 @@
 /**
- * Store Router - Public endpoints for store information
+ * Store Router — public catalog/supporting checkout (Supabase bh_*)
  */
 
+import { z } from "zod";
 import { router, publicProcedure } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
-import { getDb } from "./db";
-import { storeSettings, orders } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
-import { z } from "zod";
+import { supabaseAdmin } from "./_core/supabaseAdmin";
+import { mapStoreSettingsRow } from "./_core/supabaseMappers";
+
+const defaultStoreSettings = () =>
+  mapStoreSettingsRow({
+    id: null,
+    store_name: "The Boss Hookah Wholesale",
+    address: "6520 Greenfield Rd",
+    city: "Dearborn",
+    state: "MI",
+    zip_code: "48126",
+    phone: "(313) 406-6589",
+    email: "info@bosshookah.com",
+    hours: "Open Daily\nCloses 1:00 AM",
+    pickup_instructions:
+      "Please bring your order confirmation and a valid ID when picking up your order. Call us at (313) 406-6589 if you have any questions.",
+    zelle_email: null,
+    zelle_phone: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  })!;
 
 export const storeRouter = router({
-  // Get store settings (public endpoint for checkout success page)
   getSettings: publicProcedure.query(async () => {
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const { data, error } = await supabaseAdmin
+      .from("bh_store_settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
 
-    const settings = await db.select().from(storeSettings).limit(1);
-    
-    if (!settings || settings.length === 0) {
-      // Return default settings if none exist
-      return {
-        id: 0,
-        storeName: "The Boss Hookah Wholesale",
-        address: "6520 Greenfield Rd",
-        city: "Dearborn",
-        state: "MI",
-        zipCode: "48126",
-        phone: "(313) 406-6589",
-        email: "info@bosshookah.com",
-        hours: "Open Daily\nCloses 1:00 AM",
-        pickupInstructions: "Please bring your order confirmation and a valid ID when picking up your order. Call us at (313) 406-6589 if you have any questions.",
-        zelleEmail: null,
-        zellePhone: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+    if (error) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
     }
 
-    return settings[0];
+    return mapStoreSettingsRow((data ?? null) as Record<string, unknown> | null) ?? defaultStoreSettings();
   }),
 
-  // Get order by Stripe session ID (public endpoint for checkout success page)
   getOrderBySessionId: publicProcedure
     .input(z.object({ sessionId: z.string() }))
     .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
-      const [order] = await db
-        .select({
-          id: orders.id,
-          stripeCheckoutSessionId: orders.stripeCheckoutSessionId,
-          totalAmount: orders.totalAmount,
-          deliveryMethod: orders.deliveryMethod,
-          createdAt: orders.createdAt,
-        })
-        .from(orders)
-        .where(eq(orders.stripeCheckoutSessionId, input.sessionId))
-        .limit(1);
-
-      if (!order) {
+      if (!input.sessionId) {
         return null;
       }
 
-      return order;
+      const { data, error } = await supabaseAdmin
+        .from("bh_orders")
+        .select("id, stripe_session_id, total_amount, delivery_method, created_at")
+        .eq("stripe_session_id", input.sessionId)
+        .maybeSingle();
+
+      if (error) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+      }
+
+      if (!data) {
+        return null;
+      }
+
+      const row = data as Record<string, unknown>;
+      return {
+        id: String(row.id ?? ""),
+        stripeCheckoutSessionId: (row.stripe_session_id as string) ?? null,
+        totalAmount: Number(row.total_amount) || 0,
+        deliveryMethod: String(row.delivery_method ?? "shipping"),
+        createdAt: String(row.created_at ?? new Date().toISOString()),
+      };
     }),
 });

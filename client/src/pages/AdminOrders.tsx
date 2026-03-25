@@ -32,7 +32,7 @@ export default function AdminOrders() {
   const [fulfillmentFilter, setFulfillmentFilter] = useState<"all" | "pending" | "ready_to_ship" | "shipped" | "delivered">("all");
   const [deliveryFilter, setDeliveryFilter] = useState<"all" | "shipping" | "pickup">("all");
 
-  const { data: orders, isLoading, refetch } = trpc.admin.getOrders.useQuery({
+  const { data: ordersData, isLoading, refetch } = trpc.admin.getOrders.useQuery({
     page: 1,
     pageSize: 50,
     status: statusFilter,
@@ -92,6 +92,8 @@ export default function AdminOrders() {
   if (!user || user.role !== "admin") {
     return null;
   }
+
+  const orders = ordersData?.orders ?? [];
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
