@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
@@ -98,7 +100,32 @@ export default function AdminDashboard() {
   const [prodPage, setProdPage] = useState(1);
   const [ordPage, setOrdPage] = useState(1);
   const [custPage, setCustPage] = useState(1);
-  const PER = 10;
+  const ORDERS_PER = 10;
+  const PRODUCTS_PER = 50;
+  const PROFILES_PER = 50;
+
+  const [inventorySearch, setInventorySearch] = useState("");
+  const [debouncedInventorySearch, setDebouncedInventorySearch] = useState("");
+  const [profileSearch, setProfileSearch] = useState("");
+  const [debouncedProfileSearch, setDebouncedProfileSearch] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedInventorySearch(inventorySearch), 300);
+    return () => clearTimeout(t);
+  }, [inventorySearch]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedProfileSearch(profileSearch), 300);
+    return () => clearTimeout(t);
+  }, [profileSearch]);
+
+  useEffect(() => {
+    setProdPage(1);
+  }, [debouncedInventorySearch]);
+
+  useEffect(() => {
+    setCustPage(1);
+  }, [debouncedProfileSearch]);
 
   const adminReady = Boolean(isAuthenticated && user?.role === "admin");
 
@@ -119,17 +146,35 @@ export default function AdminDashboard() {
     { enabled: adminReady && section === "overview" }
   );
   const ordersListQuery = trpc.admin.getOrders.useQuery(
-    { page: ordPage, pageSize: PER, status: "all", fulfillmentStatus: "all", deliveryMethod: "all" },
+    { page: ordPage, pageSize: ORDERS_PER, status: "all", fulfillmentStatus: "all", deliveryMethod: "all" },
     { enabled: adminReady && section === "orders" }
   );
   const productsQuery = trpc.admin.getInventory.useQuery(
-    { page: prodPage, pageSize: PER },
+    {
+      page: prodPage,
+      pageSize: PRODUCTS_PER,
+      search: debouncedInventorySearch.trim() || undefined,
+    },
     { enabled: adminReady && section === "products" }
   );
-  const customersQuery = trpc.admin.getCustomers.useQuery(
-    { page: custPage, pageSize: PER },
+  const profilesQuery = trpc.admin.getProfiles.useQuery(
+    {
+      page: custPage,
+      pageSize: PROFILES_PER,
+      search: debouncedProfileSearch.trim() || undefined,
+    },
     { enabled: adminReady && section === "customers" }
   );
+
+  const updateOrderStatus = trpc.admin.updateOrderStatus.useMutation({
+    onSuccess: () => {
+      toast.success("Order updated");
+      void ordersListQuery.refetch();
+      void recentOrdersQuery.refetch();
+      void statsQuery.refetch();
+    },
+    onError: err => toast.error(err.message || "Could not update order"),
+  });
 
   const dataLoading = useMemo(() => {
     if (!adminReady) return true;
@@ -137,7 +182,7 @@ export default function AdminDashboard() {
     if (section === "overview" && recentOrdersQuery.isLoading) return true;
     if (section === "orders" && ordersListQuery.isLoading) return true;
     if (section === "products" && productsQuery.isLoading) return true;
-    if (section === "customers" && customersQuery.isLoading) return true;
+    if (section === "customers" && profilesQuery.isLoading) return true;
     return false;
   }, [
     adminReady,
@@ -146,7 +191,7 @@ export default function AdminDashboard() {
     recentOrdersQuery.isLoading,
     ordersListQuery.isLoading,
     productsQuery.isLoading,
-    customersQuery.isLoading,
+    profilesQuery.isLoading,
   ]);
 
   if (authLoading) {
@@ -175,8 +220,8 @@ export default function AdminDashboard() {
   const orderTotalCount = ordersListQuery.data?.total ?? 0;
   const prodItems = productsQuery.data?.items ?? [];
   const productTotalCount = productsQuery.data?.total ?? 0;
-  const custRows = customersQuery.data?.customers ?? [];
-  const customerTotalCount = customersQuery.data?.total ?? 0;
+  const profileRows = profilesQuery.data?.profiles ?? [];
+  const profileTotalCount = profilesQuery.data?.total ?? 0;
 
   const totalRevenue = stats?.totalRevenue ?? 0;
   const pendingOrders = stats?.pendingOrders ?? 0;
@@ -291,22 +336,60 @@ export default function AdminDashboard() {
                     </div>
                     {listOrders.length === 0 ? <EmptyState msg="No orders yet." /> : (
                       <>
-                        <table className="w-full text-xs">
-                          <thead><tr><Th>Customer</Th><Th>Email</Th><Th>Total</Th><Th>Status</Th><Th>Fulfillment</Th><Th>Date</Th></tr></thead>
+                        <div className="overflow-x-auto">
+                        <table className="w-full text-xs min-w-[720px]">
+                          <thead><tr><Th>Customer</Th><Th>Email</Th><Th>Total</Th><Th>Payment</Th><Th>Fulfillment</Th><Th>Date</Th></tr></thead>
                           <tbody className="divide-y divide-zinc-900/60">
                             {listOrders.map(o => (
                               <tr key={o.id} className="hover:bg-zinc-900/30 transition-colors">
                                 <Td>{o.customerName || "—"}</Td>
                                 <Td muted>{o.customerEmail || "—"}</Td>
                                 <Td>${((o.totalAmount || 0) / 100).toFixed(2)}</Td>
-                                <Td><StatusBadge status={o.status} /></Td>
-                                <Td><StatusBadge status={o.fulfillmentStatus || "pending"} /></Td>
+                                <Td>
+                                  <select
+                                    value={o.status}
+                                    disabled={updateOrderStatus.isPending}
+                                    onChange={e =>
+                                      updateOrderStatus.mutate({
+                                        orderId: o.id,
+                                        status: e.target.value,
+                                      })
+                                    }
+                                    className="max-w-[9rem] rounded-lg border border-zinc-700 bg-zinc-900 px-2 py-1 text-[11px] text-zinc-200"
+                                  >
+                                    <option value="pending">Pending</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="failed">Failed</option>
+                                    <option value="refunded">Refunded</option>
+                                    <option value="cancelled">Cancelled</option>
+                                    <option value="completed">Completed</option>
+                                  </select>
+                                </Td>
+                                <Td>
+                                  <select
+                                    value={o.fulfillmentStatus || "pending"}
+                                    disabled={updateOrderStatus.isPending}
+                                    onChange={e =>
+                                      updateOrderStatus.mutate({
+                                        orderId: o.id,
+                                        fulfillmentStatus: e.target.value,
+                                      })
+                                    }
+                                    className="max-w-[9rem] rounded-lg border border-zinc-700 bg-zinc-900 px-2 py-1 text-[11px] text-zinc-200"
+                                  >
+                                    <option value="pending">Pending</option>
+                                    <option value="ready_to_ship">Ready to ship</option>
+                                    <option value="shipped">Shipped</option>
+                                    <option value="delivered">Delivered</option>
+                                  </select>
+                                </Td>
                                 <Td muted>{new Date(o.createdAt).toLocaleDateString()}</Td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
-                        <div className="px-4 pb-4"><Pagination page={ordPage} total={orderTotalCount} perPage={PER} onChange={setOrdPage} /></div>
+                        </div>
+                        <div className="px-4 pb-4"><Pagination page={ordPage} total={orderTotalCount} perPage={ORDERS_PER} onChange={setOrdPage} /></div>
                       </>
                     )}
                   </div>
@@ -315,8 +398,16 @@ export default function AdminDashboard() {
                 {/* PRODUCTS */}
                 {section === "products" && (
                   <div className="rounded-2xl border border-zinc-900/80 bg-zinc-950/60 overflow-hidden">
-                    <div className="px-4 py-3 border-b border-zinc-900/80">
-                      <p className="text-xs font-medium text-zinc-300">Products <span className="text-zinc-600">({productTotalCount})</span></p>
+                    <div className="px-4 py-3 border-b border-zinc-900/80 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-xs font-medium text-zinc-300">Inventory <span className="text-zinc-600">({productTotalCount})</span></p>
+                      <div className="w-full sm:max-w-xs">
+                        <Input
+                          value={inventorySearch}
+                          onChange={e => setInventorySearch(e.target.value)}
+                          placeholder="Search name, brand, SKU, category…"
+                          className="h-9 text-xs bg-zinc-900/80 border-zinc-700 text-zinc-100 placeholder:text-zinc-600"
+                        />
+                      </div>
                     </div>
                     {prodItems.length === 0 ? <EmptyState msg="No products yet." /> : (
                       <>
@@ -353,7 +444,7 @@ export default function AdminDashboard() {
                             ))}
                           </tbody>
                         </table>
-                        <div className="px-4 pb-4"><Pagination page={prodPage} total={productTotalCount} perPage={PER} onChange={setProdPage} /></div>
+                        <div className="px-4 pb-4"><Pagination page={prodPage} total={productTotalCount} perPage={PRODUCTS_PER} onChange={setProdPage} /></div>
                       </>
                     )}
                   </div>
@@ -362,26 +453,40 @@ export default function AdminDashboard() {
                 {/* CUSTOMERS */}
                 {section === "customers" && (
                   <div className="rounded-2xl border border-zinc-900/80 bg-zinc-950/60 overflow-hidden">
-                    <div className="px-4 py-3 border-b border-zinc-900/80">
-                      <p className="text-xs font-medium text-zinc-300">Customers <span className="text-zinc-600">({customerTotalCount})</span></p>
+                    <div className="px-4 py-3 border-b border-zinc-900/80 flex flex-col gap-2">
+                      <div className="flex flex-col gap-1">
+                        <p className="text-xs font-medium text-zinc-300">Site sign-ins <span className="text-zinc-600">({profileTotalCount})</span></p>
+                        <p className="text-[10px] text-zinc-600">Every email that has logged in (Supabase profiles).</p>
+                      </div>
+                      <div className="w-full sm:max-w-xs">
+                        <Input
+                          value={profileSearch}
+                          onChange={e => setProfileSearch(e.target.value)}
+                          placeholder="Search email or name…"
+                          className="h-9 text-xs bg-zinc-900/80 border-zinc-700 text-zinc-100 placeholder:text-zinc-600"
+                        />
+                      </div>
                     </div>
-                    {custRows.length === 0 ? <EmptyState msg="No customers yet." /> : (
+                    {profileRows.length === 0 ? <EmptyState msg="No sign-ins yet." /> : (
                       <>
                         <table className="w-full text-xs">
-                          <thead><tr><Th>Name</Th><Th>Email</Th><Th>Phone</Th><Th>Orders</Th><Th>Total Spent</Th></tr></thead>
+                          <thead><tr><Th>Name</Th><Th>Email</Th><Th>Role</Th><Th>Last signed in</Th></tr></thead>
                           <tbody className="divide-y divide-zinc-900/60">
-                            {custRows.map(c => (
-                              <tr key={c.id} className="hover:bg-zinc-900/30 transition-colors">
-                                <Td>{c.name || "—"}</Td>
-                                <Td muted>{c.email || "—"}</Td>
-                                <Td muted>{c.phone || "—"}</Td>
-                                <Td>{c.orderCount}</Td>
-                                <Td>${(c.totalSpent || 0).toFixed(2)}</Td>
+                            {profileRows.map(p => (
+                              <tr key={p.id} className="hover:bg-zinc-900/30 transition-colors">
+                                <Td>{p.name || "—"}</Td>
+                                <Td muted>{p.email || "—"}</Td>
+                                <Td>
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${p.role === "admin" ? "bg-[#d7ff3f]/20 text-[#d7ff3f]" : "bg-zinc-800 text-zinc-400"}`}>
+                                    {p.role}
+                                  </span>
+                                </Td>
+                                <Td muted>{new Date(p.lastSignedIn).toLocaleString()}</Td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
-                        <div className="px-4 pb-4"><Pagination page={custPage} total={customerTotalCount} perPage={PER} onChange={setCustPage} /></div>
+                        <div className="px-4 pb-4"><Pagination page={custPage} total={profileTotalCount} perPage={PROFILES_PER} onChange={setCustPage} /></div>
                       </>
                     )}
                   </div>

@@ -10,6 +10,7 @@ import {
   mapOrderRow,
   mapCustomerRow,
   mapProductInventoryRow,
+  mapProfileAdminRow,
   mapStoreSettingsRow,
   storeSettingsToSnake,
 } from "./_core/supabaseMappers";
@@ -19,6 +20,11 @@ function formatSupabaseErr(err: PostgrestError): string {
   return [err.message, err.details, err.hint, err.code ? `(${err.code})` : ""]
     .filter(Boolean)
     .join(" ");
+}
+
+/** Strip characters that break PostgREST `or()` / `ilike` filters. */
+function sanitizeIlikeTerm(raw: string): string {
+  return raw.trim().replace(/[%(),]/g, "").slice(0, 120);
 }
 
 /** Remove prior catalog imports (sku starts with catalog:). Uses select + delete by id for broad PostgREST compatibility. */
@@ -191,7 +197,11 @@ export const adminRouter = router({
         .range(offset, offset + input.pageSize - 1);
 
       if (input.search) {
-        query = query.or(`name.ilike.%${input.search}%,email.ilike.%${input.search}%`);
+        const term = sanitizeIlikeTerm(input.search);
+        if (term) {
+          const q = `%${term}%`;
+          query = query.or(`name.ilike.${q},email.ilike.${q}`);
+        }
       }
 
       const { data, count, error } = await query;
@@ -199,6 +209,40 @@ export const adminRouter = router({
 
       return {
         customers: (data || []).map(row => mapCustomerRow(row as Record<string, unknown>)),
+        total: count || 0,
+        page: input.page,
+        pageSize: input.pageSize,
+      };
+    }),
+
+  /** Supabase `profiles` — everyone who has signed in (JWT synced). */
+  getProfiles: adminProcedure
+    .input(
+      z.object({
+        page: z.number().default(1),
+        pageSize: z.number().default(50),
+        search: z.string().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const offset = (input.page - 1) * input.pageSize;
+      let query = supabaseAdmin
+        .from("profiles")
+        .select("*", { count: "exact" })
+        .order("last_signed_in", { ascending: false })
+        .range(offset, offset + input.pageSize - 1);
+
+      const term = input.search ? sanitizeIlikeTerm(input.search) : "";
+      if (term) {
+        const q = `%${term}%`;
+        query = query.or(`email.ilike.${q},name.ilike.${q}`);
+      }
+
+      const { data, count, error } = await query;
+      if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+
+      return {
+        profiles: (data || []).map(row => mapProfileAdminRow(row as Record<string, unknown>)),
         total: count || 0,
         page: input.page,
         pageSize: input.pageSize,
@@ -275,6 +319,7 @@ export const adminRouter = router({
         page: z.number().default(1),
         pageSize: z.number().default(50),
         category: z.string().optional(),
+        search: z.string().optional(),
       })
     )
     .query(async ({ input }) => {
@@ -287,6 +332,12 @@ export const adminRouter = router({
 
       if (input.category) {
         query = query.eq("category", input.category);
+      }
+
+      const term = input.search ? sanitizeIlikeTerm(input.search) : "";
+      if (term) {
+        const q = `%${term}%`;
+        query = query.or(`name.ilike.${q},brand.ilike.${q},sku.ilike.${q},category.ilike.${q}`);
       }
 
       const { data, count, error } = await query;

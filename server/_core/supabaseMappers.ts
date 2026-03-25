@@ -18,6 +18,21 @@ export function mapOrderRow(o: Record<string, unknown>) {
   };
 }
 
+/** Admin list row for `profiles` (every user who has signed in). */
+export function mapProfileAdminRow(o: Record<string, unknown>) {
+  return {
+    id: String(o.id ?? ""),
+    email: (o.email as string | null | undefined) ?? null,
+    name: (o.name as string | null | undefined) ?? null,
+    role: String(o.role ?? "user"),
+    loginMethod: (o.login_method as string | null | undefined) ?? null,
+    lastSignedIn: String(
+      o.last_signed_in ?? o.updated_at ?? o.created_at ?? new Date().toISOString()
+    ),
+    createdAt: o.created_at != null ? String(o.created_at) : null,
+  };
+}
+
 export function mapCustomerRow(o: Record<string, unknown>) {
   const created = String(o.created_at ?? o.updated_at ?? new Date().toISOString());
   const updated = String(o.updated_at ?? o.created_at ?? created);
