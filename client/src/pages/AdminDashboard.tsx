@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
+import { DEFAULT_SUPABASE_URL } from "@shared/const";
 import { useSupabaseAuth } from "@/lib/SupabaseAuthProvider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -118,12 +119,17 @@ export default function AdminDashboard() {
   const fetchData = useCallback(async () => {
     if (!session) return;
     setDataLoading(true);
+    const anon =
+      (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim() ??
+      "";
+    const base =
+      (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() ||
+      DEFAULT_SUPABASE_URL;
     const headers = {
       Authorization: `Bearer ${session.access_token}`,
-      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY as string,
+      apikey: anon,
       "Content-Type": "application/json",
     };
-    const base = import.meta.env.VITE_SUPABASE_URL as string;
 
     const [pRes, oRes, cRes] = await Promise.all([
       fetch(`${base}/rest/v1/bh_products?select=*&order=created_at.desc`, { headers }),

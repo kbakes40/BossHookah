@@ -1,28 +1,29 @@
 import { createClient } from "@supabase/supabase-js";
+import { DEFAULT_SUPABASE_URL } from "@shared/const";
 
-/** Valid-shaped defaults so the app bundle loads without throwing when env is unset (e.g. static `serve` of `dist/public`). Auth and DB calls need real `VITE_*` values. */
-const PLACEHOLDER_URL = "https://placeholder.supabase.co";
+/**
+ * Valid-shaped placeholder so the bundle loads when `VITE_SUPABASE_ANON_KEY` is unset.
+ * Set `VITE_SUPABASE_ANON_KEY` (Dashboard → Settings → API → anon public) for login and PostgREST.
+ */
 const PLACEHOLDER_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.local-preview-only";
 
 const supabaseUrl =
-  (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() || PLACEHOLDER_URL;
+  (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() ||
+  DEFAULT_SUPABASE_URL;
 const supabaseAnonKey =
   (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim() ||
   PLACEHOLDER_ANON_KEY;
 
-if (
-  supabaseUrl === PLACEHOLDER_URL ||
-  supabaseAnonKey === PLACEHOLDER_ANON_KEY
-) {
+if (supabaseAnonKey === PLACEHOLDER_ANON_KEY) {
   console.warn(
-    "[Supabase] VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY not set (or incomplete); using placeholders. Set them for auth and synced data."
+    "[Supabase] Set VITE_SUPABASE_ANON_KEY in .env / .env.local (Settings → API → anon public). Login requires it."
   );
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    flowType: "implicit",
+    flowType: "pkce",
     detectSessionInUrl: true,
     persistSession: true,
     autoRefreshToken: true,

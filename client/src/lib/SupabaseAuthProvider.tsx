@@ -51,16 +51,24 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: {
-          access_type: "offline",
-          prompt: "consent",
+    // Google Cloud → Authorized redirect URIs: SUPABASE_OAUTH_REDIRECT_URI in @shared/const
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
         },
-      },
-    });
+      });
+      if (error) {
+        console.error("[SupabaseAuth] Google sign-in failed:", error.message);
+      }
+    } catch (e) {
+      console.error("[SupabaseAuth] Google sign-in error:", e);
+    }
   }, []);
 
   const signInWithEmail = useCallback(async (email: string, password: string) => {

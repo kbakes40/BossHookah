@@ -1,72 +1,64 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
+function safeReturnTo(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/";
+  return raw;
+}
+
 export default function AuthCallback() {
-  const handled = useRef(false);
-
   useEffect(() => {
-    if (handled.current) return;
-    handled.current = true;
+    let active = true;
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    let authSubscription: { unsubscribe: () => void } | null = null;
 
-    const fullUrl = window.location.href;
-    const search = window.location.search;
-    const hash = window.location.hash;
-    const params = new URLSearchParams(search);
-    const hashParams = new URLSearchParams(hash.substring(1));
+    (async () => {
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = safeReturnTo(params.get("returnTo"));
 
-    const returnTo = params.get("returnTo") || "/";
-    const code = params.get("code");
-    const accessToken = hashParams.get("access_token");
+      if (params.get("error")) {
+        console.error(
+          "[AuthCallback] OAuth error:",
+          params.get("error"),
+          params.get("error_description")
+        );
+        window.location.replace("/sign-in");
+        return;
+      }
 
-    const doRedirect = (success: boolean) => {
-      window.location.replace(success ? returnTo : "/sign-in");
-    };
+      // detectSessionInUrl + PKCE: code is exchanged in GoTrueClient._initialize — do not exchange again here.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!active) return;
 
-    if (params.get("error")) {
-      console.error("[AuthCallback] OAuth error:", params.get("error"), params.get("error_description"));
-      doRedirect(false);
-      return;
-    }
+      if (session) {
+        window.location.replace(returnTo);
+        return;
+      }
 
-    if (accessToken) {
-      // Implicit flow — tokens in hash (Google)
-      setTimeout(async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        doRedirect(!!session);
-      }, 800);
-    } else if (code) {
-      // PKCE flow — exchange code
-      supabase.auth.exchangeCodeForSession(fullUrl)
-        .then(({ data, error }) => {
-          if (!error && data?.session) {
-            doRedirect(true);
-          } else {
-            console.error("[AuthCallback] Code exchange failed:", error);
-            doRedirect(false);
-          }
-        });
-    } else {
-      // No tokens — check existing session or wait
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          doRedirect(true);
-          return;
-        }
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-          if (event === "SIGNED_IN" && session) {
-            subscription.unsubscribe();
-            doRedirect(true);
-          }
-        });
-
-        setTimeout(async () => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, next) => {
+        if (!active) return;
+        if (event === "SIGNED_IN" && next) {
           subscription.unsubscribe();
-          const { data: { session } } = await supabase.auth.getSession();
-          doRedirect(!!session);
-        }, 10000);
+          window.location.replace(returnTo);
+        }
       });
-    }
+      authSubscription = subscription;
+
+      const t = setTimeout(async () => {
+        subscription.unsubscribe();
+        if (!active) return;
+        const { data: { session: later } } = await supabase.auth.getSession();
+        if (!active) return;
+        window.location.replace(later ? returnTo : "/sign-in");
+      }, 8000);
+      timeouts.push(t);
+    })();
+
+    return () => {
+      active = false;
+      authSubscription?.unsubscribe();
+      timeouts.forEach(clearTimeout);
+    };
   }, []);
 
   return (

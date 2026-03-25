@@ -1,3 +1,5 @@
+import { DEFAULT_SUPABASE_URL } from "@shared/const";
+
 export const ENV = {
   appId: process.env.VITE_APP_ID ?? "",
   cookieSecret: process.env.JWT_SECRET ?? "",
@@ -6,7 +8,7 @@ export const ENV = {
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
   // Supabase
-  supabaseUrl: process.env.VITE_SUPABASE_URL ?? "",
+  supabaseUrl: process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL,
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
   // Admin emails - these users will always have admin role
   adminEmail: "kevin@bakerhub.com",

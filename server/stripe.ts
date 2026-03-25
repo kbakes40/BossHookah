@@ -6,13 +6,25 @@ import Stripe from "stripe";
 import { ENV } from "./_core/env";
 import { supabaseAdmin } from "./_core/supabaseAdmin";
 
+/** Dummy key so the module loads in dev; real API calls need STRIPE_SECRET_KEY. */
+const DEV_PLACEHOLDER_KEY =
+  "sk_test_0000000000000000000000000000000000000000000000000000000000";
+
 if (!ENV.stripeSecretKey) {
-  throw new Error("STRIPE_SECRET_KEY is required");
+  if (ENV.isProduction) {
+    throw new Error("STRIPE_SECRET_KEY is required");
+  }
+  console.warn(
+    "[Stripe] STRIPE_SECRET_KEY not set — checkout/webhooks will fail until you add it to .env.local"
+  );
 }
 
-export const stripe = new Stripe(ENV.stripeSecretKey, {
-  apiVersion: "2026-01-28.clover",
-});
+export const stripe = new Stripe(
+  ENV.stripeSecretKey || DEV_PLACEHOLDER_KEY,
+  {
+    apiVersion: "2026-01-28.clover",
+  }
+);
 
 /**
  * Create a Stripe Checkout Session for product purchase
@@ -26,6 +38,9 @@ export async function createCheckoutSession(params: {
   successUrl: string;
   cancelUrl: string;
 }) {
+  if (!ENV.stripeSecretKey) {
+    throw new Error("STRIPE_SECRET_KEY is not configured");
+  }
   const { userId, userEmail, userName, items, deliveryMethod, successUrl, cancelUrl } = params;
   console.log('[Stripe] Creating checkout session:', { userId, userEmail, itemCount: items.length });
 
