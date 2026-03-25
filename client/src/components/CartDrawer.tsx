@@ -8,7 +8,8 @@ import { X, Minus, Plus, Trash2, Truck, Store } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import {
   PAYPAL_CHECKOUT_STORAGE_KEY,
@@ -51,21 +52,67 @@ export default function CartDrawer() {
     deliveryMethod === "pickup" ? 0 : shippingQuote.shippingAmount;
   const checkoutTotals = displayTotals(cartTotal, shipUsd);
 
+  useEffect(() => {
+    if (!isOpen) {
+      document.documentElement.classList.remove("cart-open");
+      document.body.classList.remove("cart-open");
+      return;
+    }
+
+    const mq = window.matchMedia("(max-width: 767px)");
+    const syncBodyLock = () => {
+      if (mq.matches) {
+        document.documentElement.classList.add("cart-open");
+        document.body.classList.add("cart-open");
+      } else {
+        document.documentElement.classList.remove("cart-open");
+        document.body.classList.remove("cart-open");
+      }
+    };
+
+    syncBodyLock();
+    mq.addEventListener("change", syncBodyLock);
+    return () => {
+      mq.removeEventListener("change", syncBodyLock);
+      document.documentElement.classList.remove("cart-open");
+      document.body.classList.remove("cart-open");
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
     <>
-      {/* Overlay */}
-      <div 
-        className="fixed inset-0 bg-foreground/50 z-50 transition-opacity"
+      {/* Mobile: fixed layer below cart — blocks taps/scroll reaching the page (cart sits at z-[60]) */}
+      <div
+        className="md:hidden fixed inset-0 z-[55] pointer-events-auto touch-none"
+        aria-hidden
+      />
+      {/* Desktop only: dim page behind drawer */}
+      <div
+        className="hidden md:block fixed inset-0 bg-foreground/50 z-[50] transition-opacity"
         onClick={closeCart}
+        aria-hidden
       />
 
-      {/* Drawer */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-md bg-background border-l-3 border-border z-50 flex flex-col">
+      {/* Drawer: mobile = full viewport; md+ = right rail (unchanged layout) */}
+      <div
+        className={cn(
+          "fixed z-[60] flex flex-col bg-background border-border pointer-events-auto",
+          // Mobile — true full-screen layer (100dvh + 100vh min for older Safari)
+          "inset-0 h-[100dvh] max-h-[100dvh] min-h-[100vh] w-full max-w-[100vw] overflow-hidden rounded-none border-0",
+          // Desktop
+          "md:inset-x-auto md:left-auto md:right-0 md:top-0 md:bottom-auto md:h-full md:max-h-none md:min-h-0 md:w-full md:max-w-md md:border-l-3"
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cart-drawer-title"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b-3 border-border">
-          <h2 className="text-2xl font-display font-black">YOUR CART ({cartCount})</h2>
+        <div className="flex shrink-0 items-center justify-between p-6 border-b-3 border-border">
+          <h2 id="cart-drawer-title" className="text-2xl font-display font-black">
+            YOUR CART ({cartCount})
+          </h2>
           <button 
             onClick={closeCart}
             className="w-10 h-10 brutalist-border flex items-center justify-center hover:bg-secondary transition-colors"
@@ -74,8 +121,13 @@ export default function CartDrawer() {
           </button>
         </div>
 
-        {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-6">
+        {/* Cart items — only this region scrolls on mobile */}
+        <div
+          className={cn(
+            "flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-auto p-6",
+            "[-webkit-overflow-scrolling:touch]"
+          )}
+        >
           {items.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-xl font-display font-bold mb-4">Your cart is empty</p>
@@ -154,9 +206,9 @@ export default function CartDrawer() {
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer (sticky bottom on mobile via flex shrink-0) */}
         {items.length > 0 && (
-          <div className="border-t-3 border-border p-6 space-y-4">
+          <div className="shrink-0 border-t-3 border-border p-6 space-y-4">
             {/* Shipping Notice */}
             <div className="bg-secondary brutalist-border p-4 text-sm">
               <p className="font-semibold">

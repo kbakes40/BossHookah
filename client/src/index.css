@@ -90,6 +90,14 @@
   input[type="radio"]:not(:disabled) {
     @apply cursor-pointer;
   }
+
+  /* Cart drawer: scroll / touch lock on mobile only (class toggled from CartDrawer). */
+  html.cart-open,
+  body.cart-open {
+    overflow: hidden !important;
+    height: 100%;
+    touch-action: none;
+  }
 }
 
 @layer components {
