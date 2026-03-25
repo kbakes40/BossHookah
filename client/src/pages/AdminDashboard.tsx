@@ -7,6 +7,25 @@ import { toast } from "sonner";
 import { ADMIN_INVENTORY_PAGE_SIZE } from "@shared/const";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+function deliveryLabel(dm: string) {
+  const k = (dm || "").toLowerCase();
+  if (k === "pickup") return "Pickup";
+  return "Shipping";
+}
+
+function DeliveryBadge({ method }: { method: string }) {
+  const k = (method || "").toLowerCase();
+  const cls =
+    k === "pickup"
+      ? "bg-violet-900/50 text-violet-200"
+      : "bg-slate-800/80 text-slate-300";
+  return (
+    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${cls}`}>
+      {deliveryLabel(method)}
+    </span>
+  );
+}
+
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     pending: "bg-yellow-900/60 text-yellow-300",
@@ -301,13 +320,14 @@ export default function AdminDashboard() {
                       </div>
                       {overviewOrders.length === 0 ? <EmptyState msg="No orders yet." /> : (
                         <table className="w-full text-xs">
-                          <thead><tr><Th>Customer</Th><Th>Total</Th><Th>Status</Th><Th>Date</Th></tr></thead>
+                          <thead><tr><Th>Customer</Th><Th>Total</Th><Th>Status</Th><Th>Delivery</Th><Th>Date</Th></tr></thead>
                           <tbody className="divide-y divide-zinc-900/60">
                             {overviewOrders.map(o => (
                               <tr key={o.id} className="hover:bg-zinc-900/30 transition-colors">
                                 <Td>{o.customerName || "—"}</Td>
                                 <Td>${((o.totalAmount || 0) / 100).toFixed(2)}</Td>
                                 <Td><StatusBadge status={o.status} /></Td>
+                                <Td><DeliveryBadge method={o.deliveryMethod} /></Td>
                                 <Td muted>{new Date(o.createdAt).toLocaleDateString()}</Td>
                               </tr>
                             ))}
@@ -340,8 +360,8 @@ export default function AdminDashboard() {
                     {listOrders.length === 0 ? <EmptyState msg="No orders yet." /> : (
                       <>
                         <div className="overflow-x-auto">
-                        <table className="w-full text-xs min-w-[720px]">
-                          <thead><tr><Th>Customer</Th><Th>Email</Th><Th>Total</Th><Th>Payment</Th><Th>Fulfillment</Th><Th>Date</Th></tr></thead>
+                        <table className="w-full text-xs min-w-[820px]">
+                          <thead><tr><Th>Customer</Th><Th>Email</Th><Th>Total</Th><Th>Payment</Th><Th>Delivery</Th><Th>Fulfillment</Th><Th>Date</Th></tr></thead>
                           <tbody className="divide-y divide-zinc-900/60">
                             {listOrders.map(o => (
                               <tr key={o.id} className="hover:bg-zinc-900/30 transition-colors">
@@ -367,6 +387,9 @@ export default function AdminDashboard() {
                                     <option value="cancelled">Cancelled</option>
                                     <option value="completed">Completed</option>
                                   </select>
+                                </Td>
+                                <Td>
+                                  <DeliveryBadge method={o.deliveryMethod} />
                                 </Td>
                                 <Td>
                                   <select
