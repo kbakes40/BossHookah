@@ -1,22 +1,26 @@
 import { useMemo, useState } from "react";
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   BarChart,
   Bar,
+  Legend,
+  PieChart,
+  Pie,
   Cell,
 } from "recharts";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   adminFilterBarRowClass,
   adminFilterControlClass,
+  adminDashboardGridGapClass,
   adminFilterFieldSmClass,
   adminFilterLabelClass,
+  adminPageStackClass,
+  adminPanelClass,
 } from "@/components/admin/adminFilterBarStyles";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -55,11 +59,6 @@ function fmtMoney(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
-function pct(n: number | null) {
-  if (n == null || Number.isNaN(n)) return "—";
-  return `${(n * 100).toFixed(1)}%`;
-}
-
 function downloadCsv(filename: string, rows: string[][]) {
   const esc = (s: string) => `"${String(s).replace(/"/g, '""')}"`;
   const body = rows.map(r => r.map(c => esc(c)).join(",")).join("\n");
@@ -71,8 +70,27 @@ function downloadCsv(filename: string, rows: string[][]) {
   URL.revokeObjectURL(a.href);
 }
 
+/** Donut palette: lime accent family + neutral zinc (on-brand, not rainbow). */
+const BRAND_SLICE_COLORS = [
+  "rgba(163, 230, 53, 0.92)",
+  "rgba(132, 204, 22, 0.88)",
+  "rgba(101, 163, 13, 0.85)",
+  "#a1a1aa",
+  "#71717a",
+  "#52525b",
+  "#3f3f46",
+  "#d9f99d",
+] as const;
+
 type SortKey = "profit" | "revenue" | "units" | "margin" | "cost";
 type SortDir = "asc" | "desc";
+
+function chartYAxisMoney(v: number) {
+  const sign = v < 0 ? "-" : "";
+  const n = Math.abs(v);
+  if (n >= 1000) return `${sign}$${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k`;
+  return `${sign}$${n}`;
+}
 
 export default function AdminSales() {
   const [preset, setPreset] = useState<Preset>("30");
@@ -124,14 +142,25 @@ export default function AdminSales() {
     }));
   }, [report]);
 
-  const costVsRevenue = useMemo(() => {
-    if (!report) return [];
+  const brandDonutSlices = useMemo(() => {
+    const rows = report?.salesByBrand ?? [];
+    if (rows.length === 0) return [];
+    if (rows.length <= 6) return rows.map(r => ({ name: r.name, value: r.revenue }));
+    const top = rows.slice(0, 5);
+    const restSum = rows.slice(5).reduce((s, r) => s + r.revenue, 0);
     return [
-      { name: "Revenue", value: report.grossSales },
-      { name: "Cost", value: report.totalCost },
-      { name: "Gross profit", value: report.grossProfit },
+      ...top.map(r => ({ name: r.name, value: r.revenue })),
+      { name: "Other categories", value: restSum },
     ];
   }, [report]);
+
+  const brandTotal = useMemo(
+    () => brandDonutSlices.reduce((s, d) => s + d.value, 0),
+    [brandDonutSlices]
+  );
+
+  const deliverySliceTotal =
+    report != null ? report.revenueByDelivery.shipping + report.revenueByDelivery.pickup : 0;
 
   const sortedProfitability = useMemo(() => {
     const rows = report?.productProfitability ?? [];
@@ -176,7 +205,12 @@ export default function AdminSales() {
       ["Net sales", String(report.netSales)],
       ["Total cost (matched lines)", String(report.totalCost)],
       ["Gross profit", String(report.grossProfit)],
-      ["Profit margin (on gross)", String(report.profitMargin ?? "")],
+      [
+        "Profit margin (on gross)",
+        report.profitMargin != null && Number.isFinite(report.profitMargin)
+          ? String(report.profitMargin)
+          : "",
+      ],
       ["Net profit after refunds", String(report.netProfitAfterRefunds)],
       ["Avg order value (paid)", String(report.averageOrderValue ?? "")],
       ["Orders in range", String(report.orderCount)],
@@ -287,7 +321,7 @@ export default function AdminSales() {
       subtitle="Revenue, cost, and profit (paid orders in range)"
       headerTrailing={salesFiltersBar}
     >
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className={adminPageStackClass}>
         {reportQuery.isError && (
           <div className="rounded-lg border border-red-900/50 bg-red-950/30 text-red-200 text-sm px-4 py-3">
             {reportQuery.error.message}
@@ -317,119 +351,176 @@ export default function AdminSales() {
 
         {report && (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-              <Kpi label="Gross sales" value={fmtMoney(report.grossSales)} />
-              <Kpi label="Net sales" value={fmtMoney(report.netSales)} hint="After refunds" />
-              <Kpi label="Total cost" value={fmtMoney(report.totalCost)} />
-              <Kpi label="Gross profit" value={fmtMoney(report.grossProfit)} accent={report.grossProfit >= 0} />
-              <Kpi label="Margin" value={pct(report.profitMargin)} accent={Boolean(report.profitMargin && report.profitMargin > 0)} />
-              <Kpi label="AOV" value={report.averageOrderValue != null ? fmtMoney(report.averageOrderValue) : "—"} />
+            <div className={`grid grid-cols-2 lg:grid-cols-4 ${adminDashboardGridGapClass}`}>
+              <Kpi label="Total orders" value={String(report.orderCount)} hint="All statuses in range" />
+              <Kpi label="Total revenue" value={fmtMoney(report.grossSales)} hint="Paid orders" accent />
+              <Kpi label="Paid orders" value={String(report.paidOrderCount)} />
+              <Kpi
+                label="Avg order value"
+                value={report.averageOrderValue != null ? fmtMoney(report.averageOrderValue) : "—"}
+                hint="Paid orders"
+              />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="rounded-xl border border-zinc-800/90 bg-[#121214] px-4 py-3">
-                <p className="text-[10px] uppercase tracking-wider text-zinc-500">Refunds (in range)</p>
-                <p className="text-lg font-semibold text-zinc-100 mt-1 tabular-nums">
-                  {report.refundedTotal > 0 ? fmtMoney(report.refundedTotal) : "—"}
-                </p>
-                <p className="text-[11px] text-zinc-500 mt-0.5">
-                  {report.refundedTotal === 0 ? "No refunded orders in this range." : "Subtracted from gross for net sales."}
-                </p>
-              </div>
-              <div className="rounded-xl border border-zinc-800/90 bg-[#121214] px-4 py-3 relative overflow-hidden">
-                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[#84cc16]/70" aria-hidden />
-                <p className="text-[10px] uppercase tracking-wider text-zinc-500 pl-2">Net profit after refunds</p>
-                <p
-                  className={`text-lg font-semibold mt-1 tabular-nums pl-2 ${
-                    report.netProfitAfterRefunds >= 0 ? "text-[#bef264]" : "text-red-300"
-                  }`}
-                >
-                  {fmtMoney(report.netProfitAfterRefunds)}
-                </p>
-                <p className="text-[11px] text-zinc-500 mt-0.5 pl-2">Net sales − matched COGS</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <ChartCard title="Sales over time">
-                {chartData.length === 0 ? (
-                  <EmptyChart />
-                ) : (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                      <XAxis dataKey="label" stroke="#71717a" tick={{ fill: "#71717a", fontSize: 11 }} />
-                      <YAxis stroke="#71717a" tick={{ fill: "#71717a", fontSize: 11 }} tickFormatter={v => `$${v}`} />
-                      <Tooltip
-                        contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8 }}
-                        labelStyle={{ color: "#a1a1aa" }}
-                        formatter={(v: unknown) => [fmtMoney(Number(v)), "Revenue"]}
-                      />
-                      <Line type="monotone" dataKey="revenue" stroke="#a3e635" strokeWidth={2} dot={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                )}
-              </ChartCard>
-              <ChartCard title="Profit over time">
-                {chartData.length === 0 ? (
-                  <EmptyChart />
-                ) : (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                      <XAxis dataKey="label" stroke="#71717a" tick={{ fill: "#71717a", fontSize: 11 }} />
-                      <YAxis stroke="#71717a" tick={{ fill: "#71717a", fontSize: 11 }} tickFormatter={v => `$${v}`} />
-                      <Tooltip
-                        contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8 }}
-                        formatter={(v: unknown) => [fmtMoney(Number(v)), "Profit"]}
-                      />
-                      <Line type="monotone" dataKey="profit" stroke="#84cc16" strokeWidth={2} dot={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                )}
-              </ChartCard>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <ChartCard title="Cost vs revenue vs profit">
-                {report.grossSales === 0 && report.totalCost === 0 ? (
-                  <EmptyChart msg="No paid revenue in this range." />
-                ) : (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <BarChart data={costVsRevenue}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                      <XAxis dataKey="name" stroke="#71717a" tick={{ fill: "#71717a", fontSize: 11 }} />
-                      <YAxis stroke="#71717a" tick={{ fill: "#71717a", fontSize: 11 }} tickFormatter={v => `$${v}`} />
-                      <Tooltip
-                        contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8 }}
-                        formatter={(v: unknown) => fmtMoney(Number(v))}
-                      />
-                      <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                        {costVsRevenue.map((_, i) => (
-                          <Cell
-                            key={i}
-                            fill={i === 0 ? "#52525b" : i === 1 ? "#3f3f46" : "rgba(132, 204, 22, 0.85)"}
-                          />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </ChartCard>
-
-              <ChartCard title="Order performance">
-                <div className="p-4 grid grid-cols-2 gap-3 text-sm">
-                  <Perf label="Orders in range" value={String(report.orderCount)} />
-                  <Perf label="Paid" value={String(report.paidOrderCount)} accent />
-                  <Perf label="Pending" value={String(report.pendingOrderCount)} />
-                  <Perf label="AOV" value={report.averageOrderValue != null ? fmtMoney(report.averageOrderValue) : "—"} />
-                  <Perf label="Shipping (paid)" value={String(report.shippingOrders)} />
-                  <Perf label="Pickup (paid)" value={String(report.pickupOrders)} />
+            <div className={`${adminPanelClass} p-4 md:p-5`}>
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between mb-4">
+                <div>
+                  <p className="text-sm font-medium text-zinc-200">Revenue & gross profit</p>
+                  <p className="text-[11px] text-zinc-500 mt-0.5">Daily totals · paid orders in range</p>
                 </div>
-              </ChartCard>
+              </div>
+              {chartData.length === 0 ? (
+                <EmptyChart msg="No paid sales in this range for the chart." />
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={chartData}
+                    margin={{ top: 8, right: 8, left: 4, bottom: 0 }}
+                    barCategoryGap="14%"
+                    barGap={6}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                    <XAxis dataKey="label" stroke="#71717a" tick={{ fill: "#71717a", fontSize: 11 }} axisLine={{ stroke: "#3f3f46" }} />
+                    <YAxis
+                      stroke="#71717a"
+                      tick={{ fill: "#71717a", fontSize: 11 }}
+                      tickFormatter={(v: number) => chartYAxisMoney(Number(v))}
+                      axisLine={{ stroke: "#3f3f46" }}
+                      width={52}
+                    />
+                    <Tooltip
+                      contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8 }}
+                      labelStyle={{ color: "#a1a1aa" }}
+                      formatter={(v: unknown, name: string) => [fmtMoney(Number(v)), name]}
+                    />
+                    <Legend
+                      verticalAlign="top"
+                      align="right"
+                      wrapperStyle={{ fontSize: 12, color: "#a1a1aa", paddingBottom: 8 }}
+                    />
+                    <Bar dataKey="revenue" name="Revenue" fill="#52525b" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                    <Bar
+                      dataKey="profit"
+                      name="Gross profit"
+                      fill="rgba(163, 230, 53, 0.88)"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={40}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
 
-            <div className="rounded-xl border border-zinc-800/90 bg-[#121214] overflow-hidden">
+            <div className={`grid grid-cols-1 lg:grid-cols-2 ${adminDashboardGridGapClass} lg:items-stretch`}>
+              <div className={`${adminPanelClass} flex flex-col min-h-[20rem] overflow-hidden`}>
+                <div className="px-4 py-3 border-b border-zinc-800/80 shrink-0">
+                  <p className="text-sm font-medium text-zinc-200">Sales by product category</p>
+                  <p className="text-[11px] text-zinc-500 mt-0.5">
+                    By brand on matched catalog products · line revenue
+                  </p>
+                </div>
+                <div className="p-4 flex-1 flex flex-col sm:flex-row gap-4 items-stretch min-h-[15rem]">
+                  {brandTotal <= 0 || brandDonutSlices.length === 0 ? (
+                    <p className="text-zinc-500 text-sm m-auto text-center px-4">
+                      No category data — add brands to products in Inventory or widen the date range.
+                    </p>
+                  ) : (
+                    <>
+                      <ul className="w-full sm:w-[42%] shrink-0 space-y-2 flex flex-col justify-center">
+                        {brandDonutSlices.map((row, i) => {
+                          const pct = brandTotal > 0 ? (row.value / brandTotal) * 100 : 0;
+                          return (
+                            <li key={row.name} className="flex items-center gap-2 text-xs">
+                              <span
+                                className="h-2 w-2 rounded-full shrink-0"
+                                style={{ backgroundColor: BRAND_SLICE_COLORS[i % BRAND_SLICE_COLORS.length] }}
+                                aria-hidden
+                              />
+                              <span className="text-zinc-300 truncate flex-1 min-w-0" title={row.name}>
+                                {row.name}
+                              </span>
+                              <span className="text-zinc-500 tabular-nums shrink-0">{pct.toFixed(0)}%</span>
+                              <span className="text-zinc-200 tabular-nums shrink-0 w-[4.5rem] text-right">
+                                {fmtMoney(row.value)}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      <div className="flex-1 w-full h-[220px] min-h-[220px]">
+                        <ResponsiveContainer width="100%" height={220}>
+                          <PieChart>
+                            <Pie
+                              data={brandDonutSlices}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              innerRadius="58%"
+                              outerRadius="82%"
+                              paddingAngle={2}
+                              stroke="#18181b"
+                              strokeWidth={1}
+                            >
+                              {brandDonutSlices.map((_, i) => (
+                                <Cell key={i} fill={BRAND_SLICE_COLORS[i % BRAND_SLICE_COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8 }}
+                              formatter={(v: unknown) => fmtMoney(Number(v))}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className={`${adminPanelClass} flex flex-col min-h-[20rem] overflow-hidden`}>
+                <div className="px-4 py-3 border-b border-zinc-800/80 shrink-0">
+                  <p className="text-sm font-medium text-zinc-200">Sales by delivery</p>
+                  <p className="text-[11px] text-zinc-500 mt-0.5">Paid order totals · shipping vs pickup</p>
+                </div>
+                <div className="p-4 flex-1 flex flex-col justify-center gap-5 min-h-[15rem]">
+                  {deliverySliceTotal <= 0 ? (
+                    <p className="text-zinc-500 text-sm text-center">No paid delivery revenue in this range.</p>
+                  ) : (
+                    <>
+                      {(
+                        [
+                          { key: "ship", label: "Shipping", value: report.revenueByDelivery.shipping, fill: "#52525b" },
+                          { key: "pick", label: "Pickup", value: report.revenueByDelivery.pickup, fill: "rgba(163, 230, 53, 0.9)" },
+                        ] as const
+                      ).map(row => {
+                        const pct = deliverySliceTotal > 0 ? (row.value / deliverySliceTotal) * 100 : 0;
+                        return (
+                          <div key={row.key}>
+                            <div className="flex items-center justify-between text-xs gap-3 mb-1.5">
+                              <span className="flex items-center gap-2 text-zinc-300">
+                                <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: row.fill }} />
+                                {row.label}
+                              </span>
+                              <span className="text-zinc-200 tabular-nums font-medium">{fmtMoney(row.value)}</span>
+                            </div>
+                            <div className="h-2 rounded-full bg-zinc-800/90 overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-[width]"
+                                style={{ width: `${Math.max(4, pct)}%`, backgroundColor: row.fill }}
+                              />
+                            </div>
+                            <p className="text-[10px] text-zinc-600 mt-1 tabular-nums">{pct.toFixed(1)}% of paid revenue</p>
+                          </div>
+                        );
+                      })}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className={`${adminPanelClass} overflow-hidden`}>
               <div className="px-4 py-3 border-b border-zinc-800/80">
                 <p className="text-sm font-medium text-zinc-200">Top products</p>
                 <p className="text-[11px] text-zinc-500 mt-0.5">By revenue in range (paid lines)</p>
@@ -470,7 +561,7 @@ export default function AdminSales() {
               )}
             </div>
 
-            <div className="rounded-xl border border-zinc-800/90 bg-[#121214] overflow-hidden">
+            <div className={`${adminPanelClass} w-full overflow-hidden`}>
               <div className="px-4 py-3 border-b border-zinc-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
                   <p className="text-sm font-medium text-zinc-200">Product profitability</p>
@@ -507,7 +598,9 @@ export default function AdminSales() {
                             {fmtMoney(row.profit)}
                           </td>
                           <td className="px-4 py-2.5 text-right tabular-nums text-zinc-300">
-                            {row.marginPct != null ? `${row.marginPct.toFixed(1)}%` : "—"}
+                            {row.marginPct != null && Number.isFinite(row.marginPct)
+                              ? `${row.marginPct.toFixed(1)}%`
+                              : "—"}
                           </td>
                         </tr>
                       ))}
@@ -532,38 +625,20 @@ export default function AdminSales() {
 function Kpi({ label, value, hint, accent }: { label: string; value: string; hint?: string; accent?: boolean }) {
   return (
     <div
-      className={`rounded-xl border px-3 py-3 bg-[#121214] ${
+      className={`rounded-xl border px-4 py-3.5 bg-[#121214] shadow-sm min-h-[5.75rem] flex flex-col justify-center ${
         accent ? "border-[#3f6212]/40 shadow-[inset_0_0_0_1px_rgba(132,204,22,0.08)]" : "border-zinc-800/90"
       }`}
     >
       <p className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">{label}</p>
       <p className={`text-lg font-semibold mt-1 tabular-nums ${accent ? "text-[#bef264]" : "text-zinc-50"}`}>{value}</p>
-      {hint && <p className="text-[10px] text-zinc-600 mt-0.5">{hint}</p>}
-    </div>
-  );
-}
-
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-zinc-800/90 bg-[#121214] p-3 shadow-sm">
-      <p className="text-sm font-medium text-zinc-200 px-1 mb-2">{title}</p>
-      {children}
+      {hint && <p className="text-[10px] text-zinc-600 mt-1">{hint}</p>}
     </div>
   );
 }
 
 function EmptyChart({ msg = "No series data for this range." }: { msg?: string }) {
   return (
-    <div className="h-[260px] flex items-center justify-center text-zinc-500 text-sm px-4 text-center">{msg}</div>
-  );
-}
-
-function Perf({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
-  return (
-    <div className={`rounded-lg border px-3 py-2 ${accent ? "border-[#3f6212]/35 bg-[#18181b]" : "border-zinc-800/80 bg-[#18181b]"}`}>
-      <p className="text-[10px] uppercase tracking-wide text-zinc-500">{label}</p>
-      <p className={`text-base font-semibold tabular-nums mt-0.5 ${accent ? "text-[#bef264]" : "text-zinc-100"}`}>{value}</p>
-    </div>
+    <div className="h-[300px] flex items-center justify-center text-zinc-500 text-sm px-4 text-center">{msg}</div>
   );
 }
 

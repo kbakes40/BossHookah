@@ -1,5 +1,13 @@
 /** Normalize Supabase snake_case rows for tRPC / admin UI (camelCase). */
 
+/** `bh_products.cost` — non-negative finite USD, or null if unset / invalid. */
+export function parseBhProductCost(raw: unknown): number | null {
+  if (raw == null || raw === "") return null;
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return n;
+}
+
 export function mapOrderRow(o: Record<string, unknown>) {
   return {
     id: String(o.id ?? ""),
@@ -67,7 +75,7 @@ export function mapProductInventoryRow(o: Record<string, unknown>) {
     inStock: o.in_stock !== false,
     badge: (o.badge as string) ?? null,
     /** Unit cost USD for margin reporting; null if not set */
-    cost: o.cost != null && o.cost !== "" ? Number(o.cost) : null,
+    cost: parseBhProductCost(o.cost),
   };
 }
 

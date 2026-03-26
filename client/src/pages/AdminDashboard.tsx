@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { adminPageStackClass } from "@/components/admin/adminFilterBarStyles";
 import { ArrowRight, AlertTriangle } from "lucide-react";
 
 function deliveryLabel(dm: string) {
@@ -109,7 +110,7 @@ export default function AdminDashboard() {
 
   return (
     <AdminShell title="Home" subtitle={subtitle}>
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className={adminPageStackClass}>
         {loading ? (
           <div className="h-40 flex items-center justify-center text-zinc-500 text-sm">Loading overview…</div>
         ) : (

@@ -6,6 +6,7 @@ import {
   adminFilterBarRowClass,
   adminFilterControlClass,
   adminFilterLabelClass,
+  adminPageStackClass,
 } from "@/components/admin/adminFilterBarStyles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,8 +114,8 @@ export default function AdminCustomers() {
       subtitle="Wholesale / checkout accounts (bh_customers)"
       headerTrailing={customerFiltersBar}
     >
-      <div className="max-w-7xl mx-auto space-y-4">
-        {isLoading && !customers?.length ? (
+      <div className={adminPageStackClass}>
+        {isLoading && customers == null ? (
           <div className="h-40 flex items-center justify-center text-zinc-500 text-sm">Loading…</div>
         ) : (
           <div className="rounded-xl border border-zinc-800/90 bg-[#121214] overflow-hidden">

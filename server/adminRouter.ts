@@ -13,6 +13,7 @@ import {
   mapProductInventoryRow,
   mapProfileAdminRow,
   mapStoreSettingsRow,
+  parseBhProductCost,
   storeSettingsToSnake,
 } from "./_core/supabaseMappers";
 import { countSiteCatalogSkus, siteProductsToBhRows } from "./siteCatalogSync";
@@ -31,6 +32,13 @@ function formatSupabaseErr(err: PostgrestError): string {
 /** Strip characters that break PostgREST `or()` / `ilike` filters. */
 function sanitizeIlikeTerm(raw: string): string {
   return raw.trim().replace(/[%(),]/g, "").slice(0, 120);
+}
+
+/** DBs that have not run `007_bh_products_cost.sql` (or core schema before `cost` was added). */
+function isBhProductsCostColumnMissing(err: PostgrestError | null): boolean {
+  if (!err?.message) return false;
+  const m = err.message.toLowerCase();
+  return m.includes("cost") && (m.includes("does not exist") || m.includes("schema cache"));
 }
 
 /** Remove prior catalog imports (sku starts with catalog:). Uses select + delete by id for broad PostgREST compatibility. */
@@ -514,12 +522,14 @@ export const adminRouter = router({
       if (oe)
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: oe.message });
 
-      const { data: prodRows, error: pe } = await supabaseAdmin
-        .from("bh_products")
-        .select("id, name, brand, sku, cost");
+      let prodFetch = await supabaseAdmin.from("bh_products").select("id, name, brand, sku, cost");
+      if (isBhProductsCostColumnMissing(prodFetch.error)) {
+        prodFetch = await supabaseAdmin.from("bh_products").select("id, name, brand, sku");
+      }
 
+      const { data: prodRows, error: pe } = prodFetch;
       if (pe)
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: pe.message });
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: formatSupabaseErr(pe) });
 
       const products: ProductCostRow[] = (prodRows ?? []).map(
         (r: Record<string, unknown>) => ({
@@ -527,7 +537,7 @@ export const adminRouter = router({
           name: String(r.name ?? ""),
           brand: String(r.brand ?? ""),
           sku: r.sku != null ? String(r.sku) : null,
-          cost: r.cost != null && r.cost !== "" ? Number(r.cost) : null,
+          cost: parseBhProductCost(r.cost),
         })
       );
 

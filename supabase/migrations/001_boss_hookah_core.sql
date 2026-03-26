@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS public.bh_products (
   brand text,
   category text NOT NULL,
   price numeric NOT NULL DEFAULT 0,
+  cost numeric,
   stock integer NOT NULL DEFAULT 0,
   low_stock_threshold integer NOT NULL DEFAULT 10,
   sku text,

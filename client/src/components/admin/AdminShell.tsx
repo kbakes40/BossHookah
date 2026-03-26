@@ -20,7 +20,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const HEADER_TRAILING_MAX = "lg:max-w-[min(100%,56rem)]";
+/** Cap filter clusters on wide screens so they wrap before colliding with the title; keeps right edge inside content max width. */
+const HEADER_TRAILING_MAX = "lg:max-w-[min(100%,48rem)]";
 
 export type AdminNavItem = {
   href: string;
@@ -73,7 +74,7 @@ export function AdminShell({ title, subtitle, children, headerTrailing }: AdminS
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-200 flex text-sm">
       <aside className="w-56 shrink-0 border-r border-zinc-800/90 bg-[#0c0c0e] flex flex-col">
-        <div className="p-4 border-b border-zinc-800/80">
+        <div className="p-4 border-b border-zinc-800/90">
           <Link href="/admin/dashboard">
             <a className="flex items-center gap-3 group">
               <div className="h-9 w-9 rounded-lg bg-zinc-800 border border-zinc-700/80 flex items-center justify-center">
@@ -136,24 +137,29 @@ export function AdminShell({ title, subtitle, children, headerTrailing }: AdminS
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="shrink-0 border-b border-zinc-800/90 bg-[#0f0f12]/95 backdrop-blur px-4 py-2.5">
+      {/* Main column: header border-b is full-bleed (meets sidebar edge); same max-w-7xl + px as main for flush title/content corners. */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+        <header className="shrink-0 border-b border-zinc-800/90 bg-[#0f0f12]/95 backdrop-blur">
           <div
-            className={`mx-auto w-full max-w-7xl flex flex-col gap-3 min-w-0 ${
-              headerTrailing ? "lg:flex-row lg:items-end lg:justify-between lg:gap-5" : ""
+            className={`mx-auto w-full max-w-7xl min-w-0 px-4 md:px-6 py-3.5 flex flex-col gap-3 ${
+              headerTrailing
+                ? "lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:min-h-[3.5rem]"
+                : ""
             }`}
           >
             <div className="min-w-0 shrink-0">
-              <h1 className="text-lg font-semibold text-zinc-50 tracking-tight truncate leading-snug">{title}</h1>
-              {subtitle && <p className="text-xs text-zinc-500 mt-0.5 leading-snug">{subtitle}</p>}
+              <h1 className="text-lg font-semibold text-zinc-50 tracking-tight truncate leading-tight">{title}</h1>
+              {subtitle && <p className="text-xs text-zinc-500 mt-1 leading-snug">{subtitle}</p>}
             </div>
             {headerTrailing != null && (
-              <div className={`min-w-0 w-full lg:w-auto ${HEADER_TRAILING_MAX}`}>{headerTrailing}</div>
+              <div className={`min-w-0 w-full lg:w-auto lg:shrink ${HEADER_TRAILING_MAX}`}>{headerTrailing}</div>
             )}
           </div>
         </header>
 
-        <main className="flex-1 min-h-0 overflow-auto p-4 md:p-6 bg-[#09090b]">{children}</main>
+        <main className="flex-1 min-h-0 overflow-auto">
+          <div className="mx-auto w-full max-w-7xl min-w-0 px-4 md:px-6 py-4 md:py-6">{children}</div>
+        </main>
       </div>
     </div>
   );

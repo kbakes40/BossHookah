@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { adminPageStackClass } from "@/components/admin/adminFilterBarStyles";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,7 +75,7 @@ export default function AdminStoreSettings() {
 
   return (
     <AdminShell title="Settings" subtitle="Store profile, pickup, and Zelle">
-      <div className="max-w-3xl">
+      <div className={`w-full max-w-3xl mx-auto ${adminPageStackClass}`}>
         {isLoading ? (
           <div className="h-40 flex items-center justify-center text-zinc-500 text-sm">Loading settings…</div>
         ) : (

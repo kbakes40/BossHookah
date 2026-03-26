@@ -1,5 +1,15 @@
 /** Shared admin page header / filter bar layout (Sales, Orders, Customers). */
 
+/** Vertical rhythm inside `AdminShell` main (one consistent stack). */
+export const adminPageStackClass = "space-y-6";
+
+/** Standard gutter between dashboard KPI rows, chart, and twin panels. */
+export const adminDashboardGridGapClass = "gap-4";
+
+/** Panel/card surface used across Sales, Home sections, Analytics, etc. */
+export const adminPanelClass =
+  "rounded-xl border border-zinc-800/90 bg-[#121214] shadow-sm";
+
 export const adminFilterBarRowClass =
   "flex flex-wrap items-end gap-x-3 gap-y-3 sm:gap-x-4 justify-start lg:justify-end";
 

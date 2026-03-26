@@ -49,30 +49,50 @@ function parseItems(raw: unknown): OrderItemLine[] {
   return out;
 }
 
+function scoreLineToProduct(lineName: string, p: ProductCostRow): number {
+  const n = lineName.toLowerCase().trim();
+  const pn = p.name.toLowerCase().trim();
+  const full = `${p.brand} - ${p.name}`.toLowerCase().trim();
+  let score = 0;
+  if (n.includes(pn) && pn.length >= 3) score = pn.length;
+  if (n.includes(full) && full.length >= score) score = full.length;
+  if (pn.length >= 4 && pn.split(/\s+/).some(w => w.length > 2 && n.includes(w))) {
+    score = Math.max(score, Math.min(pn.length, 20));
+  }
+  return score;
+}
+
+/**
+ * Match order line text to the best catalog row (same logic as historical cost matching).
+ * `requireCost: true` limits to rows with a known unit cost (COGS path).
+ */
+export function matchProductForLine(
+  lineName: string,
+  products: ProductCostRow[],
+  options?: { requireCost?: boolean }
+): ProductCostRow | null {
+  const n = lineName.toLowerCase().trim();
+  if (!n) return null;
+  let pool = products;
+  if (options?.requireCost) {
+    pool = products.filter(p => p.cost != null && Number.isFinite(p.cost) && p.cost >= 0);
+  }
+  if (pool.length === 0) return null;
+  const scored = pool.map(p => ({ p, score: scoreLineToProduct(lineName, p) }));
+  scored.sort((a, b) => b.score - a.score);
+  const best = scored[0];
+  if (!best || best.score === 0) return null;
+  return best.p;
+}
+
 /** Match order line name to best product unit cost (longest name match wins). */
 export function unitCostForLineName(
   lineName: string,
   products: ProductCostRow[]
 ): number | null {
-  const n = lineName.toLowerCase().trim();
-  if (!n) return null;
-  const withCost = products.filter(p => p.cost != null && Number(p.cost) >= 0);
-  if (withCost.length === 0) return null;
-  const scored = withCost.map(p => {
-    const pn = p.name.toLowerCase().trim();
-    const full = `${p.brand} - ${p.name}`.toLowerCase().trim();
-    let score = 0;
-    if (n.includes(pn) && pn.length >= 3) score = pn.length;
-    if (n.includes(full) && full.length >= score) score = full.length;
-    if (pn.length >= 4 && pn.split(/\s+/).some(w => w.length > 2 && n.includes(w))) {
-      score = Math.max(score, Math.min(pn.length, 20));
-    }
-    return { p, score };
-  });
-  scored.sort((a, b) => b.score - a.score);
-  const best = scored[0];
-  if (!best || best.score === 0) return null;
-  return Number(best.p.cost);
+  const p = matchProductForLine(lineName, products, { requireCost: true });
+  if (p == null || p.cost == null || !Number.isFinite(p.cost)) return null;
+  return p.cost;
 }
 
 export type SalesReportInput = {
@@ -112,6 +132,10 @@ export type SalesReportResult = {
     profit: number;
     marginPct: number | null;
   }>;
+  /** Paid order line revenue grouped by matched product brand (unmatched → Other). */
+  salesByBrand: Array<{ name: string; revenue: number }>;
+  /** Paid order totals by fulfillment type (same rules as shipping / pickup counts). */
+  revenueByDelivery: { shipping: number; pickup: number };
   /** netSales − totalCost (paid orders); uses same cost basis as grossProfit. */
   netProfitAfterRefunds: number;
 };
@@ -134,10 +158,13 @@ export function buildSalesReport(input: SalesReportInput): SalesReportResult {
   let pendingOrderCount = 0;
   let shippingOrders = 0;
   let pickupOrders = 0;
+  let revenueShipping = 0;
+  let revenuePickup = 0;
   let hasUnknownCost = false;
   let unknownCostLineCount = 0;
 
   const seriesMap = new Map<string, { revenue: number; profit: number }>();
+  const brandRevenue = new Map<string, number>();
   const productAgg = new Map<
     string,
     { units: number; revenue: number; cost: number }
@@ -162,8 +189,13 @@ export function buildSalesReport(input: SalesReportInput): SalesReportResult {
 
     paidOrderCount += 1;
     grossSales += totalUsd;
-    if (dm === "pickup") pickupOrders += 1;
-    else shippingOrders += 1;
+    if (dm === "pickup") {
+      pickupOrders += 1;
+      revenuePickup += totalUsd;
+    } else {
+      shippingOrders += 1;
+      revenueShipping += totalUsd;
+    }
 
     const lines = parseItems(o.items);
     let orderCost = 0;
@@ -175,6 +207,8 @@ export function buildSalesReport(input: SalesReportInput): SalesReportResult {
     if (lines.length === 0) {
       orderCost = 0;
       hasUnknownCost = true;
+      const other = brandRevenue.get("Other") ?? 0;
+      brandRevenue.set("Other", other + totalUsd);
     } else {
       for (const li of lines) {
         const rev = (li.priceInCents * li.quantity) / 100;
@@ -186,6 +220,11 @@ export function buildSalesReport(input: SalesReportInput): SalesReportResult {
         } else {
           orderCost += lineCost;
         }
+        const matched = matchProductForLine(li.name, input.products, { requireCost: false });
+        const brandLabel =
+          matched?.brand?.trim() ? matched.brand.trim() : matched ? "Uncategorized" : "Other";
+        brandRevenue.set(brandLabel, (brandRevenue.get(brandLabel) ?? 0) + rev);
+
         const key = li.name.slice(0, 200);
         const cur = productAgg.get(key) ?? { units: 0, revenue: 0, cost: 0 };
         cur.units += li.quantity;
@@ -202,7 +241,9 @@ export function buildSalesReport(input: SalesReportInput): SalesReportResult {
   const netSales = grossSales - refundedTotal;
   const grossProfit = grossSales - totalCost;
   const netProfitAfterRefunds = netSales - totalCost;
-  const profitMargin = grossSales > 0 ? grossProfit / grossSales : null;
+  const rawMargin = grossSales > 0 ? grossProfit / grossSales : null;
+  const profitMargin =
+    rawMargin != null && Number.isFinite(rawMargin) ? rawMargin : null;
   const averageOrderValue = paidOrderCount > 0 ? grossSales / paidOrderCount : null;
 
   const series = Array.from(seriesMap.entries())
@@ -227,9 +268,17 @@ export function buildSalesReport(input: SalesReportInput): SalesReportResult {
       revenue: v.revenue,
       cost: v.cost,
       profit: v.revenue - v.cost,
-      marginPct: v.revenue > 0 ? ((v.revenue - v.cost) / v.revenue) * 100 : null,
+      marginPct: (() => {
+        if (v.revenue <= 0) return null;
+        const pct = ((v.revenue - v.cost) / v.revenue) * 100;
+        return Number.isFinite(pct) ? pct : null;
+      })(),
     }))
     .sort((a, b) => b.profit - a.profit);
+
+  const salesByBrand = Array.from(brandRevenue.entries())
+    .map(([name, revenue]) => ({ name, revenue }))
+    .sort((a, b) => b.revenue - a.revenue);
 
   return {
     grossSales,
@@ -249,6 +298,8 @@ export function buildSalesReport(input: SalesReportInput): SalesReportResult {
     series,
     topProducts,
     productProfitability,
+    salesByBrand,
+    revenueByDelivery: { shipping: revenueShipping, pickup: revenuePickup },
     netProfitAfterRefunds,
   };
 }

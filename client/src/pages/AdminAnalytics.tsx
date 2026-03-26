@@ -10,7 +10,12 @@ import {
   Legend,
 } from "recharts";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Button } from "@/components/ui/button";
+import {
+  adminFilterBarRowClass,
+  adminFilterLabelClass,
+  adminDashboardGridGapClass,
+  adminPageStackClass,
+} from "@/components/admin/adminFilterBarStyles";
 import { supabase } from "@/lib/supabase";
 import type { Ga4OverviewResponse, Ga4OverviewSuccess } from "@shared/ga4Overview";
 import { RefreshCw, BarChart3, AlertCircle } from "lucide-react";
@@ -61,25 +66,36 @@ export default function AdminAnalytics() {
     staleTime: 30_000,
   });
 
-  return (
-    <AdminShell title="Analytics" subtitle="Live traffic from Google Analytics 4 · Revenue stays in Sales">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-9 border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
-            disabled={q.isFetching}
-            onClick={() => void q.refetch()}
-          >
-            <RefreshCw className={`h-3.5 w-3.5 mr-2 ${q.isFetching ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-        </div>
+  const analyticsHeaderActions = (
+    <div className={adminFilterBarRowClass}>
+      <div className="flex flex-col gap-1 shrink-0">
+        <span className={`${adminFilterLabelClass} select-none text-transparent`} aria-hidden>
+          &nbsp;
+        </span>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-9 min-h-9 border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 text-xs px-3"
+          disabled={q.isFetching}
+          onClick={() => void q.refetch()}
+        >
+          <RefreshCw className={`h-3.5 w-3.5 mr-2 ${q.isFetching ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
+      </div>
+    </div>
+  );
 
+  return (
+    <AdminShell
+      title="Analytics"
+      subtitle="Live traffic from Google Analytics 4 · Revenue stays in Sales"
+      headerTrailing={analyticsHeaderActions}
+    >
+      <div className={adminPageStackClass}>
         {q.isPending && !q.data && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className={`grid grid-cols-2 lg:grid-cols-4 ${adminDashboardGridGapClass}`}>
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />

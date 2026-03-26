@@ -6,6 +6,7 @@ import {
   adminFilterControlClass,
   adminFilterFieldSmClass,
   adminFilterLabelClass,
+  adminPageStackClass,
 } from "@/components/admin/adminFilterBarStyles";
 import {
   Select,
@@ -145,7 +146,7 @@ export default function AdminOrders() {
 
   return (
     <AdminShell title="Orders" subtitle="Payment, fulfillment, and delivery" headerTrailing={orderFiltersBar}>
-      <div className="max-w-7xl mx-auto space-y-4">
+      <div className={adminPageStackClass}>
         {isLoading ? (
           <div className="h-40 flex items-center justify-center text-zinc-500 text-sm">Loading orders…</div>
         ) : (

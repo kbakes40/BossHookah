@@ -42,7 +42,7 @@ export default function AdminPlaceholder() {
 
   return (
     <AdminShell title={cfg.title} subtitle={cfg.subtitle}>
-      <div className="max-w-xl rounded-xl border border-zinc-800/90 bg-[#121214] p-6">
+      <div className="max-w-xl mx-auto rounded-xl border border-zinc-800/90 bg-[#121214] p-6">
         <div className="flex gap-3 mb-4">
           <div className="h-10 w-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center">
             <Icon className="h-5 w-5 text-zinc-400" />

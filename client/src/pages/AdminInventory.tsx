@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { adminPageStackClass } from "@/components/admin/adminFilterBarStyles";
 
 export default function AdminInventory() {
   const [categoryFilter, setCategoryFilter] = useState<string | undefined>(undefined);
@@ -324,7 +325,7 @@ export default function AdminInventory() {
 
   return (
     <AdminShell title="Products" subtitle="Inventory, pricing, and landed unit cost">
-      <div className="max-w-7xl mx-auto space-y-4">
+      <div className={adminPageStackClass}>
         {toolbar}
         <div className="rounded-xl border border-zinc-800/90 bg-[#121214] p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
