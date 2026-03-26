@@ -10,11 +10,14 @@ import {
   Legend,
 } from "recharts";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { Button } from "@/components/ui/button";
 import {
   adminFilterBarRowClass,
   adminFilterLabelClass,
   adminDashboardGridGapClass,
   adminPageStackClass,
+  adminPanelClass,
+  adminPanelHeaderClass,
 } from "@/components/admin/adminFilterBarStyles";
 import { supabase } from "@/lib/supabase";
 import type { Ga4OverviewResponse, Ga4OverviewSuccess } from "@shared/ga4Overview";
@@ -51,7 +54,7 @@ function fmtTime(iso: string) {
 
 function SkeletonCard() {
   return (
-    <div className="rounded-xl border border-zinc-800/90 bg-[#121214] p-4 animate-pulse">
+    <div className={`${adminPanelClass} p-4 animate-pulse`}>
       <div className="h-3 w-24 bg-zinc-800 rounded mb-3" />
       <div className="h-8 w-16 bg-zinc-800 rounded" />
     </div>
@@ -203,7 +206,7 @@ function AnalyticsDashboard({ data, isFetching }: { data: Ga4OverviewSuccess; is
         />
       </div>
 
-      <div className="rounded-xl border border-zinc-800/90 bg-[#121214] p-4 shadow-sm">
+      <div className={`${adminPanelClass} p-4`}>
         <p className="text-sm font-medium text-zinc-200 mb-3">Traffic over last 7 days</p>
         {data.dailyTrend.length === 0 ? (
           <p className="text-zinc-500 text-sm py-12 text-center">No daily data in this range.</p>
@@ -226,14 +229,14 @@ function AnalyticsDashboard({ data, isFetching }: { data: Ga4OverviewSuccess; is
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-zinc-800/90 bg-[#121214] overflow-hidden">
-          <div className="px-4 py-3 border-b border-zinc-800/80">
+        <div className={`${adminPanelClass} overflow-hidden`}>
+          <div className={adminPanelHeaderClass}>
             <p className="text-sm font-medium text-zinc-200">Top pages</p>
             <p className="text-[11px] text-zinc-500 mt-0.5">Last 7 days · screen views</p>
           </div>
           <div className="overflow-x-auto max-h-[320px] overflow-y-auto">
             <table className="w-full text-xs">
-              <thead className="sticky top-0 bg-[#0c0c0e] border-b border-zinc-800">
+              <thead className="sticky top-0 bg-[#0c0c0e] border-b border-zinc-800/90">
                 <tr>
                   <th className="text-left px-4 py-2 text-[10px] uppercase text-zinc-500 font-medium">Page</th>
                   <th className="text-right px-4 py-2 text-[10px] uppercase text-zinc-500 font-medium">Views</th>
@@ -258,14 +261,14 @@ function AnalyticsDashboard({ data, isFetching }: { data: Ga4OverviewSuccess; is
           </div>
         </div>
 
-        <div className="rounded-xl border border-zinc-800/90 bg-[#121214] overflow-hidden">
-          <div className="px-4 py-3 border-b border-zinc-800/80">
+        <div className={`${adminPanelClass} overflow-hidden`}>
+          <div className={adminPanelHeaderClass}>
             <p className="text-sm font-medium text-zinc-200">Traffic sources</p>
             <p className="text-[11px] text-zinc-500 mt-0.5">Session default channel · 7 days</p>
           </div>
           <div className="overflow-x-auto max-h-[320px] overflow-y-auto">
             <table className="w-full text-xs">
-              <thead className="sticky top-0 bg-[#0c0c0e] border-b border-zinc-800">
+              <thead className="sticky top-0 bg-[#0c0c0e] border-b border-zinc-800/90">
                 <tr>
                   <th className="text-left px-4 py-2 text-[10px] uppercase text-zinc-500 font-medium">Channel</th>
                   <th className="text-right px-4 py-2 text-[10px] uppercase text-zinc-500 font-medium">Sessions</th>
@@ -294,7 +297,7 @@ function AnalyticsDashboard({ data, isFetching }: { data: Ga4OverviewSuccess; is
             data.deviceBreakdown.map(d => (
               <div
                 key={d.category}
-                className="rounded-xl border border-zinc-800/90 bg-[#121214] px-4 py-4 hover:border-zinc-600/70 transition-colors"
+                className={`${adminPanelClass} px-4 py-4 hover:border-zinc-600/70 transition-colors`}
               >
                 <p className="text-[10px] uppercase tracking-wide text-zinc-500">{d.category}</p>
                 <p className="text-xl font-semibold text-zinc-100 mt-1 tabular-nums">{d.users}</p>
@@ -325,7 +328,7 @@ function StatCard({
   subtitle?: string;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-800/90 bg-[#121214] p-4 hover:border-zinc-700/90 transition-colors">
+    <div className={`${adminPanelClass} p-4 hover:border-zinc-700/90 transition-colors`}>
       <p className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">{label}</p>
       <p className="text-2xl font-semibold text-zinc-50 mt-1 tabular-nums tracking-tight">{value}</p>
       {subtitle != null && (

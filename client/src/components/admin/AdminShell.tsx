@@ -111,7 +111,7 @@ export function AdminShell({ title, subtitle, children, headerTrailing }: AdminS
           })}
         </nav>
 
-        <div className="p-3 border-t border-zinc-800/80 space-y-2">
+        <div className="p-3 border-t border-zinc-800/90 space-y-2">
           <div className="px-2 py-2 rounded-lg bg-zinc-900/50 border border-zinc-800/60">
             <p className="text-xs font-medium text-zinc-300 truncate">{user.name}</p>
             <p className="text-[10px] text-zinc-500 truncate">{user.email}</p>
@@ -157,7 +157,7 @@ export function AdminShell({ title, subtitle, children, headerTrailing }: AdminS
           </div>
         </header>
 
-        <main className="flex-1 min-h-0 overflow-auto">
+        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden bg-[#09090b]">
           <div className="mx-auto w-full max-w-7xl min-w-0 px-4 md:px-6 py-4 md:py-6">{children}</div>
         </main>
       </div>

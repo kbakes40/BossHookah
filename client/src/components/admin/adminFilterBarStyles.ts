@@ -1,14 +1,23 @@
 /** Shared admin page header / filter bar layout (Sales, Orders, Customers). */
 
+/** One structural border color for shell, panels, and internal rules (avoids 80/90 mismatch at joins). */
+export const adminBorderClass = "border-zinc-800/90";
+
+/** Standard outer corner radius for panels, table wrappers, and section cards. */
+export const adminRadiusPanelClass = "rounded-xl";
+
 /** Vertical rhythm inside `AdminShell` main (one consistent stack). */
 export const adminPageStackClass = "space-y-6";
 
 /** Standard gutter between dashboard KPI rows, chart, and twin panels. */
 export const adminDashboardGridGapClass = "gap-4";
 
-/** Panel/card surface used across Sales, Home sections, Analytics, etc. */
-export const adminPanelClass =
-  "rounded-xl border border-zinc-800/90 bg-[#121214] shadow-sm";
+/** Panel/card surface — consistent radius, border, bg; use `overflow-hidden` on wrapper when clipping tables. */
+export const adminPanelClass = `${adminRadiusPanelClass} border ${adminBorderClass} bg-[#121214] shadow-sm`;
+
+/** Table / section title row inside a panel (full-width rule, no extra radius). */
+export const adminPanelHeaderClass =
+  "px-4 py-3 border-b border-zinc-800/90 shrink-0 bg-[#121214]";
 
 export const adminFilterBarRowClass =
   "flex flex-wrap items-end gap-x-3 gap-y-3 sm:gap-x-4 justify-start lg:justify-end";

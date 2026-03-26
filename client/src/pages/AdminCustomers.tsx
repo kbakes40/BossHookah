@@ -122,7 +122,7 @@ export default function AdminCustomers() {
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="bg-[#0c0c0e] border-b border-zinc-800/80">
+                  <tr className="bg-[#0c0c0e] border-b border-zinc-800/90">
                     <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
                       Customer
                     </th>

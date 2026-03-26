@@ -376,7 +376,7 @@ export default function AdminInventory() {
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="bg-[#0c0c0e] border-b border-zinc-800/80">
+                  <tr className="bg-[#0c0c0e] border-b border-zinc-800/90">
                     <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
                       Product
                     </th>
@@ -486,7 +486,7 @@ export default function AdminInventory() {
               </table>
             </div>
             {invTotal > 0 && (
-              <div className="px-4 py-3 border-t border-zinc-800/80 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-zinc-400">
+              <div className="px-4 py-3 border-t border-zinc-800/90 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-zinc-400">
                 <span>
                   Showing {Math.min((invPage - 1) * invPageSize + 1, invTotal)}–{Math.min(invPage * invPageSize, invTotal)}{" "}
                   of {invTotal} ({invPageSize}/page)

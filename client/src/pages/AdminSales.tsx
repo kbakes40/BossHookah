@@ -21,6 +21,8 @@ import {
   adminFilterLabelClass,
   adminPageStackClass,
   adminPanelClass,
+  adminPanelHeaderClass,
+  adminRadiusPanelClass,
 } from "@/components/admin/adminFilterBarStyles";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -413,7 +415,7 @@ export default function AdminSales() {
 
             <div className={`grid grid-cols-1 lg:grid-cols-2 ${adminDashboardGridGapClass} lg:items-stretch`}>
               <div className={`${adminPanelClass} flex flex-col min-h-[20rem] overflow-hidden`}>
-                <div className="px-4 py-3 border-b border-zinc-800/80 shrink-0">
+                <div className={adminPanelHeaderClass}>
                   <p className="text-sm font-medium text-zinc-200">Sales by product category</p>
                   <p className="text-[11px] text-zinc-500 mt-0.5">
                     By brand on matched catalog products · line revenue
@@ -479,7 +481,7 @@ export default function AdminSales() {
               </div>
 
               <div className={`${adminPanelClass} flex flex-col min-h-[20rem] overflow-hidden`}>
-                <div className="px-4 py-3 border-b border-zinc-800/80 shrink-0">
+                <div className={adminPanelHeaderClass}>
                   <p className="text-sm font-medium text-zinc-200">Sales by delivery</p>
                   <p className="text-[11px] text-zinc-500 mt-0.5">Paid order totals · shipping vs pickup</p>
                 </div>
@@ -521,7 +523,7 @@ export default function AdminSales() {
             </div>
 
             <div className={`${adminPanelClass} overflow-hidden`}>
-              <div className="px-4 py-3 border-b border-zinc-800/80">
+              <div className={adminPanelHeaderClass}>
                 <p className="text-sm font-medium text-zinc-200">Top products</p>
                 <p className="text-[11px] text-zinc-500 mt-0.5">By revenue in range (paid lines)</p>
               </div>
@@ -531,7 +533,7 @@ export default function AdminSales() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="bg-[#0c0c0e]/80">
+                      <tr className="bg-[#0c0c0e] border-b border-zinc-800/90">
                         <th className="text-left px-4 py-2.5 text-[10px] uppercase text-zinc-500 font-medium">Product</th>
                         <th className="text-right px-4 py-2.5 text-[10px] uppercase text-zinc-500 font-medium">Units</th>
                         <th className="text-right px-4 py-2.5 text-[10px] uppercase text-zinc-500 font-medium">Revenue</th>
@@ -562,7 +564,7 @@ export default function AdminSales() {
             </div>
 
             <div className={`${adminPanelClass} w-full overflow-hidden`}>
-              <div className="px-4 py-3 border-b border-zinc-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className={`${adminPanelHeaderClass} flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2`}>
                 <div>
                   <p className="text-sm font-medium text-zinc-200">Product profitability</p>
                   <p className="text-[11px] text-zinc-500 mt-0.5">Paid order lines · click column to sort</p>
@@ -574,7 +576,7 @@ export default function AdminSales() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs min-w-[720px]">
                     <thead>
-                      <tr className="bg-[#0c0c0e]/80">
+                      <tr className="bg-[#0c0c0e] border-b border-zinc-800/90">
                         <th className="text-left px-4 py-2.5 text-zinc-500 font-medium">Product</th>
                         <SortTh label="Units" k="units" active={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
                         <SortTh label="Revenue" k="revenue" active={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
@@ -625,7 +627,7 @@ export default function AdminSales() {
 function Kpi({ label, value, hint, accent }: { label: string; value: string; hint?: string; accent?: boolean }) {
   return (
     <div
-      className={`rounded-xl border px-4 py-3.5 bg-[#121214] shadow-sm min-h-[5.75rem] flex flex-col justify-center ${
+      className={`${adminRadiusPanelClass} border px-4 py-3.5 bg-[#121214] shadow-sm min-h-[5.75rem] flex flex-col justify-center ${
         accent ? "border-[#3f6212]/40 shadow-[inset_0_0_0_1px_rgba(132,204,22,0.08)]" : "border-zinc-800/90"
       }`}
     >

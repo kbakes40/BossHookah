@@ -1,7 +1,11 @@
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { adminPageStackClass } from "@/components/admin/adminFilterBarStyles";
+import {
+  adminPageStackClass,
+  adminPanelClass,
+  adminPanelHeaderClass,
+} from "@/components/admin/adminFilterBarStyles";
 import { ArrowRight, AlertTriangle } from "lucide-react";
 
 function deliveryLabel(dm: string) {
@@ -38,7 +42,7 @@ function StatusBadge({ status }: { status: string }) {
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="rounded-xl bg-[#121214] p-4 border border-zinc-800/90 shadow-sm">
+    <div className={`${adminPanelClass} p-4`}>
       <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">{label}</p>
       <p className="text-2xl font-semibold text-zinc-50 mt-1 tabular-nums tracking-tight">{value}</p>
       {sub && <p className="text-[11px] mt-1 text-zinc-500">{sub}</p>}
@@ -48,7 +52,7 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
 
 function Th({ children }: { children: React.ReactNode }) {
   return (
-    <th className="px-3 py-2.5 text-left text-[10px] uppercase tracking-[0.12em] text-zinc-500 font-medium bg-[#0c0c0e]/80 border-b border-zinc-800/80">
+    <th className="px-3 py-2.5 text-left text-[10px] uppercase tracking-[0.12em] text-zinc-500 font-medium bg-[#0c0c0e] border-b border-zinc-800/90">
       {children}
     </th>
   );
@@ -64,8 +68,8 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-800/90 bg-[#121214] overflow-hidden shadow-sm">
-      <div className="px-4 py-3 border-b border-zinc-800/80 flex items-center justify-between gap-2">
+    <div className={`${adminPanelClass} overflow-hidden`}>
+      <div className={`${adminPanelHeaderClass} flex items-center justify-between gap-2`}>
         <p className="text-sm font-medium text-zinc-200">{title}</p>
         {action}
       </div>
@@ -246,7 +250,9 @@ export default function AdminDashboard() {
                   { href: "/admin/sales", t: "Sales reports", d: "Revenue, cost, profit" },
                 ].map(x => (
                   <Link key={x.href + x.t} href={x.href}>
-                    <a className="block rounded-xl border border-zinc-800/90 bg-[#121214] p-4 hover:border-zinc-600/80 hover:bg-[#161618] transition-colors group">
+                    <a
+                      className={`block ${adminPanelClass} p-4 hover:border-zinc-600/80 hover:bg-[#161618] transition-colors group`}
+                    >
                       <p className="text-sm font-medium text-zinc-100 group-hover:text-white">{x.t}</p>
                       <p className="text-[11px] text-zinc-500 mt-0.5">{x.d}</p>
                     </a>
@@ -268,7 +274,7 @@ export default function AdminDashboard() {
 /** Subtle green emphasis only on primary revenue metric */
 function StatCardAccent({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="rounded-xl bg-[#121214] p-4 border border-zinc-800/90 shadow-sm relative overflow-hidden">
+    <div className={`${adminPanelClass} p-4 relative overflow-hidden`}>
       <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[#84cc16]/80" aria-hidden />
       <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-500 pl-1">{label}</p>
       <p className="text-2xl font-semibold text-[#bef264] mt-1 tabular-nums tracking-tight pl-1">{value}</p>

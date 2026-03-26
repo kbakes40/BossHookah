@@ -162,7 +162,7 @@ export default function AdminStoreSettings() {
                 />
               </div>
 
-              <div className="border-t border-zinc-800/80 pt-5 space-y-4">
+              <div className="border-t border-zinc-800/90 pt-5 space-y-4">
                 <h3 className="text-sm font-semibold text-zinc-200">Zelle</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -183,7 +183,7 @@ export default function AdminStoreSettings() {
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-zinc-800/80 bg-[#0c0c0e]/50 flex justify-end gap-2">
+            <div className="px-6 py-4 border-t border-zinc-800/90 bg-[#0c0c0e]/50 flex justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
