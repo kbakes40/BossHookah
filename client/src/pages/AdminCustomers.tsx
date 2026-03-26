@@ -1,50 +1,105 @@
 // Admin Customers — bh_customers (checkout / wholesale accounts)
 import { useState } from "react";
+import { keepPreviousData } from "@tanstack/react-query";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
-import { Search, Mail, Calendar, Trash2, Users } from "lucide-react";
+import { exportToCsv } from "@/lib/exportCsv";
+import { Search, Mail, Calendar, Trash2, Users, Download } from "lucide-react";
 
 export default function AdminCustomers() {
   const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
 
-  const { data: customersData, isLoading, refetch } = trpc.admin.getCustomers.useQuery({
-    page: 1,
-    pageSize: 50,
-    search: search.trim() || undefined,
-  });
+  const { data: customers, isLoading, refetch } = trpc.admin.customers.list.useQuery(
+    { search: query.trim() || undefined },
+    { placeholderData: keepPreviousData }
+  );
 
   const deleteCustomer = trpc.admin.deleteCustomer.useMutation({
-    onSuccess: () => refetch(),
+    onSuccess: () => void refetch(),
   });
 
   const handleDelete = (customerId: string, customerName: string) => {
-    if (
-      window.confirm(`Delete customer "${customerName}"? This cannot be undone.`)
-    ) {
+    if (window.confirm(`Delete customer "${customerName}"? This cannot be undone.`)) {
       deleteCustomer.mutate({ customerId });
     }
   };
 
-  const customers = customersData?.customers ?? [];
+  const handleExport = () => {
+    if (!customers?.length) return;
+    exportToCsv(
+      "boss-hookah-customers.csv",
+      customers.map(c => ({
+        id: c.id,
+        email: c.email,
+        name: c.name,
+        orders: c.orders,
+        totalSpentUsd: c.totalSpent,
+        joined: c.joined,
+        updated: c.updated,
+      }))
+    );
+  };
 
   const searchBar = (
-    <div className="relative w-full max-w-xs">
-      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
-      <Input
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        placeholder="Search name or email…"
-        className="h-9 pl-8 text-xs bg-zinc-900 border-zinc-700 text-zinc-200"
-      />
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="relative w-full max-w-xs">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
+        <Input
+          placeholder="Search name or email…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && setQuery(search)}
+          className="h-9 pl-8 text-xs bg-zinc-900 border-zinc-700 text-zinc-200"
+        />
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-9 border-zinc-700 bg-zinc-900 text-zinc-200"
+        onClick={() => setQuery(search)}
+      >
+        Search
+      </Button>
+      {query && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-9 text-zinc-400"
+          onClick={() => {
+            setSearch("");
+            setQuery("");
+          }}
+        >
+          Clear
+        </Button>
+      )}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-9 border-zinc-700 bg-zinc-900 text-zinc-200"
+        onClick={handleExport}
+        disabled={!customers?.length}
+      >
+        <Download className="w-3.5 h-3.5 mr-1.5" />
+        Export CSV
+      </Button>
     </div>
   );
 
   return (
-    <AdminShell title="Customers" subtitle="Wholesale / checkout accounts (bh_customers)" actions={searchBar}>
-      <div className="max-w-7xl mx-auto">
-        {isLoading ? (
+    <AdminShell
+      title="Customers"
+      subtitle="Wholesale / checkout accounts (bh_customers)"
+      actions={searchBar}
+    >
+      <div className="max-w-7xl mx-auto space-y-3">
+        {isLoading && !customers?.length ? (
           <div className="h-40 flex items-center justify-center text-zinc-500 text-sm">Loading…</div>
         ) : (
           <div className="rounded-xl border border-zinc-800/90 bg-[#121214] overflow-hidden">
@@ -76,43 +131,47 @@ export default function AdminCustomers() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/70">
-                  {customers.length > 0 ? (
-                    customers.map(customer => (
-                      <tr key={customer.id} className="hover:bg-zinc-900/35 transition-colors">
+                  {customers && customers.length > 0 ? (
+                    customers.map(c => (
+                      <tr key={c.id} className="hover:bg-zinc-900/35 transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
                               <Users className="w-4 h-4 text-zinc-500" />
                             </div>
-                            <div>
-                              <div className="text-sm font-medium text-zinc-200">{customer.name || "Guest"}</div>
-                              <div className="text-[11px] font-mono text-zinc-500 truncate max-w-[140px]">{customer.id}</div>
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-zinc-200">{c.name}</div>
+                              <div className="text-[11px] font-mono text-zinc-500 truncate max-w-[140px]">
+                                {c.id}
+                              </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-zinc-300">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 min-w-0">
                             <Mail className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                            {customer.email || "—"}
+                            <span className="truncate">{c.email || "—"}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-zinc-300 tabular-nums">{customer.orderCount}</td>
-                        <td className="px-4 py-3 text-zinc-200 tabular-nums">${customer.totalSpent.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-zinc-300 tabular-nums">{c.orders}</td>
+                        <td className="px-4 py-3 text-zinc-200 tabular-nums">
+                          ${c.totalSpent.toFixed(2)}
+                        </td>
                         <td className="px-4 py-3 text-zinc-500">
                           <div className="flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5" />
-                            {new Date(customer.createdAt).toLocaleDateString()}
+                            <Calendar className="w-3.5 h-3.5 shrink-0" />
+                            {new Date(c.joined).toLocaleDateString()}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-zinc-500">
-                          {new Date(customer.lastSignedIn).toLocaleDateString()}
+                          {new Date(c.updated).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3">
                           <Button
                             variant="ghost"
                             size="sm"
                             className="h-8 text-zinc-400 hover:text-red-300"
-                            onClick={() => handleDelete(customer.id, customer.name || "Guest")}
+                            onClick={() => handleDelete(c.id, c.name)}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -130,6 +189,13 @@ export default function AdminCustomers() {
               </table>
             </div>
           </div>
+        )}
+
+        {customers != null && (
+          <p className="text-xs text-zinc-600">
+            {customers.length} customer{customers.length !== 1 ? "s" : ""}
+            {customers.length >= 10_000 ? " (max 10,000 shown — refine search)" : ""}
+          </p>
         )}
       </div>
     </AdminShell>

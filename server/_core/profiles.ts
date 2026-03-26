@@ -49,6 +49,23 @@ export async function syncProfileFromAuthUser(authUser: AuthUser): Promise<void>
   if (error) {
     console.error("[profiles] upsert failed:", error.message);
   }
+
+  /** Ensure admin Customers list (`bh_customers`) includes everyone who signs in. */
+  if (email) {
+    const customerRow: Record<string, unknown> = {
+      email,
+      updated_at: now,
+    };
+    if (fullName) {
+      customerRow.name = fullName;
+    }
+    const { error: customerError } = await supabaseAdmin
+      .from("bh_customers")
+      .upsert(customerRow, { onConflict: "email" });
+    if (customerError) {
+      console.error("[bh_customers] sign-in upsert failed:", customerError.message);
+    }
+  }
 }
 
 export function profileRowToTrpcUser(row: {

@@ -3,6 +3,7 @@
  */
 import { BetaAnalyticsDataClient } from "@google-analytics/data";
 import type {
+  Ga4ConnectionTestResult,
   Ga4DailyPoint,
   Ga4DeviceRow,
   Ga4OverviewFailure,
@@ -18,6 +19,19 @@ function propertyResourceName(rawId: string): string {
   const s = rawId.trim();
   if (s.startsWith("properties/")) return s;
   return `properties/${s}`;
+}
+
+/** GA4 Data API expects numeric Property ID, not the web stream Measurement ID (G-…). */
+function ga4PropertyIdConfigErrorMessage(propertyId: string): string | null {
+  const s = propertyId.trim();
+  if (!s) return null;
+  if (/^G-[A-Z0-9]+$/i.test(s)) {
+    return (
+      "GA4_PROPERTY_ID must be the numeric Property ID from Google Analytics → Admin → Property settings " +
+      "(e.g. 123456789), not the Measurement ID (G-…). The site tag (gtag) uses G-…; the Data API uses the number."
+    );
+  }
+  return null;
 }
 
 function numMetric(row: { metricValues?: Array<{ value?: string | null }> }, i: number): number {
@@ -176,25 +190,8 @@ const NOT_CONFIGURED: Ga4OverviewNotConfigured = {
   ok: true,
   configured: false,
   message:
-    "Google Analytics is not connected. Add GA4_PROPERTY_ID, GA4_CLIENT_EMAIL, and GA4_PRIVATE_KEY (service account JSON key) to your server environment. Grant the service account Viewer access on the GA4 property.",
+    "Google Analytics is not connected. Add GA4_PROPERTY_ID (numeric Property ID from GA4 Admin — not G-…), GA4_CLIENT_EMAIL, and GA4_PRIVATE_KEY to your server environment (e.g. Vercel Production). Grant the service account Viewer on the GA4 property. Set VITE_GA_MEASUREMENT_ID to your G-… stream and redeploy so the site tag and API read the same property.",
 };
-
-/** Safe to return from admin test route — no secrets. */
-export type Ga4ConnectionTestOk = {
-  connected: true;
-  /** Raw env id (numeric or with `properties/` stripped for display consistency). */
-  propertyId: string;
-  realtimeActiveUsers: number;
-  checkedAt: string;
-};
-
-export type Ga4ConnectionTestFail = {
-  connected: false;
-  propertyId: string | null;
-  error: string;
-};
-
-export type Ga4ConnectionTestResult = Ga4ConnectionTestOk | Ga4ConnectionTestFail;
 
 /**
  * Lightweight GA4 Data API call for credential / property verification.
@@ -210,6 +207,11 @@ export async function testGa4Connection(): Promise<Ga4ConnectionTestResult> {
       propertyId: propertyIdRaw,
       error: "Missing GA4_PROPERTY_ID, GA4_CLIENT_EMAIL, or GA4_PRIVATE_KEY",
     };
+  }
+
+  const idMsg = ga4PropertyIdConfigErrorMessage(env.propertyId);
+  if (idMsg) {
+    return { connected: false, propertyId: propertyIdRaw, error: idMsg };
   }
 
   const property = propertyResourceName(env.propertyId);
@@ -244,8 +246,19 @@ export async function fetchGa4Overview(): Promise<Ga4OverviewResponse> {
     return NOT_CONFIGURED;
   }
 
-  const property = propertyResourceName(env.propertyId);
   const fetchedAt = new Date().toISOString();
+  const idMsg = ga4PropertyIdConfigErrorMessage(env.propertyId);
+  if (idMsg) {
+    const err: Ga4OverviewFailure = {
+      ok: false,
+      configured: true,
+      error: idMsg,
+      fetchedAt,
+    };
+    return err;
+  }
+
+  const property = propertyResourceName(env.propertyId);
   let client: BetaAnalyticsDataClient;
   try {
     client = createClient();

@@ -2,10 +2,11 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { defineConfig } from "vite";
+import { injectGaMeasurementId } from "./vite.inject-ga-plugin";
 
 // Vercel-compatible Vite config (without Manus-specific dev plugins)
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), injectGaMeasurementId()],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),

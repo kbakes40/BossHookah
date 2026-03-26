@@ -56,3 +56,17 @@ export type Ga4OverviewFailure = {
 };
 
 export type Ga4OverviewResponse = Ga4OverviewSuccess | Ga4OverviewNotConfigured | Ga4OverviewFailure;
+
+/** GET /api/admin/analytics/test — credential smoke test (no secrets in response). */
+export type Ga4ConnectionTestResult =
+  | {
+      connected: true;
+      propertyId: string;
+      realtimeActiveUsers: number;
+      checkedAt: string;
+    }
+  | {
+      connected: false;
+      propertyId: string | null;
+      error: string;
+    };

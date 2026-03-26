@@ -10,6 +10,13 @@ export const appRouter = router({
   auth: router({
     // Returns the currently authenticated user (from Supabase JWT context)
     me: publicProcedure.query(opts => opts.ctx.user),
+    /**
+     * Runs context + profile/`bh_customers` sync when called with a valid JWT.
+     * Used on SIGNED_IN / INITIAL_SESSION so Customers tab updates without waiting for other tRPC calls.
+     */
+    syncSession: publicProcedure.mutation(() => {
+      return { ok: true as const };
+    }),
     // Logout is handled client-side by Supabase; this is a no-op kept for compatibility
     logout: publicProcedure.mutation(() => {
       return { success: true } as const;

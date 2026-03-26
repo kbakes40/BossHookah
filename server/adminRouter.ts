@@ -221,6 +221,54 @@ export const adminRouter = router({
       };
     }),
 
+  /**
+   * Flat customer list for admin table + CSV (up to 10k rows; search optional).
+   */
+  customers: router({
+    list: adminProcedure
+      .input(z.object({ search: z.string().optional() }))
+      .query(async ({ input }) => {
+        const maxRows = 10_000;
+        let query = supabaseAdmin
+          .from("bh_customers")
+          .select("id,email,name,order_count,total_spent,created_at,updated_at")
+          .order("created_at", { ascending: false })
+          .limit(maxRows);
+
+        if (input.search?.trim()) {
+          const term = sanitizeIlikeTerm(input.search);
+          if (term) {
+            const q = `%${term}%`;
+            query = query.or(`name.ilike.${q},email.ilike.${q}`);
+          }
+        }
+
+        const { data, error } = await query;
+        if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+
+        return (data ?? []).map(row => {
+          const r = row as {
+            id: string;
+            email: string;
+            name: string | null;
+            order_count?: number | null;
+            total_spent?: number | string | null;
+            created_at: string;
+            updated_at: string;
+          };
+          return {
+            id: String(r.id),
+            email: r.email,
+            name: r.name?.trim() ? r.name : "—",
+            orders: Number(r.order_count) || 0,
+            totalSpent: Number(r.total_spent) || 0,
+            joined: r.created_at,
+            updated: r.updated_at,
+          };
+        });
+      }),
+  }),
+
   /** Supabase `profiles` — everyone who has signed in (JWT synced). */
   getProfiles: adminProcedure
     .input(

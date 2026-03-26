@@ -29,6 +29,20 @@ export const ENV = {
   })(),
 };
 
+/** Normalize PEM / Vercel one-line keys (literal `\n`, CRLF, wrapping quotes). */
+function normalizeGa4PrivateKey(raw: string | undefined): string {
+  if (raw == null || raw === "") return "";
+  let k = raw.replace(/\r\n/g, "\n").trim();
+  k = k.replace(/\\n/g, "\n");
+  if (
+    (k.startsWith('"') && k.endsWith('"')) ||
+    (k.startsWith("'") && k.endsWith("'"))
+  ) {
+    k = k.slice(1, -1).trim().replace(/\\n/g, "\n");
+  }
+  return k.trim();
+}
+
 /** GA4 Data API (service account). Server-side only; never send to the client. */
 export function readGa4Env(): {
   propertyId: string;
@@ -38,7 +52,7 @@ export function readGa4Env(): {
   return {
     propertyId: (process.env.GA4_PROPERTY_ID ?? "").trim(),
     clientEmail: (process.env.GA4_CLIENT_EMAIL ?? "").trim(),
-    privateKey: process.env.GA4_PRIVATE_KEY?.replace(/\\n/g, "\n") ?? "",
+    privateKey: normalizeGa4PrivateKey(process.env.GA4_PRIVATE_KEY),
   };
 }
 

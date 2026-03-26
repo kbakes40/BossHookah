@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
-import type { Session, User } from "@supabase/supabase-js";
+import { trpc } from "@/lib/trpc";
+import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 type AuthContextType = {
@@ -35,6 +36,7 @@ const AuthContext = createContext<AuthContextType>({
 export function SupabaseAuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const syncSession = trpc.auth.syncSession.useMutation();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -42,12 +44,22 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setLoading(false);
-    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event: AuthChangeEvent, nextSession) => {
+        setSession(nextSession);
+        setLoading(false);
+        if (
+          nextSession?.user &&
+          (event === "SIGNED_IN" || event === "INITIAL_SESSION")
+        ) {
+          syncSession.mutate();
+        }
+      }
+    );
 
     return () => subscription.unsubscribe();
+    // syncSession.mutate is stable; omitting from deps avoids tearing down the auth listener every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
