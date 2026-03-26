@@ -103,28 +103,22 @@ export default function AdminAnalytics() {
       .finally(() => setTestBusy(false));
   };
 
-  const headerRight = (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      className="h-9 border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
-      disabled={q.isFetching}
-      onClick={() => void q.refetch()}
-    >
-      <RefreshCw className={`h-3.5 w-3.5 mr-2 ${q.isFetching ? "animate-spin" : ""}`} />
-      Refresh
-    </Button>
-  );
-
   return (
-    <AdminShell
-      title="Analytics"
-      subtitle="Live traffic from Google Analytics 4 · Revenue stays in Sales"
-      actions={headerRight}
-      showInventorySearch={false}
-    >
+    <AdminShell title="Analytics" subtitle="Live traffic from Google Analytics 4 · Revenue stays in Sales">
       <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-9 border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
+            disabled={q.isFetching}
+            onClick={() => void q.refetch()}
+          >
+            <RefreshCw className={`h-3.5 w-3.5 mr-2 ${q.isFetching ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
         <div className="rounded-xl border border-zinc-800/90 bg-[#0c0c0e] p-4 text-xs text-zinc-400 space-y-3">
           <p className="font-medium text-zinc-200 text-sm">Google Analytics setup (Vercel)</p>
           <ul className="list-disc pl-4 space-y-1.5 leading-relaxed">

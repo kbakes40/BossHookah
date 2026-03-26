@@ -262,8 +262,9 @@ export default function AdminSales() {
   );
 
   return (
-    <AdminShell title="Sales" subtitle="Revenue, cost, and profit (paid orders in range)" actions={headerActions}>
+    <AdminShell title="Sales" subtitle="Revenue, cost, and profit (paid orders in range)">
       <div className="max-w-7xl mx-auto space-y-6">
+        {headerActions}
         {reportQuery.isError && (
           <div className="rounded-lg border border-red-900/50 bg-red-950/30 text-red-200 text-sm px-4 py-3">
             {reportQuery.error.message}

@@ -43,9 +43,11 @@ type AdminShellProps = {
   title: string;
   subtitle?: string;
   children: ReactNode;
+  /** Renders in the header row to the right of the title (e.g. Orders filters). */
+  headerTrailing?: ReactNode;
 };
 
-export function AdminShell({ title, subtitle, children }: AdminShellProps) {
+export function AdminShell({ title, subtitle, children, headerTrailing }: AdminShellProps) {
   const { user, loading, isAuthenticated, signOut } = useAuth();
   const [location] = useLocation();
 
@@ -134,9 +136,18 @@ export function AdminShell({ title, subtitle, children }: AdminShellProps) {
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="shrink-0 border-b border-zinc-800/90 bg-[#0f0f12]/95 backdrop-blur px-4 py-3">
-          <div className="min-w-0">
-            <h1 className="text-lg font-semibold text-zinc-50 tracking-tight truncate">{title}</h1>
-            {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
+          <div
+            className={`mx-auto w-full max-w-7xl flex flex-col gap-4 min-w-0 ${
+              headerTrailing ? "lg:flex-row lg:items-end lg:justify-between lg:gap-6" : ""
+            }`}
+          >
+            <div className="min-w-0 shrink-0">
+              <h1 className="text-lg font-semibold text-zinc-50 tracking-tight truncate">{title}</h1>
+              {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
+            </div>
+            {headerTrailing != null && (
+              <div className="min-w-0 w-full lg:w-auto lg:max-w-[min(100%,42rem)]">{headerTrailing}</div>
+            )}
           </div>
         </header>
 
