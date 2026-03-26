@@ -17,10 +17,8 @@ import {
   Settings,
   LogOut,
   Store,
-  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 export type AdminNavItem = {
   href: string;
@@ -45,19 +43,9 @@ type AdminShellProps = {
   title: string;
   subtitle?: string;
   children: ReactNode;
-  /** Extra controls in header row (filters, buttons) */
-  actions?: ReactNode;
-  /** Show compact inventory search → navigates to inventory (optional) */
-  showInventorySearch?: boolean;
 };
 
-export function AdminShell({
-  title,
-  subtitle,
-  children,
-  actions,
-  showInventorySearch = true,
-}: AdminShellProps) {
+export function AdminShell({ title, subtitle, children }: AdminShellProps) {
   const { user, loading, isAuthenticated, signOut } = useAuth();
   const [location] = useLocation();
 
@@ -145,31 +133,10 @@ export function AdminShell({
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="shrink-0 border-b border-zinc-800/90 bg-[#0f0f12]/95 backdrop-blur px-4 py-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <header className="shrink-0 border-b border-zinc-800/90 bg-[#0f0f12]/95 backdrop-blur px-4 py-3">
           <div className="min-w-0">
             <h1 className="text-lg font-semibold text-zinc-50 tracking-tight truncate">{title}</h1>
             {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-            {showInventorySearch && (
-              <form
-                className="relative w-full sm:w-56"
-                onSubmit={e => {
-                  e.preventDefault();
-                  const fd = new FormData(e.currentTarget);
-                  const q = String(fd.get("q") ?? "").trim();
-                  if (q) window.location.href = `/admin/inventory?q=${encodeURIComponent(q)}`;
-                }}
-              >
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
-                <Input
-                  name="q"
-                  placeholder="Search inventory…"
-                  className="h-9 pl-8 text-xs bg-zinc-900/80 border-zinc-700 text-zinc-200 placeholder:text-zinc-600"
-                />
-              </form>
-            )}
-            {actions}
           </div>
         </header>
 

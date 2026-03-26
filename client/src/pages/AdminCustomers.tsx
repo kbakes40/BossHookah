@@ -52,14 +52,14 @@ export default function AdminCustomers() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           onKeyDown={e => e.key === "Enter" && setQuery(search)}
-          className="h-9 pl-8 text-xs bg-zinc-900 border-zinc-700 text-zinc-200"
+          className="h-9 pl-8 max-w-sm text-xs bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500"
         />
       </div>
       <Button
         type="button"
         variant="outline"
         size="sm"
-        className="h-9 border-zinc-700 bg-zinc-900 text-zinc-200"
+        className="h-9 border-zinc-700 bg-zinc-900 text-white"
         onClick={() => setQuery(search)}
       >
         Search
@@ -82,7 +82,7 @@ export default function AdminCustomers() {
         type="button"
         variant="outline"
         size="sm"
-        className="h-9 border-zinc-700 bg-zinc-900 text-zinc-200"
+        className="h-9 border-zinc-700 bg-zinc-900 text-white"
         onClick={handleExport}
         disabled={!customers?.length}
       >
@@ -93,12 +93,9 @@ export default function AdminCustomers() {
   );
 
   return (
-    <AdminShell
-      title="Customers"
-      subtitle="Wholesale / checkout accounts (bh_customers)"
-      actions={searchBar}
-    >
-      <div className="max-w-7xl mx-auto space-y-3">
+    <AdminShell title="Customers" subtitle="Wholesale / checkout accounts (bh_customers)">
+      <div className="max-w-7xl mx-auto space-y-4">
+        {searchBar}
         {isLoading && !customers?.length ? (
           <div className="h-40 flex items-center justify-center text-zinc-500 text-sm">Loading…</div>
         ) : (
