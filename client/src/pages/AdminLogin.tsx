@@ -3,6 +3,7 @@ import { useSupabaseAuth } from "@/lib/SupabaseAuthProvider";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { Store } from "lucide-react";
 
 export default function AdminLogin() {
   const { signInWithEmail, signInWithGoogle, loading: sessionLoading, isAuthenticated: hasSession } = useSupabaseAuth();
@@ -46,9 +47,14 @@ export default function AdminLogin() {
   return (
     <main className="min-h-screen bg-[#d7ff3f] flex items-center justify-center px-4">
       <div className="w-full max-w-sm rounded-[28px] bg-[#050505] p-8 shadow-2xl">
-        {/* Logo */}
+        {/* Logo — matches admin shell store mark */}
         <div className="flex flex-col items-center mb-8">
-          <div className="h-12 w-12 rounded-2xl bg-[#d7ff3f] mb-4" />
+          <div
+            className="h-12 w-12 rounded-2xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center mb-4 shadow-inner"
+            aria-hidden
+          >
+            <Store className="h-6 w-6 text-[#d7ff3f]" strokeWidth={1.75} aria-hidden />
+          </div>
           <h1 className="text-xl font-bold text-zinc-50">Boss Hookah Admin</h1>
           <p className="text-xs text-zinc-500 mt-1">Sign in to your dashboard</p>
         </div>
