@@ -14,10 +14,8 @@ import {
 } from "recharts";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
-  adminFilterBarRowClass,
   adminFilterControlClass,
   adminDashboardGridGapClass,
-  adminFilterFieldSmClass,
   adminFilterLabelClass,
   adminPageStackClass,
   adminPanelClass,
@@ -34,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Link } from "wouter";
 import { Download, Info } from "lucide-react";
 
 type Preset = "today" | "7" | "30" | "month" | "custom";
@@ -221,6 +220,13 @@ export default function AdminSales() {
       ["Shipping / pickup (paid)", `${report.shippingOrders} / ${report.pickupOrders}`],
       ["Unknown cost line items", String(report.unknownCostLineCount)],
       [],
+      ["Lines missing COGS (order line, reason, inventory hint)"],
+      ...report.unknownCostLines.map(row => [
+        row.lineName,
+        row.reason,
+        row.matchedInventoryLabel ?? "",
+      ]),
+      [],
       ["Top products (name, units, revenue, cost, profit)"],
     ];
     for (const p of report.topProducts.slice(0, 20)) {
@@ -238,10 +244,10 @@ export default function AdminSales() {
   };
 
   const salesFiltersBar = (
-    <div className={adminFilterBarRowClass}>
-      <div className="flex flex-col gap-1 w-full min-w-0 sm:max-w-md">
+    <div className="flex w-full min-w-0 flex-row flex-wrap items-end justify-end gap-x-3 gap-y-2 sm:gap-x-4 lg:flex-nowrap">
+      <div className="flex min-w-0 flex-col gap-1 shrink-0">
         <label className={adminFilterLabelClass}>Date range</label>
-        <div className="flex min-h-9 flex-wrap items-center gap-0.5 rounded-lg border border-zinc-800 bg-zinc-900/80 p-0.5">
+        <div className="flex min-h-9 shrink-0 flex-wrap items-center gap-0.5 rounded-lg border border-zinc-800 bg-zinc-900/80 p-0.5">
           {(
             [
               ["today", "Today"],
@@ -267,7 +273,7 @@ export default function AdminSales() {
         </div>
       </div>
       {preset === "custom" && (
-        <div className="flex flex-col gap-1 w-full min-w-[16rem] sm:w-auto">
+        <div className="flex min-w-0 shrink-0 flex-col gap-1">
           <label className={adminFilterLabelClass}>Dates</label>
           <div className="flex flex-wrap items-center gap-2">
             <Input
@@ -286,7 +292,7 @@ export default function AdminSales() {
           </div>
         </div>
       )}
-      <div className={adminFilterFieldSmClass}>
+      <div className="flex w-full min-w-[9.5rem] shrink-0 flex-col gap-1 sm:w-44">
         <label className={adminFilterLabelClass}>Delivery</label>
         <Select value={deliveryMethod} onValueChange={(v: "all" | "shipping" | "pickup") => setDeliveryMethod(v)}>
           <SelectTrigger className={adminFilterControlClass}>
@@ -333,11 +339,39 @@ export default function AdminSales() {
         {report?.hasUnknownCost && (
           <div className="flex gap-2 rounded-lg border border-amber-900/40 bg-amber-950/20 text-amber-100/90 text-xs px-4 py-3">
             <Info className="h-4 w-4 shrink-0 mt-0.5 text-amber-400" />
-            <p>
-              Some line items have no matching product cost ({report.unknownCostLineCount} line
-              {report.unknownCostLineCount === 1 ? "" : "s"}). Set unit cost on products in Inventory so totals are
-              complete.
-            </p>
+            <div className="min-w-0 space-y-2">
+              <p>
+                Some paid order lines have no COGS ({report.unknownCostLineCount} line
+                {report.unknownCostLineCount === 1 ? "" : "s"}). Fix in{" "}
+                <Link href="/admin/inventory" className="text-amber-200 underline underline-offset-2 hover:text-white">
+                  Inventory
+                </Link>{" "}
+                so revenue and profit match.
+              </p>
+              {report.unknownCostLines.length > 0 && (
+                <ul className="list-disc pl-4 space-y-1 text-amber-100/85">
+                  {report.unknownCostLines.map(row => (
+                    <li key={row.lineName} className="break-words">
+                      <span className="font-medium text-amber-50">{row.lineName}</span>
+                      {row.reason === "cost_not_set" && row.matchedInventoryLabel ? (
+                        <span>
+                          {" "}
+                          — set <strong>unit cost</strong> on: {row.matchedInventoryLabel}
+                        </span>
+                      ) : row.reason === "cost_not_set" ? (
+                        <span> — set <strong>unit cost</strong> on the matched inventory row</span>
+                      ) : (
+                        <span>
+                          {" "}
+                          — no product <em>with unit cost</em> matches this line text; add or rename an inventory
+                          product (e.g. match checkout: Brand — Name)
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         )}
 

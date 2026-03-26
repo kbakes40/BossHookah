@@ -23,22 +23,47 @@ import { supabase } from "@/lib/supabase";
 import type { Ga4OverviewResponse, Ga4OverviewSuccess } from "@shared/ga4Overview";
 import { RefreshCw, BarChart3, AlertCircle } from "lucide-react";
 
+const ANALYTICS_FETCH_MS = 45_000;
+
 async function fetchGa4Overview(): Promise<Ga4OverviewResponse> {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  const r = await fetch("/api/admin/analytics/overview", {
-    headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
-    credentials: "include",
-  });
-  if (r.status === 403) {
-    throw new Error("You do not have access to analytics.");
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), ANALYTICS_FETCH_MS);
+  try {
+    const r = await fetch("/api/admin/analytics/overview", {
+      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      credentials: "include",
+      signal: ac.signal,
+    });
+    const text = await r.text();
+    if (r.status === 403) {
+      throw new Error("You do not have access to analytics.");
+    }
+    if (!r.ok) {
+      throw new Error(text?.trim()?.slice(0, 800) || `Request failed (${r.status})`);
+    }
+    const looksHtml = /^\s*</.test(text);
+    if (looksHtml) {
+      throw new Error(
+        "Analytics returned HTML instead of JSON — the /api route may not be running. Use the full app server (e.g. pnpm dev), not the Vite-only dev server."
+      );
+    }
+    try {
+      return JSON.parse(text) as Ga4OverviewResponse;
+    } catch {
+      throw new Error("Invalid JSON from analytics API. Check deployment logs for /api/admin/analytics/overview.");
+    }
+  } catch (e) {
+    const aborted = e instanceof Error && e.name === "AbortError";
+    if (aborted) {
+      throw new Error("Analytics request timed out — GA4 or the server took too long. Try Refresh or check Vercel function logs.");
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
   }
-  if (!r.ok) {
-    const t = await r.text();
-    throw new Error(t || `Request failed (${r.status})`);
-  }
-  return r.json() as Promise<Ga4OverviewResponse>;
 }
 
 function fmtTime(iso: string) {
@@ -67,6 +92,7 @@ export default function AdminAnalytics() {
     queryFn: fetchGa4Overview,
     refetchInterval: 60_000,
     staleTime: 30_000,
+    retry: 1,
   });
 
   const analyticsHeaderActions = (
@@ -153,14 +179,17 @@ export default function AdminAnalytics() {
 }
 
 function AnalyticsDashboard({ data, isFetching }: { data: Ga4OverviewSuccess; isFetching: boolean }) {
-  const topPage = data.topPages[0];
-  const topSource = data.topSources[0];
+  const topPages = Array.isArray(data.topPages) ? data.topPages : [];
+  const topSources = Array.isArray(data.topSources) ? data.topSources : [];
+  const dailyTrend = Array.isArray(data.dailyTrend) ? data.dailyTrend : [];
+  const deviceBreakdown = Array.isArray(data.deviceBreakdown) ? data.deviceBreakdown : [];
+  const topPage = topPages[0];
+  const topSource = topSources[0];
   const activeNow =
     data.activeUsersApprox5Minutes != null ? data.activeUsersApprox5Minutes : data.activeUsersRealtime;
   const looksEmpty =
     activeNow === 0 &&
-    (data.dailyTrend.length === 0 ||
-      data.dailyTrend.every(d => d.users === 0 && d.sessions === 0));
+    (dailyTrend.length === 0 || dailyTrend.every(d => d.users === 0 && d.sessions === 0));
 
   return (
     <>
@@ -208,11 +237,11 @@ function AnalyticsDashboard({ data, isFetching }: { data: Ga4OverviewSuccess; is
 
       <div className={`${adminPanelClass} p-4`}>
         <p className="text-sm font-medium text-zinc-200 mb-3">Traffic over last 7 days</p>
-        {data.dailyTrend.length === 0 ? (
+        {dailyTrend.length === 0 ? (
           <p className="text-zinc-500 text-sm py-12 text-center">No daily data in this range.</p>
         ) : (
           <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={data.dailyTrend}>
+            <LineChart data={dailyTrend}>
               <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
               <XAxis dataKey="date" stroke="#71717a" tick={{ fill: "#71717a", fontSize: 10 }} />
               <YAxis stroke="#71717a" tick={{ fill: "#71717a", fontSize: 10 }} />
@@ -243,7 +272,7 @@ function AnalyticsDashboard({ data, isFetching }: { data: Ga4OverviewSuccess; is
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/70">
-                {data.topPages.map(row => (
+                {topPages.map(row => (
                   <tr key={row.pagePath} className="hover:bg-zinc-900/40">
                     <td className="px-4 py-2 text-zinc-300">
                       <div className="font-mono text-[11px] truncate max-w-[220px]" title={row.pagePath}>
@@ -275,7 +304,7 @@ function AnalyticsDashboard({ data, isFetching }: { data: Ga4OverviewSuccess; is
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/70">
-                {data.topSources.map(row => (
+                {topSources.map(row => (
                   <tr key={row.channel} className="hover:bg-zinc-900/40">
                     <td className="px-4 py-2 text-zinc-300">{row.channel}</td>
                     <td className="px-4 py-2 text-right tabular-nums text-zinc-200">{row.sessions}</td>
@@ -291,10 +320,10 @@ function AnalyticsDashboard({ data, isFetching }: { data: Ga4OverviewSuccess; is
         <p className="text-sm font-medium text-zinc-200 mb-3">Device breakdown</p>
         <p className="text-[11px] text-zinc-500 mb-3">Active users · last 7 days</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {data.deviceBreakdown.length === 0 ? (
+          {deviceBreakdown.length === 0 ? (
             <p className="text-zinc-500 text-sm col-span-full">No device data.</p>
           ) : (
-            data.deviceBreakdown.map(d => (
+            deviceBreakdown.map(d => (
               <div
                 key={d.category}
                 className={`${adminPanelClass} px-4 py-4 hover:border-zinc-600/70 transition-colors`}

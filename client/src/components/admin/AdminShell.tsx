@@ -141,13 +141,13 @@ export function AdminShell({ title, subtitle, children, headerTrailing }: AdminS
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <header className="shrink-0 border-b border-zinc-800/90 bg-[#0f0f12]/95 backdrop-blur">
           <div
-            className={`mx-auto w-full max-w-7xl min-w-0 px-4 md:px-6 py-3.5 flex flex-col gap-3 ${
+            className={`mx-auto w-full max-w-7xl min-w-0 px-4 md:px-6 py-4 flex flex-col gap-3 ${
               headerTrailing
-                ? "lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:min-h-[3.5rem]"
+                ? "lg:flex-row lg:items-start lg:justify-between lg:gap-6"
                 : ""
             }`}
           >
-            <div className="min-w-0 shrink-0">
+            <div className="min-w-0 shrink-0 lg:pt-0">
               <h1 className="text-lg font-semibold text-zinc-50 tracking-tight truncate leading-tight">{title}</h1>
               {subtitle && <p className="text-xs text-zinc-500 mt-1 leading-snug">{subtitle}</p>}
             </div>

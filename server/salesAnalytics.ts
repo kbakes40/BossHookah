@@ -100,6 +100,15 @@ export type SalesReportInput = {
   products: ProductCostRow[];
 };
 
+/** Paid order line could not be assigned COGS (deduped by line text). */
+export type UnknownCostLineInfo = {
+  lineName: string;
+  /** Inventory row matches line name heuristics but `cost` is missing or invalid */
+  reason: "cost_not_set" | "no_costed_match";
+  /** Set when reason is `cost_not_set` — open this product in Inventory and enter unit cost */
+  matchedInventoryLabel: string | null;
+};
+
 export type SalesReportResult = {
   grossSales: number;
   refundedTotal: number;
@@ -116,6 +125,8 @@ export type SalesReportResult = {
   /** True when some paid lines had no matching product cost */
   hasUnknownCost: boolean;
   unknownCostLineCount: number;
+  /** Distinct line descriptions that still need COGS (names + whether to set cost vs fix matching) */
+  unknownCostLines: UnknownCostLineInfo[];
   series: Array<{ date: string; revenue: number; profit: number }>;
   topProducts: Array<{
     name: string;
@@ -144,6 +155,25 @@ const PAID_STATUSES = new Set(["paid", "completed", "delivered"]);
 const PENDING_STATUSES = new Set(["pending"]);
 const REFUND_STATUSES = new Set(["refunded"]);
 
+function inventoryLabel(p: ProductCostRow): string {
+  const b = p.brand?.trim();
+  const n = p.name?.trim();
+  if (b && n) return `${b} — ${n}`;
+  return n || b || "";
+}
+
+function mergeUnknownCostLine(
+  map: Map<string, UnknownCostLineInfo>,
+  lineName: string,
+  info: UnknownCostLineInfo
+) {
+  const key = lineName.slice(0, 500);
+  const prev = map.get(key);
+  if (!prev || (prev.reason === "no_costed_match" && info.reason === "cost_not_set")) {
+    map.set(key, info);
+  }
+}
+
 function dayKey(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso.slice(0, 10);
@@ -162,6 +192,7 @@ export function buildSalesReport(input: SalesReportInput): SalesReportResult {
   let revenuePickup = 0;
   let hasUnknownCost = false;
   let unknownCostLineCount = 0;
+  const unknownLineMap = new Map<string, UnknownCostLineInfo>();
 
   const seriesMap = new Map<string, { revenue: number; profit: number }>();
   const brandRevenue = new Map<string, number>();
@@ -212,15 +243,30 @@ export function buildSalesReport(input: SalesReportInput): SalesReportResult {
     } else {
       for (const li of lines) {
         const rev = (li.priceInCents * li.quantity) / 100;
-        const uc = unitCostForLineName(li.name, input.products);
+        const matched = matchProductForLine(li.name, input.products, { requireCost: false });
+        const pCost = matchProductForLine(li.name, input.products, { requireCost: true });
+        const uc =
+          pCost != null &&
+          pCost.cost != null &&
+          Number.isFinite(pCost.cost) &&
+          pCost.cost >= 0
+            ? pCost.cost
+            : null;
         const lineCost = uc != null ? uc * li.quantity : null;
         if (lineCost == null) {
           hasUnknownCost = true;
           unknownCostLineCount += 1;
+          const missingCost =
+            matched != null &&
+            (matched.cost == null || !Number.isFinite(matched.cost) || matched.cost < 0);
+          mergeUnknownCostLine(unknownLineMap, li.name, {
+            lineName: li.name,
+            reason: missingCost ? "cost_not_set" : "no_costed_match",
+            matchedInventoryLabel: missingCost ? inventoryLabel(matched) || null : null,
+          });
         } else {
           orderCost += lineCost;
         }
-        const matched = matchProductForLine(li.name, input.products, { requireCost: false });
         const brandLabel =
           matched?.brand?.trim() ? matched.brand.trim() : matched ? "Uncategorized" : "Other";
         brandRevenue.set(brandLabel, (brandRevenue.get(brandLabel) ?? 0) + rev);
@@ -280,6 +326,10 @@ export function buildSalesReport(input: SalesReportInput): SalesReportResult {
     .map(([name, revenue]) => ({ name, revenue }))
     .sort((a, b) => b.revenue - a.revenue);
 
+  const unknownCostLines = Array.from(unknownLineMap.values()).sort((a, b) =>
+    a.lineName.localeCompare(b.lineName)
+  );
+
   return {
     grossSales,
     refundedTotal,
@@ -295,6 +345,7 @@ export function buildSalesReport(input: SalesReportInput): SalesReportResult {
     pickupOrders,
     hasUnknownCost,
     unknownCostLineCount,
+    unknownCostLines,
     series,
     topProducts,
     productProfitability,
