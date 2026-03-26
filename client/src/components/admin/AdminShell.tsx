@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+const HEADER_TRAILING_MAX = "lg:max-w-[min(100%,56rem)]";
+
 export type AdminNavItem = {
   href: string;
   label: string;
@@ -135,18 +137,18 @@ export function AdminShell({ title, subtitle, children, headerTrailing }: AdminS
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="shrink-0 border-b border-zinc-800/90 bg-[#0f0f12]/95 backdrop-blur px-4 py-3">
+        <header className="shrink-0 border-b border-zinc-800/90 bg-[#0f0f12]/95 backdrop-blur px-4 py-2.5">
           <div
-            className={`mx-auto w-full max-w-7xl flex flex-col gap-4 min-w-0 ${
-              headerTrailing ? "lg:flex-row lg:items-end lg:justify-between lg:gap-6" : ""
+            className={`mx-auto w-full max-w-7xl flex flex-col gap-3 min-w-0 ${
+              headerTrailing ? "lg:flex-row lg:items-end lg:justify-between lg:gap-5" : ""
             }`}
           >
             <div className="min-w-0 shrink-0">
-              <h1 className="text-lg font-semibold text-zinc-50 tracking-tight truncate">{title}</h1>
-              {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
+              <h1 className="text-lg font-semibold text-zinc-50 tracking-tight truncate leading-snug">{title}</h1>
+              {subtitle && <p className="text-xs text-zinc-500 mt-0.5 leading-snug">{subtitle}</p>}
             </div>
             {headerTrailing != null && (
-              <div className="min-w-0 w-full lg:w-auto lg:max-w-[min(100%,42rem)]">{headerTrailing}</div>
+              <div className={`min-w-0 w-full lg:w-auto ${HEADER_TRAILING_MAX}`}>{headerTrailing}</div>
             )}
           </div>
         </header>

@@ -2,6 +2,11 @@
 import { useState } from "react";
 import { keepPreviousData } from "@tanstack/react-query";
 import { AdminShell } from "@/components/admin/AdminShell";
+import {
+  adminFilterBarRowClass,
+  adminFilterControlClass,
+  adminFilterLabelClass,
+} from "@/components/admin/adminFilterBarStyles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
@@ -43,59 +48,72 @@ export default function AdminCustomers() {
     );
   };
 
-  const searchBar = (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="relative w-full max-w-xs">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
-        <Input
-          placeholder="Search name or email…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && setQuery(search)}
-          className="h-9 pl-8 max-w-sm text-xs bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500"
-        />
+  const customerFiltersBar = (
+    <div className={adminFilterBarRowClass}>
+      <div className="flex flex-col gap-1 w-full min-w-[12rem] sm:min-w-[14rem] md:w-52 flex-1 sm:flex-none">
+        <label className={adminFilterLabelClass}>Name or email</label>
+        <div className="relative w-full">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
+          <Input
+            placeholder="Search name or email…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && setQuery(search)}
+            className={`${adminFilterControlClass} pl-8`}
+          />
+        </div>
       </div>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="h-9 border-zinc-700 bg-zinc-900 text-white"
-        onClick={() => setQuery(search)}
-      >
-        Search
-      </Button>
-      {query && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-9 text-zinc-400"
-          onClick={() => {
-            setSearch("");
-            setQuery("");
-          }}
-        >
-          Clear
-        </Button>
-      )}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="h-9 border-zinc-700 bg-zinc-900 text-white"
-        onClick={handleExport}
-        disabled={!customers?.length}
-      >
-        <Download className="w-3.5 h-3.5 mr-1.5" />
-        Export CSV
-      </Button>
+      <div className="flex flex-col gap-1 shrink-0">
+        <span className={`${adminFilterLabelClass} select-none text-transparent`} aria-hidden>
+          &nbsp;
+        </span>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-9 min-h-9 border-zinc-700 bg-zinc-900 text-zinc-200 text-xs px-3"
+            onClick={() => setQuery(search)}
+          >
+            Search
+          </Button>
+          {query ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-9 min-h-9 text-zinc-400 text-xs px-3"
+              onClick={() => {
+                setSearch("");
+                setQuery("");
+              }}
+            >
+              Clear
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-9 min-h-9 border-zinc-700 bg-zinc-900 text-zinc-200 text-xs px-3"
+            onClick={handleExport}
+            disabled={!customers?.length}
+          >
+            <Download className="w-3.5 h-3.5 mr-1.5" />
+            Export CSV
+          </Button>
+        </div>
+      </div>
     </div>
   );
 
   return (
-    <AdminShell title="Customers" subtitle="Wholesale / checkout accounts (bh_customers)">
+    <AdminShell
+      title="Customers"
+      subtitle="Wholesale / checkout accounts (bh_customers)"
+      headerTrailing={customerFiltersBar}
+    >
       <div className="max-w-7xl mx-auto space-y-4">
-        {searchBar}
         {isLoading && !customers?.length ? (
           <div className="h-40 flex items-center justify-center text-zinc-500 text-sm">Loading…</div>
         ) : (

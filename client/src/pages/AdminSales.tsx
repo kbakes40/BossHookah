@@ -12,6 +12,12 @@ import {
   Cell,
 } from "recharts";
 import { AdminShell } from "@/components/admin/AdminShell";
+import {
+  adminFilterBarRowClass,
+  adminFilterControlClass,
+  adminFilterFieldSmClass,
+  adminFilterLabelClass,
+} from "@/components/admin/adminFilterBarStyles";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import {
@@ -195,76 +201,93 @@ export default function AdminSales() {
     }
   };
 
-  const headerActions = (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="flex flex-wrap gap-1 p-0.5 rounded-lg bg-zinc-900/80 border border-zinc-800">
-        {(
-          [
-            ["today", "Today"],
-            ["7", "7d"],
-            ["30", "30d"],
-            ["month", "Month"],
-            ["custom", "Custom"],
-          ] as const
-        ).map(([k, label]) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => setPreset(k)}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-              preset === k
-                ? "bg-[#1a2312] text-[#bef264] border border-[#3f6212]/40"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+  const salesFiltersBar = (
+    <div className={adminFilterBarRowClass}>
+      <div className="flex flex-col gap-1 w-full min-w-0 sm:max-w-md">
+        <label className={adminFilterLabelClass}>Date range</label>
+        <div className="flex min-h-9 flex-wrap items-center gap-0.5 rounded-lg border border-zinc-800 bg-zinc-900/80 p-0.5">
+          {(
+            [
+              ["today", "Today"],
+              ["7", "7d"],
+              ["30", "30d"],
+              ["month", "Month"],
+              ["custom", "Custom"],
+            ] as const
+          ).map(([k, label]) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setPreset(k)}
+              className={`h-8 shrink-0 rounded-md px-2.5 text-[11px] font-medium transition-colors ${
+                preset === k
+                  ? "bg-[#1a2312] text-[#bef264] border border-[#3f6212]/40"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
       {preset === "custom" && (
-        <div className="flex items-center gap-2">
-          <Input
-            type="date"
-            value={customFrom}
-            onChange={e => setCustomFrom(e.target.value)}
-            className="h-9 w-36 text-xs bg-zinc-900 border-zinc-700 text-zinc-200"
-          />
-          <span className="text-zinc-600">–</span>
-          <Input
-            type="date"
-            value={customTo}
-            onChange={e => setCustomTo(e.target.value)}
-            className="h-9 w-36 text-xs bg-zinc-900 border-zinc-700 text-zinc-200"
-          />
+        <div className="flex flex-col gap-1 w-full min-w-[16rem] sm:w-auto">
+          <label className={adminFilterLabelClass}>Dates</label>
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              type="date"
+              value={customFrom}
+              onChange={e => setCustomFrom(e.target.value)}
+              className={`${adminFilterControlClass} w-36 shrink-0`}
+            />
+            <span className="text-zinc-600 text-xs">–</span>
+            <Input
+              type="date"
+              value={customTo}
+              onChange={e => setCustomTo(e.target.value)}
+              className={`${adminFilterControlClass} w-36 shrink-0`}
+            />
+          </div>
         </div>
       )}
-      <Select value={deliveryMethod} onValueChange={(v: "all" | "shipping" | "pickup") => setDeliveryMethod(v)}>
-        <SelectTrigger className="h-9 w-[140px] text-xs bg-zinc-900 border-zinc-700 text-zinc-200">
-          <SelectValue placeholder="Delivery" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All delivery</SelectItem>
-          <SelectItem value="shipping">Shipping</SelectItem>
-          <SelectItem value="pickup">Pickup</SelectItem>
-        </SelectContent>
-      </Select>
-      <Button
-        type="button"
-        size="sm"
-        className="h-9 bg-[#3f6212] hover:bg-[#4d7c0f] text-[#ecfccb] border border-[#65a30d]/50"
-        disabled={!report || reportQuery.isFetching}
-        onClick={exportCsv}
-      >
-        <Download className="h-3.5 w-3.5 mr-1.5" />
-        Export CSV
-      </Button>
+      <div className={adminFilterFieldSmClass}>
+        <label className={adminFilterLabelClass}>Delivery</label>
+        <Select value={deliveryMethod} onValueChange={(v: "all" | "shipping" | "pickup") => setDeliveryMethod(v)}>
+          <SelectTrigger className={adminFilterControlClass}>
+            <SelectValue placeholder="Delivery" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All delivery</SelectItem>
+            <SelectItem value="shipping">Shipping</SelectItem>
+            <SelectItem value="pickup">Pickup</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex flex-col gap-1 shrink-0">
+        <span className={`${adminFilterLabelClass} select-none text-transparent`} aria-hidden>
+          &nbsp;
+        </span>
+        <Button
+          type="button"
+          size="sm"
+          className="h-9 min-h-9 bg-[#3f6212] hover:bg-[#4d7c0f] text-[#ecfccb] border border-[#65a30d]/50 text-xs px-3"
+          disabled={!report || reportQuery.isFetching}
+          onClick={exportCsv}
+        >
+          <Download className="h-3.5 w-3.5 mr-1.5" />
+          Export CSV
+        </Button>
+      </div>
     </div>
   );
 
   return (
-    <AdminShell title="Sales" subtitle="Revenue, cost, and profit (paid orders in range)">
+    <AdminShell
+      title="Sales"
+      subtitle="Revenue, cost, and profit (paid orders in range)"
+      headerTrailing={salesFiltersBar}
+    >
       <div className="max-w-7xl mx-auto space-y-6">
-        {headerActions}
         {reportQuery.isError && (
           <div className="rounded-lg border border-red-900/50 bg-red-950/30 text-red-200 text-sm px-4 py-3">
             {reportQuery.error.message}

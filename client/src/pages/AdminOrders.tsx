@@ -2,6 +2,12 @@
 import { useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
+  adminFilterBarRowClass,
+  adminFilterControlClass,
+  adminFilterFieldSmClass,
+  adminFilterLabelClass,
+} from "@/components/admin/adminFilterBarStyles";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -77,15 +83,12 @@ export default function AdminOrders() {
       })
     : ordersRaw;
 
-  const filterTriggerClass =
-    "h-9 w-full min-h-9 text-xs bg-zinc-900 border-zinc-700 text-zinc-200 placeholder:text-zinc-600";
-
   const orderFiltersBar = (
-    <div className="flex flex-wrap items-end gap-x-3 gap-y-3 sm:gap-x-4 justify-start lg:justify-end">
-      <div className="flex flex-col gap-1 w-[calc(50%-0.375rem)] min-w-[9.5rem] sm:w-40 sm:min-w-[9.5rem] md:w-44">
-        <label className="text-[10px] uppercase tracking-wide text-zinc-500">Payment</label>
+    <div className={adminFilterBarRowClass}>
+      <div className={adminFilterFieldSmClass}>
+        <label className={adminFilterLabelClass}>Payment</label>
         <Select value={statusFilter} onValueChange={(v: typeof statusFilter) => setStatusFilter(v)}>
-          <SelectTrigger className={filterTriggerClass}>
+          <SelectTrigger className={adminFilterControlClass}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -97,10 +100,10 @@ export default function AdminOrders() {
           </SelectContent>
         </Select>
       </div>
-      <div className="flex flex-col gap-1 w-[calc(50%-0.375rem)] min-w-[9.5rem] sm:w-40 sm:min-w-[9.5rem] md:w-44">
-        <label className="text-[10px] uppercase tracking-wide text-zinc-500">Fulfillment</label>
+      <div className={adminFilterFieldSmClass}>
+        <label className={adminFilterLabelClass}>Fulfillment</label>
         <Select value={fulfillmentFilter} onValueChange={(v: typeof fulfillmentFilter) => setFulfillmentFilter(v)}>
-          <SelectTrigger className={filterTriggerClass}>
+          <SelectTrigger className={adminFilterControlClass}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -112,10 +115,10 @@ export default function AdminOrders() {
           </SelectContent>
         </Select>
       </div>
-      <div className="flex flex-col gap-1 w-[calc(50%-0.375rem)] min-w-[9.5rem] sm:w-40 sm:min-w-[9.5rem] md:w-44">
-        <label className="text-[10px] uppercase tracking-wide text-zinc-500">Delivery</label>
+      <div className={adminFilterFieldSmClass}>
+        <label className={adminFilterLabelClass}>Delivery</label>
         <Select value={deliveryFilter} onValueChange={(v: typeof deliveryFilter) => setDeliveryFilter(v)}>
-          <SelectTrigger className={filterTriggerClass}>
+          <SelectTrigger className={adminFilterControlClass}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -126,14 +129,14 @@ export default function AdminOrders() {
         </Select>
       </div>
       <div className="flex flex-col gap-1 w-full min-w-[12rem] sm:w-44 md:w-48 sm:min-w-[11rem]">
-        <label className="text-[10px] uppercase tracking-wide text-zinc-500">Search order</label>
+        <label className={adminFilterLabelClass}>Search order</label>
         <div className="relative w-full">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Order id, customer…"
-            className={`${filterTriggerClass} pl-8`}
+            className={`${adminFilterControlClass} pl-8`}
           />
         </div>
       </div>
