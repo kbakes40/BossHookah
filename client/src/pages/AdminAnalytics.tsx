@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -13,11 +12,7 @@ import {
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
-import type {
-  Ga4ConnectionTestResult,
-  Ga4OverviewResponse,
-  Ga4OverviewSuccess,
-} from "@shared/ga4Overview";
+import type { Ga4OverviewResponse, Ga4OverviewSuccess } from "@shared/ga4Overview";
 import { RefreshCw, BarChart3, AlertCircle } from "lucide-react";
 
 async function fetchGa4Overview(): Promise<Ga4OverviewResponse> {
@@ -36,24 +31,6 @@ async function fetchGa4Overview(): Promise<Ga4OverviewResponse> {
     throw new Error(t || `Request failed (${r.status})`);
   }
   return r.json() as Promise<Ga4OverviewResponse>;
-}
-
-async function fetchGa4ConnectionTest(): Promise<Ga4ConnectionTestResult> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const r = await fetch("/api/admin/analytics/test", {
-    headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
-    credentials: "include",
-  });
-  if (r.status === 403) {
-    throw new Error("You do not have access.");
-  }
-  if (!r.ok) {
-    const t = await r.text();
-    throw new Error(t || `Request failed (${r.status})`);
-  }
-  return r.json() as Promise<Ga4ConnectionTestResult>;
 }
 
 function fmtTime(iso: string) {
@@ -84,25 +61,6 @@ export default function AdminAnalytics() {
     staleTime: 30_000,
   });
 
-  const [testBusy, setTestBusy] = useState(false);
-  const [testOutcome, setTestOutcome] = useState<
-    { kind: "ok"; payload: Ga4ConnectionTestResult } | { kind: "err"; message: string } | null
-  >(null);
-
-  const runConnectionTest = () => {
-    setTestBusy(true);
-    setTestOutcome(null);
-    void fetchGa4ConnectionTest()
-      .then(payload => setTestOutcome({ kind: "ok", payload }))
-      .catch(e =>
-        setTestOutcome({
-          kind: "err",
-          message: e instanceof Error ? e.message : String(e),
-        })
-      )
-      .finally(() => setTestBusy(false));
-  };
-
   return (
     <AdminShell title="Analytics" subtitle="Live traffic from Google Analytics 4 · Revenue stays in Sales">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -118,53 +76,6 @@ export default function AdminAnalytics() {
             <RefreshCw className={`h-3.5 w-3.5 mr-2 ${q.isFetching ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-        </div>
-        <div className="rounded-xl border border-zinc-800/90 bg-[#0c0c0e] p-4 text-xs text-zinc-400 space-y-3">
-          <p className="font-medium text-zinc-200 text-sm">Google Analytics setup (Vercel)</p>
-          <ul className="list-disc pl-4 space-y-1.5 leading-relaxed">
-            <li>
-              <code className="text-zinc-300">GA4_PROPERTY_ID</code> must be the{" "}
-              <strong className="text-zinc-300">numeric</strong> Property ID (GA4 → Admin → Property settings).
-              Do not use the Measurement ID (<code className="text-zinc-300">G-…</code>) here.
-            </li>
-            <li>
-              <code className="text-zinc-300">VITE_GA_MEASUREMENT_ID</code> (or <code className="text-zinc-300">GA_MEASUREMENT_ID</code>)
-              should be your <code className="text-zinc-300">G-…</code> value so the site tag matches{" "}
-              <em>the same</em> GA4 property. Set it for <strong className="text-zinc-300">Production</strong> and redeploy.
-            </li>
-            <li>
-              Google Cloud service account: <code className="text-zinc-300">GA4_CLIENT_EMAIL</code> +{" "}
-              <code className="text-zinc-300">GA4_PRIVATE_KEY</code> (PEM). Grant the account{" "}
-              <strong className="text-zinc-300">Viewer</strong> on the GA4 property.
-            </li>
-            <li>
-              After changing env vars, trigger a new deployment so the API bundle and client build pick them up.
-            </li>
-          </ul>
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 text-xs"
-              disabled={testBusy}
-              onClick={runConnectionTest}
-            >
-              {testBusy ? "Testing…" : "Test GA4 API connection"}
-            </Button>
-            {testOutcome?.kind === "err" && (
-              <span className="text-red-300">{testOutcome.message}</span>
-            )}
-            {testOutcome?.kind === "ok" && testOutcome.payload.connected === false && (
-              <span className="text-amber-200/90">{testOutcome.payload.error}</span>
-            )}
-            {testOutcome?.kind === "ok" && testOutcome.payload.connected === true && (
-              <span className="text-emerald-300/90">
-                OK · property <code className="text-zinc-300">{testOutcome.payload.propertyId}</code> · realtime
-                users sample: {testOutcome.payload.realtimeActiveUsers} · {fmtTime(testOutcome.payload.checkedAt)}
-              </span>
-            )}
-          </div>
         </div>
 
         {q.isPending && !q.data && (
