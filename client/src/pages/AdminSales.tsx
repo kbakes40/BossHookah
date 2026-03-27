@@ -34,8 +34,46 @@ import {
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import { Download, Info } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Preset = "today" | "7" | "30" | "month" | "custom";
+
+/** Sales page only — dark glass hover (avoids shadcn accent / input hovers flashing bright). */
+const salesHoverTransition =
+  "transition-[background-color,border-color,box-shadow,color] duration-[180ms] ease-in-out";
+
+const salesGlassHoverInteractive =
+  `${salesHoverTransition} hover:bg-[rgba(255,255,255,0.04)] hover:border-[rgba(255,255,255,0.10)] hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]`;
+
+const salesTableRowHover =
+  `${salesHoverTransition} hover:bg-[rgba(255,255,255,0.04)]`;
+
+const salesSelectTriggerClass = cn(
+  adminFilterControlClass,
+  salesHoverTransition,
+  "border-zinc-700 shadow-none dark:hover:!bg-[rgba(255,255,255,0.04)] hover:!border-[rgba(255,255,255,0.10)] hover:!shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] focus-visible:!ring-zinc-600/35"
+);
+
+const salesSelectContentClass =
+  "bg-[#121214] border-zinc-800/90 text-zinc-200 shadow-lg [&_[data-slot=select-scroll-up-button]]:text-zinc-400 [&_[data-slot=select-scroll-down-button]]:text-zinc-400";
+
+const salesSelectItemClass = cn(
+  salesHoverTransition,
+  "text-zinc-300 cursor-pointer rounded-sm outline-none",
+  "data-[highlighted]:bg-[rgba(255,255,255,0.05)] data-[highlighted]:text-zinc-100",
+  "focus:bg-[rgba(255,255,255,0.05)] focus:text-zinc-100"
+);
+
+const salesDateInputClass = cn(
+  adminFilterControlClass,
+  salesGlassHoverInteractive,
+  "shadow-none focus-visible:!ring-zinc-600/35"
+);
+
+const salesSortBtnClass = cn(
+  salesHoverTransition,
+  "rounded-sm -mx-1 px-1 hover:bg-[rgba(255,255,255,0.04)] hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] hover:text-zinc-200"
+);
 
 function localYmd(d: Date) {
   const y = d.getFullYear();
@@ -261,11 +299,12 @@ export default function AdminSales() {
               key={k}
               type="button"
               onClick={() => setPreset(k)}
-              className={`h-8 shrink-0 rounded-md px-2.5 text-[11px] font-medium transition-colors ${
+              className={cn(
+                "h-8 shrink-0 rounded-md px-2.5 text-[11px] font-medium",
                 preset === k
-                  ? "bg-[#1a2312] text-[#bef264] border border-[#3f6212]/40"
-                  : "text-zinc-400 hover:text-zinc-200"
-              }`}
+                  ? "bg-[#1a2312] text-[#bef264] border border-[#3f6212]/40 hover:bg-[#1f2a16]"
+                  : `text-zinc-400 border border-transparent ${salesGlassHoverInteractive}`
+              )}
             >
               {label}
             </button>
@@ -280,14 +319,14 @@ export default function AdminSales() {
               type="date"
               value={customFrom}
               onChange={e => setCustomFrom(e.target.value)}
-              className={`${adminFilterControlClass} w-36 shrink-0`}
+              className={cn(salesDateInputClass, "w-36 shrink-0")}
             />
             <span className="text-zinc-600 text-xs">–</span>
             <Input
               type="date"
               value={customTo}
               onChange={e => setCustomTo(e.target.value)}
-              className={`${adminFilterControlClass} w-36 shrink-0`}
+              className={cn(salesDateInputClass, "w-36 shrink-0")}
             />
           </div>
         </div>
@@ -295,13 +334,19 @@ export default function AdminSales() {
       <div className="flex w-full min-w-[9.5rem] shrink-0 flex-col gap-1 sm:w-44">
         <label className={adminFilterLabelClass}>Delivery</label>
         <Select value={deliveryMethod} onValueChange={(v: "all" | "shipping" | "pickup") => setDeliveryMethod(v)}>
-          <SelectTrigger className={adminFilterControlClass}>
+          <SelectTrigger className={salesSelectTriggerClass}>
             <SelectValue placeholder="Delivery" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All delivery</SelectItem>
-            <SelectItem value="shipping">Shipping</SelectItem>
-            <SelectItem value="pickup">Pickup</SelectItem>
+          <SelectContent className={salesSelectContentClass}>
+            <SelectItem className={salesSelectItemClass} value="all">
+              All delivery
+            </SelectItem>
+            <SelectItem className={salesSelectItemClass} value="shipping">
+              Shipping
+            </SelectItem>
+            <SelectItem className={salesSelectItemClass} value="pickup">
+              Pickup
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -312,7 +357,7 @@ export default function AdminSales() {
         <Button
           type="button"
           size="sm"
-          className="h-9 min-h-9 bg-[#3f6212] hover:bg-[#4d7c0f] text-[#ecfccb] border border-[#65a30d]/50 text-xs px-3"
+          className="h-9 min-h-9 bg-[#3f6212] text-[#ecfccb] border border-[#65a30d]/50 text-xs px-3 transition-[background-color,box-shadow,color] duration-[180ms] ease-in-out hover:!bg-[#4d7c0f] hover:!shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] focus-visible:!ring-2 focus-visible:!ring-[#65a30d]/40"
           disabled={!report || reportQuery.isFetching}
           onClick={exportCsv}
         >
@@ -343,7 +388,10 @@ export default function AdminSales() {
               <p>
                 Some paid order lines have no COGS ({report.unknownCostLineCount} line
                 {report.unknownCostLineCount === 1 ? "" : "s"}). Fix in{" "}
-                <Link href="/admin/inventory" className="text-amber-200 underline underline-offset-2 hover:text-white">
+                <Link
+                  href="/admin/inventory"
+                  className="text-amber-200 underline underline-offset-2 transition-colors duration-[180ms] ease-in-out hover:text-amber-100"
+                >
                   Inventory
                 </Link>{" "}
                 so revenue and profit match.
@@ -577,7 +625,7 @@ export default function AdminSales() {
                     </thead>
                     <tbody className="divide-y divide-zinc-800/70">
                       {report.topProducts.slice(0, 12).map(p => (
-                        <tr key={p.name} className="hover:bg-zinc-900/40">
+                        <tr key={p.name} className={salesTableRowHover}>
                           <td className="px-4 py-2.5 text-zinc-200 max-w-[220px] truncate">{p.name}</td>
                           <td className="px-4 py-2.5 text-right tabular-nums text-zinc-300">{p.units}</td>
                           <td className="px-4 py-2.5 text-right tabular-nums text-zinc-300">{fmtMoney(p.revenue)}</td>
@@ -621,7 +669,7 @@ export default function AdminSales() {
                     </thead>
                     <tbody className="divide-y divide-zinc-800/70">
                       {sortedProfitability.slice(0, 40).map(row => (
-                        <tr key={row.name} className="hover:bg-zinc-900/40">
+                        <tr key={row.name} className={salesTableRowHover}>
                           <td className="px-4 py-2.5 text-zinc-200 max-w-[200px] truncate">{row.name}</td>
                           <td className="px-4 py-2.5 text-right tabular-nums text-zinc-300">{row.unitsSold}</td>
                           <td className="px-4 py-2.5 text-right tabular-nums text-zinc-300">{fmtMoney(row.revenue)}</td>
@@ -698,7 +746,10 @@ function SortTh({
       <button
         type="button"
         onClick={() => onSort(k)}
-        className={`hover:text-zinc-300 ${active === k ? "text-[#a3e635]" : ""}`}
+        className={cn(
+          salesSortBtnClass,
+          active === k ? "text-[#a3e635] hover:text-[#bef264]" : "text-zinc-500"
+        )}
       >
         {label}
         {active === k ? (dir === "desc" ? " ↓" : " ↑") : ""}
