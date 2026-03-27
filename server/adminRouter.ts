@@ -504,9 +504,14 @@ export const adminRouter = router({
       return { success: true };
     }),
 
-  costLookupConfigured: adminProcedure.query(() => ({
-    configured: getCostLookupCseConfig() != null,
-  })),
+  costLookupConfigured: adminProcedure.query(() => {
+    const cfg = getCostLookupCseConfig();
+    return {
+      configured: cfg != null,
+      /** Hosts used in `site:` CSE queries (from COST_LOOKUP_SITES or default). */
+      sites: cfg?.sites ?? [],
+    };
+  }),
 
   lookupInventoryProductCost: adminProcedure
     .input(z.object({ productId: z.string() }))

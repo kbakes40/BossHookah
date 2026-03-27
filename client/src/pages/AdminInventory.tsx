@@ -449,6 +449,12 @@ export default function AdminInventory() {
           Catalog import issues: run <code className="text-zinc-400">003_bh_products_sku_unique_fix.sql</code> in Supabase
           and confirm <code className="text-zinc-400">SUPABASE_SERVICE_ROLE_KEY</code> on the server.
         </p>
+        {costLookupStatus?.configured && costLookupStatus.sites.length > 0 && (
+          <p className="text-[11px] text-emerald-400/90">
+            Cost lookup enabled — searching{" "}
+            <code className="text-zinc-300">{costLookupStatus.sites.join(", ")}</code>.
+          </p>
+        )}
         {!costLookupStatus?.configured && (
           <p className="text-[11px] text-amber-200/80">
             Cost lookup: add <code className="text-zinc-400">GOOGLE_CSE_API_KEY</code> and{" "}
