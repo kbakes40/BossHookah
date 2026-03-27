@@ -23,7 +23,7 @@ import {
   type ProductCostRow,
 } from "./salesAnalytics";
 import {
-  getCostLookupCseConfig,
+  getCostLookupApprovedSites,
   lookupProductCostOnline,
   type CostLookupResult,
 } from "./costLookupService";
@@ -505,11 +505,11 @@ export const adminRouter = router({
     }),
 
   costLookupConfigured: adminProcedure.query(() => {
-    const cfg = getCostLookupCseConfig();
+    const sites = getCostLookupApprovedSites();
     return {
-      configured: cfg != null,
-      /** Hosts used in `site:` CSE queries (from COST_LOOKUP_SITES or default). */
-      sites: cfg?.sites ?? [],
+      configured: sites.length > 0,
+      /** Hosts used for direct lookup and `site:` CSE queries (from COST_LOOKUP_SITES or default). */
+      sites,
     };
   }),
 
