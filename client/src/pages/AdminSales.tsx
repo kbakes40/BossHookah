@@ -75,6 +75,19 @@ const salesSortBtnClass = cn(
   "rounded-sm -mx-1 px-1 hover:bg-[rgba(255,255,255,0.04)] hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] hover:text-zinc-200"
 );
 
+/** Revenue & gross profit chart only — Recharts defaults tooltip cursor to `#ccc` (harsh on dark UI). */
+const salesRevenueBarChartRootClass = cn(
+  "[&_path.recharts-tooltip-cursor]:!fill-[rgba(255,255,255,0.06)] [&_path.recharts-tooltip-cursor]:!stroke-[rgba(255,255,255,0.1)]",
+  "[&_.recharts-default-legend_.recharts-legend-item]:rounded-md [&_.recharts-default-legend_.recharts-legend-item]:transition-[background-color] [&_.recharts-default-legend_.recharts-legend-item]:duration-[180ms] [&_.recharts-default-legend_.recharts-legend-item]:ease-in-out",
+  "[&_.recharts-default-legend_.recharts-legend-item:hover]:bg-[rgba(255,255,255,0.04)]"
+);
+
+const salesRevenueBarTooltipCursor = {
+  fill: "rgba(255, 255, 255, 0.06)",
+  stroke: "rgba(255, 255, 255, 0.10)",
+  strokeWidth: 1,
+} as const;
+
 function localYmd(d: Date) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -456,42 +469,46 @@ export default function AdminSales() {
               {chartData.length === 0 ? (
                 <EmptyChart msg="No paid sales in this range for the chart." />
               ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart
-                    data={chartData}
-                    margin={{ top: 8, right: 8, left: 4, bottom: 0 }}
-                    barCategoryGap="14%"
-                    barGap={6}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                    <XAxis dataKey="label" stroke="#71717a" tick={{ fill: "#71717a", fontSize: 11 }} axisLine={{ stroke: "#3f3f46" }} />
-                    <YAxis
-                      stroke="#71717a"
-                      tick={{ fill: "#71717a", fontSize: 11 }}
-                      tickFormatter={(v: number) => chartYAxisMoney(Number(v))}
-                      axisLine={{ stroke: "#3f3f46" }}
-                      width={52}
-                    />
-                    <Tooltip
-                      contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8 }}
-                      labelStyle={{ color: "#a1a1aa" }}
-                      formatter={(v: unknown, name: string) => [fmtMoney(Number(v)), name]}
-                    />
-                    <Legend
-                      verticalAlign="top"
-                      align="right"
-                      wrapperStyle={{ fontSize: 12, color: "#a1a1aa", paddingBottom: 8 }}
-                    />
-                    <Bar dataKey="revenue" name="Revenue" fill="#52525b" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                    <Bar
-                      dataKey="profit"
-                      name="Gross profit"
-                      fill="rgba(163, 230, 53, 0.88)"
-                      radius={[4, 4, 0, 0]}
-                      maxBarSize={40}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className={salesRevenueBarChartRootClass}>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart
+                      data={chartData}
+                      margin={{ top: 8, right: 8, left: 4, bottom: 0 }}
+                      barCategoryGap="14%"
+                      barGap={6}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                      <XAxis dataKey="label" stroke="#71717a" tick={{ fill: "#71717a", fontSize: 11 }} axisLine={{ stroke: "#3f3f46" }} />
+                      <YAxis
+                        stroke="#71717a"
+                        tick={{ fill: "#71717a", fontSize: 11 }}
+                        tickFormatter={(v: number) => chartYAxisMoney(Number(v))}
+                        axisLine={{ stroke: "#3f3f46" }}
+                        width={52}
+                      />
+                      <Tooltip
+                        cursor={salesRevenueBarTooltipCursor}
+                        contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8 }}
+                        labelStyle={{ color: "#a1a1aa" }}
+                        formatter={(v: unknown, name: string) => [fmtMoney(Number(v)), name]}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        align="right"
+                        inactiveColor="#52525b"
+                        wrapperStyle={{ fontSize: 12, color: "#a1a1aa", paddingBottom: 8 }}
+                      />
+                      <Bar dataKey="revenue" name="Revenue" fill="#52525b" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                      <Bar
+                        dataKey="profit"
+                        name="Gross profit"
+                        fill="rgba(163, 230, 53, 0.88)"
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={40}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               )}
             </div>
 
