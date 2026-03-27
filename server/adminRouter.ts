@@ -22,6 +22,11 @@ import {
   type OrderForAnalytics,
   type ProductCostRow,
 } from "./salesAnalytics";
+import {
+  getCostLookupCseConfig,
+  lookupProductCostOnline,
+  type CostLookupResult,
+} from "./costLookupService";
 
 function formatSupabaseErr(err: PostgrestError): string {
   return [err.message, err.details, err.hint, err.code ? `(${err.code})` : ""]
@@ -483,13 +488,259 @@ export const adminRouter = router({
       })
     )
     .mutation(async ({ input }) => {
+      const now = new Date().toISOString();
       const { error } = await supabaseAdmin
         .from("bh_products")
-        .update({ cost: input.cost, updated_at: new Date().toISOString() })
+        .update({
+          cost: input.cost,
+          updated_at: now,
+          cost_suggested_usd: null,
+          cost_needs_review: false,
+          cost_is_auto_filled: false,
+        })
         .eq("id", input.productId);
 
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
       return { success: true };
+    }),
+
+  costLookupConfigured: adminProcedure.query(() => ({
+    configured: getCostLookupCseConfig() != null,
+  })),
+
+  lookupInventoryProductCost: adminProcedure
+    .input(z.object({ productId: z.string() }))
+    .mutation(async ({ input }) => {
+      const { data: row, error: fe } = await supabaseAdmin
+        .from("bh_products")
+        .select("*")
+        .eq("id", input.productId)
+        .maybeSingle();
+
+      if (fe)
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: formatSupabaseErr(fe) });
+      if (!row)
+        throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
+
+      const existingCost = parseBhProductCost((row as Record<string, unknown>).cost);
+      if (existingCost != null) {
+        return {
+          skipped: true as const,
+          reason: "This product already has a unit cost. Edit it manually or clear it in the database before auto-lookup.",
+          result: null as CostLookupResult | null,
+        };
+      }
+
+      const product = {
+        id: String((row as Record<string, unknown>).id ?? ""),
+        name: String((row as Record<string, unknown>).name ?? ""),
+        brand: String((row as Record<string, unknown>).brand ?? ""),
+        category: String((row as Record<string, unknown>).category ?? ""),
+        sku: ((row as Record<string, unknown>).sku as string | null) ?? null,
+      };
+      const retail = Number((row as Record<string, unknown>).price) || 0;
+
+      let result: CostLookupResult;
+      try {
+        result = await lookupProductCostOnline(product, retail);
+      } catch (e) {
+        console.error("[lookupInventoryProductCost]", e);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: e instanceof Error ? e.message : "Cost lookup failed",
+        });
+      }
+
+      const nowIso = result.checkedAt;
+      const basePatch: Record<string, unknown> = {
+        cost_last_checked_at: nowIso,
+        updated_at: nowIso,
+      };
+
+      if (result.confidence === "exact" && result.costUsd != null) {
+        basePatch.cost = result.costUsd;
+        basePatch.cost_is_auto_filled = true;
+        basePatch.cost_needs_review = false;
+        basePatch.cost_suggested_usd = null;
+        basePatch.cost_source_url = result.sourceUrl;
+        basePatch.cost_source_name = result.sourceName;
+        basePatch.cost_match_confidence = "exact";
+      } else if (
+        (result.confidence === "likely" || result.confidence === "review") &&
+        result.suggestedUsd != null
+      ) {
+        basePatch.cost_suggested_usd = result.suggestedUsd;
+        basePatch.cost_needs_review = true;
+        basePatch.cost_is_auto_filled = false;
+        basePatch.cost_source_url = result.sourceUrl;
+        basePatch.cost_source_name = result.sourceName;
+        basePatch.cost_match_confidence = result.confidence;
+      } else {
+        basePatch.cost_match_confidence = "none";
+        basePatch.cost_needs_review = false;
+        basePatch.cost_suggested_usd = null;
+        basePatch.cost_source_url = null;
+        basePatch.cost_source_name = null;
+      }
+
+      const { error: ue } = await supabaseAdmin.from("bh_products").update(basePatch).eq("id", input.productId);
+
+      if (ue) {
+        console.error("[lookupInventoryProductCost] update", ue);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `${formatSupabaseErr(ue)} If columns are missing, run supabase/migrations/009_bh_products_cost_lookup_meta.sql`,
+        });
+      }
+
+      return { skipped: false as const, reason: null as string | null, result };
+    }),
+
+  bulkLookupInventoryMissingCosts: adminProcedure
+    .input(
+      z.object({
+        productIds: z.array(z.string()).min(1).max(25),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const results: Array<{
+        productId: string;
+        ok: boolean;
+        skipped?: boolean;
+        note?: string;
+        confidence?: string;
+      }> = [];
+
+      for (const productId of input.productIds) {
+        try {
+          const { data: row, error: fe } = await supabaseAdmin
+            .from("bh_products")
+            .select("*")
+            .eq("id", productId)
+            .maybeSingle();
+          if (fe || !row) {
+            results.push({
+              productId,
+              ok: false,
+              note: fe ? formatSupabaseErr(fe) : "not found",
+            });
+            continue;
+          }
+          const existingCost = parseBhProductCost((row as Record<string, unknown>).cost);
+          if (existingCost != null) {
+            results.push({ productId, ok: true, skipped: true, note: "has cost" });
+            continue;
+          }
+          const product = {
+            id: String((row as Record<string, unknown>).id ?? ""),
+            name: String((row as Record<string, unknown>).name ?? ""),
+            brand: String((row as Record<string, unknown>).brand ?? ""),
+            category: String((row as Record<string, unknown>).category ?? ""),
+            sku: ((row as Record<string, unknown>).sku as string | null) ?? null,
+          };
+          const retail = Number((row as Record<string, unknown>).price) || 0;
+          const result = await lookupProductCostOnline(product, retail);
+          const nowIso = result.checkedAt;
+          const basePatch: Record<string, unknown> = {
+            cost_last_checked_at: nowIso,
+            updated_at: nowIso,
+          };
+          if (result.confidence === "exact" && result.costUsd != null) {
+            basePatch.cost = result.costUsd;
+            basePatch.cost_is_auto_filled = true;
+            basePatch.cost_needs_review = false;
+            basePatch.cost_suggested_usd = null;
+            basePatch.cost_source_url = result.sourceUrl;
+            basePatch.cost_source_name = result.sourceName;
+            basePatch.cost_match_confidence = "exact";
+          } else if (
+            (result.confidence === "likely" || result.confidence === "review") &&
+            result.suggestedUsd != null
+          ) {
+            basePatch.cost_suggested_usd = result.suggestedUsd;
+            basePatch.cost_needs_review = true;
+            basePatch.cost_is_auto_filled = false;
+            basePatch.cost_source_url = result.sourceUrl;
+            basePatch.cost_source_name = result.sourceName;
+            basePatch.cost_match_confidence = result.confidence;
+          } else {
+            basePatch.cost_match_confidence = "none";
+            basePatch.cost_needs_review = false;
+            basePatch.cost_suggested_usd = null;
+            basePatch.cost_source_url = null;
+            basePatch.cost_source_name = null;
+          }
+          const { error: ue } = await supabaseAdmin.from("bh_products").update(basePatch).eq("id", productId);
+          if (ue) {
+            results.push({ productId, ok: false, note: formatSupabaseErr(ue) });
+          } else {
+            results.push({
+              productId,
+              ok: true,
+              confidence: result.confidence,
+            });
+          }
+        } catch (e) {
+          console.error("[bulkLookupInventoryMissingCosts]", productId, e);
+          results.push({
+            productId,
+            ok: false,
+            note: e instanceof Error ? e.message : String(e),
+          });
+        }
+        await new Promise(r => setTimeout(r, 400));
+      }
+
+      return { results };
+    }),
+
+  applyInventorySuggestedCost: adminProcedure
+    .input(z.object({ productId: z.string() }))
+    .mutation(async ({ input }) => {
+      const { data: row, error: fe } = await supabaseAdmin
+        .from("bh_products")
+        .select("cost_suggested_usd, cost_needs_review, cost")
+        .eq("id", input.productId)
+        .maybeSingle();
+
+      if (fe)
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: formatSupabaseErr(fe) });
+      if (!row)
+        throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
+
+      const r = row as Record<string, unknown>;
+      if (r.cost_needs_review !== true) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Nothing to apply — run Find cost first or product is not awaiting review",
+        });
+      }
+      const suggested = parseBhProductCost(r.cost_suggested_usd);
+      if (suggested == null) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "No suggested cost on file" });
+      }
+      if (parseBhProductCost(r.cost) != null) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Product already has a cost; manual edit required",
+        });
+      }
+
+      const now = new Date().toISOString();
+      const { error: ue } = await supabaseAdmin
+        .from("bh_products")
+        .update({
+          cost: suggested,
+          cost_suggested_usd: null,
+          cost_needs_review: false,
+          cost_is_auto_filled: false,
+          cost_match_confidence: "exact",
+          updated_at: now,
+        })
+        .eq("id", input.productId);
+
+      if (ue) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: formatSupabaseErr(ue) });
+      return { success: true as const, appliedCost: suggested };
     }),
 
   getSalesReport: adminProcedure

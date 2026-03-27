@@ -76,6 +76,17 @@ export function mapProductInventoryRow(o: Record<string, unknown>) {
     badge: (o.badge as string) ?? null,
     /** Unit cost USD for margin reporting; null if not set */
     cost: parseBhProductCost(o.cost),
+    costSourceUrl: (o.cost_source_url as string | null | undefined) ?? null,
+    costSourceName: (o.cost_source_name as string | null | undefined) ?? null,
+    costMatchConfidence:
+      o.cost_match_confidence != null && String(o.cost_match_confidence).trim() !== ""
+        ? String(o.cost_match_confidence)
+        : null,
+    costLastCheckedAt:
+      o.cost_last_checked_at != null ? String(o.cost_last_checked_at) : null,
+    costIsAutoFilled: o.cost_is_auto_filled === true,
+    costNeedsReview: o.cost_needs_review === true,
+    costSuggestedUsd: parseBhProductCost(o.cost_suggested_usd),
   };
 }
 

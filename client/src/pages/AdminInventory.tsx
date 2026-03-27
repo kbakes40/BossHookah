@@ -1,6 +1,6 @@
 // Admin Inventory — stock, pricing, unit cost (for margin reporting)
 import { useEffect, useState } from "react";
-import { Upload, Search, AlertTriangle, Plus, Package } from "lucide-react";
+import { Upload, Search, AlertTriangle, Plus, Package, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
@@ -24,6 +24,10 @@ import {
 import { Label } from "@/components/ui/label";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { adminPageStackClass } from "@/components/admin/adminFilterBarStyles";
+import type { inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "../../../server/routers";
+
+type InventoryRow = inferRouterOutputs<AppRouter>["admin"]["getInventory"]["items"][number];
 
 export default function AdminInventory() {
   const [categoryFilter, setCategoryFilter] = useState<string | undefined>(undefined);
@@ -33,6 +37,8 @@ export default function AdminInventory() {
   const [editingStock, setEditingStock] = useState<{ id: string; quantity: number } | null>(null);
   const [editingCost, setEditingCost] = useState<{ id: string; raw: string } | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [reviewItem, setReviewItem] = useState<InventoryRow | null>(null);
+  const [lookupBusyId, setLookupBusyId] = useState<string | null>(null);
   const [newItem, setNewItem] = useState({
     productId: "",
     productName: "",
@@ -80,6 +86,48 @@ export default function AdminInventory() {
   });
 
   const { data: catalogSkuInfo } = trpc.admin.siteCatalogSkuCount.useQuery();
+  const { data: costLookupStatus } = trpc.admin.costLookupConfigured.useQuery();
+
+  const lookupCost = trpc.admin.lookupInventoryProductCost.useMutation({
+    onSuccess: data => {
+      if (data.skipped) {
+        toast.message(data.reason ?? "Skipped");
+        return;
+      }
+      const r = data.result;
+      if (!r) return;
+      if (r.confidence === "exact" && r.costUsd != null) {
+        toast.success(`Cost filled: $${r.costUsd.toFixed(2)}`);
+      } else if (r.confidence === "likely" || r.confidence === "review") {
+        toast.message("Match needs review — check suggested cost", { duration: 5000 });
+      } else {
+        toast.message(r.note ?? "No match found");
+      }
+      refetch();
+    },
+    onError: err => toast.error(err.message),
+    onSettled: () => setLookupBusyId(null),
+  });
+
+  const bulkLookupCosts = trpc.admin.bulkLookupInventoryMissingCosts.useMutation({
+    onSuccess: ({ results }) => {
+      const processed = results.filter(x => x.ok && "confidence" in x && x.confidence).length;
+      const skipped = results.filter(x => x.skipped === true).length;
+      const fail = results.filter(x => !x.ok).length;
+      toast.success(`Lookup: ${processed} resolved, ${skipped} skipped, ${fail} failed`);
+      refetch();
+    },
+    onError: err => toast.error(err.message),
+  });
+
+  const applySuggested = trpc.admin.applyInventorySuggestedCost.useMutation({
+    onSuccess: d => {
+      toast.success(`Applied $${d.appliedCost.toFixed(2)}`);
+      setReviewItem(null);
+      refetch();
+    },
+    onError: err => toast.error(err.message),
+  });
 
   const syncSiteCatalog = trpc.admin.syncSiteCatalog.useMutation({
     onSuccess: result => {
@@ -113,6 +161,29 @@ export default function AdminInventory() {
   });
 
   const inventoryItems = inventoryData?.items ?? [];
+
+  const runFindCost = (productId: string) => {
+    if (!costLookupStatus?.configured) {
+      toast.error("Set GOOGLE_CSE_API_KEY and GOOGLE_CSE_CX on the server (Programmable Search).");
+      return;
+    }
+    setLookupBusyId(productId);
+    lookupCost.mutate({ productId });
+  };
+
+  const runBulkMissingCosts = () => {
+    if (!costLookupStatus?.configured) {
+      toast.error("Set GOOGLE_CSE_API_KEY and GOOGLE_CSE_CX on the server.");
+      return;
+    }
+    const ids = inventoryItems.filter(i => i.cost == null).map(i => i.id);
+    if (ids.length === 0) {
+      toast.message("No products with missing cost on this page.");
+      return;
+    }
+    const slice = ids.slice(0, 20);
+    bulkLookupCosts.mutate({ productIds: slice });
+  };
   const invTotal = inventoryData?.total ?? 0;
   const invPageSize = inventoryData?.pageSize ?? ADMIN_INVENTORY_PAGE_SIZE;
   const invTotalPages = Math.max(1, Math.ceil(invTotal / invPageSize));
@@ -167,6 +238,16 @@ export default function AdminInventory() {
 
   const toolbar = (
     <div className="flex flex-wrap items-center gap-2 justify-end">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-[rgba(255,255,255,0.04)]"
+        disabled={!costLookupStatus?.configured || bulkLookupCosts.isPending}
+        onClick={runBulkMissingCosts}
+      >
+        Find missing costs
+      </Button>
       <Button
         type="button"
         variant="secondary"
@@ -368,6 +449,15 @@ export default function AdminInventory() {
           Catalog import issues: run <code className="text-zinc-400">003_bh_products_sku_unique_fix.sql</code> in Supabase
           and confirm <code className="text-zinc-400">SUPABASE_SERVICE_ROLE_KEY</code> on the server.
         </p>
+        {!costLookupStatus?.configured && (
+          <p className="text-[11px] text-amber-200/80">
+            Cost lookup: add <code className="text-zinc-400">GOOGLE_CSE_API_KEY</code> and{" "}
+            <code className="text-zinc-400">GOOGLE_CSE_CX</code> (Programmable Search). Optional{" "}
+            <code className="text-zinc-400">COST_LOOKUP_SITES</code> — comma-separated hosts (default{" "}
+            <code className="text-zinc-400">5starhookah.com</code>). Run migration{" "}
+            <code className="text-zinc-400">009_bh_products_cost_lookup_meta.sql</code>.
+          </p>
+        )}
 
         {isLoading ? (
           <div className="h-40 flex items-center justify-center text-zinc-500 text-sm">Loading inventory…</div>
@@ -394,6 +484,9 @@ export default function AdminInventory() {
                     </th>
                     <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
                       Cost
+                    </th>
+                    <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 font-medium">
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -456,27 +549,92 @@ export default function AdminInventory() {
                               autoFocus
                             />
                           ) : (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setEditingCost({
-                                  id: item.id,
-                                  raw: item.cost != null ? String(item.cost) : "",
-                                })
-                              }
-                              className={`tabular-nums text-left ${
-                                item.cost != null ? "text-[#bef264]" : "text-zinc-500"
-                              } hover:text-white`}
-                            >
-                              {item.cost != null ? `$${item.cost.toFixed(2)}` : "Set cost"}
-                            </button>
+                            <div className="flex flex-col gap-1 items-start">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setEditingCost({
+                                    id: item.id,
+                                    raw: item.cost != null ? String(item.cost) : "",
+                                  })
+                                }
+                                className={`tabular-nums text-left ${
+                                  item.cost != null ? "text-[#bef264]" : "text-zinc-500"
+                                } hover:text-zinc-200 transition-colors`}
+                              >
+                                {item.cost != null ? `$${item.cost.toFixed(2)}` : "Set cost"}
+                              </button>
+                              {item.cost == null &&
+                                item.costNeedsReview &&
+                                item.costSuggestedUsd != null && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setReviewItem(item)}
+                                    className="text-[11px] text-amber-400/90 hover:text-amber-300 transition-colors"
+                                  >
+                                    Review match · ${item.costSuggestedUsd.toFixed(2)}?
+                                  </button>
+                                )}
+                              {item.cost == null &&
+                                item.costMatchConfidence === "none" &&
+                                item.costLastCheckedAt && (
+                                  <span className="text-[11px] text-zinc-600">No match</span>
+                                )}
+                              {(item.costSourceUrl ?? "") !== "" && (
+                                <a
+                                  href={item.costSourceUrl!}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors"
+                                  onClick={e => e.stopPropagation()}
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                  Source
+                                </a>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {item.cost == null ? (
+                            <div className="flex flex-col gap-1">
+                              <button
+                                type="button"
+                                disabled={
+                                  !costLookupStatus?.configured ||
+                                  lookupBusyId === item.id ||
+                                  lookupCost.isPending
+                                }
+                                onClick={() => runFindCost(item.id)}
+                                className="text-[11px] text-left text-[#a3e635]/90 hover:text-[#bef264] disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                              >
+                                {lookupBusyId === item.id ? "Searching…" : "Find cost"}
+                              </button>
+                              {(item.costNeedsReview || item.costMatchConfidence === "none") &&
+                                item.costLastCheckedAt && (
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      !costLookupStatus?.configured ||
+                                      lookupBusyId === item.id ||
+                                      lookupCost.isPending
+                                    }
+                                    onClick={() => runFindCost(item.id)}
+                                    className="text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors text-left"
+                                  >
+                                    Retry
+                                  </button>
+                                )}
+                            </div>
+                          ) : (
+                            <span className="text-zinc-600">—</span>
                           )}
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-4 py-14 text-center text-zinc-500">
+                      <td colSpan={7} className="px-4 py-14 text-center text-zinc-500">
                         <Package className="w-10 h-10 mx-auto mb-3 text-zinc-600" />
                         <p className="text-sm">No products match.</p>
                       </td>
@@ -521,6 +679,58 @@ export default function AdminInventory() {
           </div>
         )}
       </div>
+
+      <Dialog open={reviewItem != null} onOpenChange={open => !open && setReviewItem(null)}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-md">
+          <DialogHeader>
+            <DialogTitle>Review match</DialogTitle>
+            <DialogDescription className="text-zinc-500">
+              Likely or partial match — confirm price and variant against the source before applying.
+            </DialogDescription>
+          </DialogHeader>
+          {reviewItem && (
+            <div className="space-y-3 text-sm pt-1">
+              <p className="text-zinc-200 font-medium">{reviewItem.productName}</p>
+              <p className="text-zinc-500 text-xs">{reviewItem.brand}</p>
+              <p className="tabular-nums text-[#bef264] text-lg">
+                ${reviewItem.costSuggestedUsd != null ? reviewItem.costSuggestedUsd.toFixed(2) : "—"} ·{" "}
+                <span className="text-zinc-400 text-sm">{reviewItem.costMatchConfidence ?? ""}</span>
+              </p>
+              {reviewItem.costSourceUrl ? (
+                <a
+                  href={reviewItem.costSourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-[#a3e635]/90 hover:text-[#bef264]"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  View source
+                </a>
+              ) : null}
+              <div className="flex gap-2 justify-end pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="border-zinc-700"
+                  onClick={() => setReviewItem(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="bg-[#3f6212] hover:bg-[#4d7c0f] text-[#ecfccb]"
+                  disabled={applySuggested.isPending || reviewItem.costSuggestedUsd == null}
+                  onClick={() => applySuggested.mutate({ productId: reviewItem.id })}
+                >
+                  Apply cost
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AdminShell>
   );
 }
