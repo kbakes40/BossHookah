@@ -1,6 +1,7 @@
 /**
  * Multi-source wholesale cost lookup (server-side).
- * Order: SerpApi Google Shopping → Barcode Lookup → 5starhookah (existing direct/CSE flow).
+ * SerpApi: (1) google_shopping `{productName}` → (2) google organic `{productName} wholesale price` →
+ * Barcode Lookup → 5starhookah (existing direct/CSE flow).
  */
 import { supabaseAdmin } from "../server/_core/supabaseAdmin";
 import { lookupProductCostOnline } from "../server/costLookupService";
@@ -15,6 +16,37 @@ export type CostResult = {
 export type LookupSource = "serpapi" | "barcode" | "5star" | "none";
 
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Ignore retail/case listings; cap unit wholesale hints. */
+const SERP_MAX_UNIT_PRICE = 50;
+/** Prefer per-unit wholesale band (vape/disposables). */
+const SERP_PREFERRED_MIN = 5;
+const SERP_PREFERRED_MAX = 30;
+
+/**
+ * From dollar strings in organic snippets (e.g. "$9.85", "$98.50") parse amounts, drop above cap.
+ */
+function pricesFromDollarMatches(text: string): number[] {
+  const re = /\$[\d,]+\.?\d*/g;
+  const out: number[] = [];
+  let m: RegExpExecArray | null;
+  const s = String(text);
+  re.lastIndex = 0;
+  while ((m = re.exec(s)) !== null) {
+    const n = parsePriceString(m[0]);
+    if (n != null && n > 0 && n <= SERP_MAX_UNIT_PRICE) out.push(n);
+  }
+  return out;
+}
+
+/** Prefer prices in [5, 30] when any exist; else lowest in (0, 50]. */
+export function pickPreferredWholesaleUnitPrice(candidates: number[]): number | null {
+  const valid = candidates.filter(p => p > 0 && p <= SERP_MAX_UNIT_PRICE);
+  if (valid.length === 0) return null;
+  const band = valid.filter(p => p >= SERP_PREFERRED_MIN && p <= SERP_PREFERRED_MAX);
+  if (band.length > 0) return Math.round(Math.min(...band) * 100) / 100;
+  return Math.round(Math.min(...valid) * 100) / 100;
+}
 
 function readEnv(name: string): string {
   return (process.env[name] ?? "").trim();
@@ -83,49 +115,151 @@ export async function saveToCache(cacheSku: string, result: CostResult): Promise
   }
 }
 
+async function serpApiFetchJson(url: string): Promise<{ ok: boolean; data: Record<string, unknown> }> {
+  const res = await fetch(url, { method: "GET" });
+  if (!res.ok) {
+    console.error("[PriceLookup]", "serpapi", "http", res.status);
+    return { ok: false, data: {} };
+  }
+  const data = (await res.json()) as Record<string, unknown>;
+  return { ok: true, data };
+}
+
+/**
+ * SerpApi two-step: google_shopping (product name only) → google organic "wholesale price" snippets.
+ * Never uses a price &gt; $50; prefers $5–$30 when possible.
+ */
 export async function lookupViaSerpApi(productName: string): Promise<CostResult> {
   const key = readEnv("SERPAPI_KEY");
   if (!key) return { cost: null, source: "serpapi_failed" };
+  const name = productName.trim();
+  if (!name) return { cost: null, source: "serpapi_failed" };
+
   try {
-    const q = `${productName} wholesale`.trim();
-    const url = new URL("https://serpapi.com/search.json");
-    url.searchParams.set("engine", "google_shopping");
-    url.searchParams.set("q", q);
-    url.searchParams.set("api_key", key);
-    const res = await fetch(url.toString(), { method: "GET" });
-    if (!res.ok) {
-      console.error("[PriceLookup]", "serpapi", res.status);
-      return { cost: null, source: "serpapi_failed" };
-    }
-    const data = (await res.json()) as {
-      shopping_results?: Array<{ price?: string; extracted_price?: number; link?: string; title?: string }>;
-      error?: string;
-    };
-    if (data.error) {
-      console.error("[PriceLookup]", "serpapi", data.error);
-      return { cost: null, source: "serpapi_failed" };
-    }
-    const results = data.shopping_results ?? [];
-    let lowest: number | null = null;
-    let linkOut: string | undefined;
-    for (const r of results) {
-      let n: number | null = null;
-      if (r.extracted_price != null && Number.isFinite(r.extracted_price)) {
-        n = Number(r.extracted_price);
+    // —— Step 1: Google Shopping — query is product name only ——
+    const urlShop = new URL("https://serpapi.com/search.json");
+    urlShop.searchParams.set("engine", "google_shopping");
+    urlShop.searchParams.set("q", name);
+    urlShop.searchParams.set("api_key", key);
+
+    const shopRes = await serpApiFetchJson(urlShop.toString());
+    if (shopRes.ok) {
+      const err = shopRes.data.error;
+      if (err) {
+        console.error("[PriceLookup]", "serpapi", "step1_google_shopping", "api_error", err);
       } else {
-        n = parsePriceString(r.price);
-      }
-      if (n != null && (lowest == null || n < lowest)) {
-        lowest = n;
-        linkOut = r.link;
+        const shoppingRaw = shopRes.data.shopping_results as
+          | Array<{ price?: string; extracted_price?: number; link?: string; title?: string }>
+          | undefined;
+        const shopping = shoppingRaw ?? [];
+
+        if (shopping.length >= 2) {
+          const rows: Array<{ price: number; link?: string }> = [];
+          for (const r of shopping) {
+            let n: number | null = null;
+            if (r.extracted_price != null && Number.isFinite(Number(r.extracted_price))) {
+              n = Number(r.extracted_price);
+            } else {
+              n = parsePriceString(r.price);
+            }
+            if (n != null && n > 0 && n <= SERP_MAX_UNIT_PRICE) {
+              rows.push({ price: n, link: r.link });
+            }
+          }
+          const picked = pickPreferredWholesaleUnitPrice(rows.map(x => x.price));
+          if (picked != null) {
+            const winner = rows.find(x => x.price === picked) ?? rows[0];
+            console.log(
+              "[PriceLookup]",
+              "serpapi",
+              "step1_google_shopping",
+              "picked",
+              picked,
+              "shopping_rows",
+              shopping.length,
+              "valid_under_cap",
+              rows.length
+            );
+            return {
+              cost: picked,
+              source: "Google Shopping (SerpApi step 1)",
+              sourceUrl: winner?.link,
+            };
+          }
+          console.log(
+            "[PriceLookup]",
+            "serpapi",
+            "step1_google_shopping",
+            "skip",
+            "no_valid_price_under_cap",
+            "shopping_rows",
+            shopping.length
+          );
+        } else {
+          console.log(
+            "[PriceLookup]",
+            "serpapi",
+            "step1_google_shopping",
+            "skip",
+            "need_at_least_2_results",
+            "got",
+            shopping.length
+          );
+        }
       }
     }
-    if (lowest == null) return { cost: null, source: "serpapi_failed" };
-    return {
-      cost: lowest,
-      source: "Google Shopping",
-      sourceUrl: linkOut,
-    };
+
+    // —— Step 2: Google organic — "{name} wholesale price" ——
+    const urlOrg = new URL("https://serpapi.com/search.json");
+    urlOrg.searchParams.set("engine", "google");
+    urlOrg.searchParams.set("q", `${name} wholesale price`);
+    urlOrg.searchParams.set("api_key", key);
+
+    const orgRes = await serpApiFetchJson(urlOrg.toString());
+    if (!orgRes.ok) return { cost: null, source: "serpapi_failed" };
+
+    const orgErr = orgRes.data.error;
+    if (orgErr) {
+      console.error("[PriceLookup]", "serpapi", "step2_google_organic", "api_error", orgErr);
+      return { cost: null, source: "serpapi_failed" };
+    }
+
+    const organicRaw = orgRes.data.organic_results as
+      | Array<{ title?: string; snippet?: string; link?: string }>
+      | undefined;
+    const organic = organicRaw ?? [];
+
+    const tagged: Array<{ price: number; link?: string }> = [];
+    for (const r of organic) {
+      const blob = `${r.title ?? ""} ${r.snippet ?? ""}`;
+      for (const p of pricesFromDollarMatches(blob)) {
+        tagged.push({ price: p, link: r.link });
+      }
+    }
+
+    const picked2 = pickPreferredWholesaleUnitPrice(tagged.map(t => t.price));
+    if (picked2 != null) {
+      const w = tagged.find(t => t.price === picked2);
+      console.log(
+        "[PriceLookup]",
+        "serpapi",
+        "step2_google_organic",
+        "picked",
+        picked2,
+        "organic_rows",
+        organic.length,
+        "snippet_prices",
+        tagged.length
+      );
+      return {
+        cost: picked2,
+        source: "Google Search organic (SerpApi step 2)",
+        sourceUrl: w?.link,
+      };
+    }
+
+    console.log("[PriceLookup]", "serpapi", "step2_google_organic", "no_usable_snippet_prices");
+    return { cost: null, source: "serpapi_failed" };
   } catch (e) {
     console.error("[PriceLookup]", "serpapi", e);
     return { cost: null, source: "serpapi_failed" };
