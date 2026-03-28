@@ -27,7 +27,7 @@ export default function Collection() {
   const [showInStock, setShowInStock] = useState(false);
   const [showOutOfStock, setShowOutOfStock] = useState(false);
 
-  const { products: catalog, query: catalogQuery } = useStorefrontCatalog();
+  const { products: catalog } = useStorefrontCatalog();
 
   const displayProducts = useMemo(() => {
     return category === "all"
@@ -161,11 +161,7 @@ export default function Collection() {
             {/* Product Grid */}
             <div className="flex-1">
               <div className="mb-6 flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  {catalogQuery.isLoading && catalog.length === 0
-                    ? "Loading products…"
-                    : `${filteredProducts.length} products`}
-                </p>
+                <p className="text-sm text-muted-foreground">{filteredProducts.length} products</p>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
