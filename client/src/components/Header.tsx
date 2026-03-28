@@ -4,10 +4,10 @@
 import { ShoppingCart, Search, Menu, User, X, ChevronDown, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { useMemo, useState } from "react";
 import { useCart } from "@/contexts/CartContext";
 import PromoBar from "./PromoBar";
+import PredictiveSearch from "./PredictiveSearch";
 import { useStorefrontCatalog } from "@/hooks/useStorefrontCatalog";
 import { useSupabaseAuth } from "@/lib/SupabaseAuthProvider";
 
@@ -39,15 +39,6 @@ export default function Header() {
       vapes: forCat("vapes"),
     };
   }, [catalogProducts]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      setLocation(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchOpen(false);
-      setSearchQuery("");
-    }
-  };
 
   // Categories with dropdown menus
   const categoriesWithDropdowns = ['shisha', 'vapes', 'charcoal'];
@@ -117,20 +108,15 @@ export default function Header() {
               </Link>
             </div>
 
-            {/* Center: Search */}
-            <div className="hidden md:flex flex-1 max-w-md mx-8">
-              <form onSubmit={handleSearch} className="relative w-full">
-                <Input
-                  type="search"
-                  placeholder="Search products..."
-                  className="w-full brutalist-border pr-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <Search className="h-5 w-5 text-muted-foreground" />
-                </button>
-              </form>
+            {/* Center: Predictive search */}
+            <div className="hidden md:flex flex-1 max-w-lg mx-6 lg:mx-8">
+              <PredictiveSearch
+                variant="desktop"
+                catalog={catalogProducts}
+                query={searchQuery}
+                onQueryChange={setSearchQuery}
+                onClose={() => {}}
+              />
             </div>
 
             {/* Right: Icons */}
@@ -448,26 +434,20 @@ export default function Header() {
         </div>
       )}
 
-      {/* Mobile Search Overlay */}
+      {/* Mobile predictive search */}
       {searchOpen && (
-        <div className="fixed inset-0 bg-background z-[60] md:hidden">
-          <div className="flex flex-col h-full">
-            <div className="flex items-center gap-4 p-4 border-b-3 border-border">
-              <Button variant="ghost" size="icon" onClick={() => setSearchOpen(false)}>
-                <X className="h-6 w-6" />
-              </Button>
-              <form onSubmit={handleSearch} className="flex-1">
-                <Input
-                  type="search"
-                  placeholder="Search products..."
-                  className="w-full brutalist-border"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  autoFocus
-                />
-              </form>
-            </div>
-          </div>
+        <div className="fixed inset-0 z-[60] md:hidden flex flex-col min-h-0 min-w-0 touch-pan-y bg-background h-[100dvh] max-h-[100dvh]">
+          <PredictiveSearch
+            variant="mobile"
+            catalog={catalogProducts}
+            query={searchQuery}
+            onQueryChange={setSearchQuery}
+            onClose={() => {
+              setSearchOpen(false);
+              setSearchQuery("");
+            }}
+            autoFocus
+          />
         </div>
       )}
     </>

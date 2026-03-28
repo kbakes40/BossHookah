@@ -28,6 +28,11 @@ export interface Product {
   variants?: ProductVariant[];
   /** Shipping weight per unit (lb). If omitted, shared shipping logic uses 1 lb per unit. */
   weightLb?: number;
+  /**
+   * Aggregated DB fields (SKU, row names, etc.) for storefront search.
+   * Not shown in UI; populated from Supabase rows when present.
+   */
+  searchText?: string;
 }
 
 export const categories = [
