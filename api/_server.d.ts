@@ -22,4 +22,5 @@ declare module "./_server.mjs" {
     req: unknown,
     res: unknown
   ): Promise<void>;
+  export function registerProductsLookupRoutes(app: Express): void;
 }

@@ -1,6 +1,6 @@
 // Admin Inventory — stock, pricing, unit cost (for margin reporting)
-import { useEffect, useState } from "react";
-import { Upload, Search, AlertTriangle, Plus, Package, ExternalLink } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Upload, Search, AlertTriangle, Plus, Package, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
@@ -22,12 +22,22 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { adminPageStackClass } from "@/components/admin/adminFilterBarStyles";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/routers";
 
 type InventoryRow = inferRouterOutputs<AppRouter>["admin"]["getInventory"]["items"][number];
+
+function cacheAgeLabel(iso: string): string {
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return iso;
+  const days = Math.floor((Date.now() - t) / 86400000);
+  if (days <= 0) return "Last updated today";
+  if (days === 1) return "Last updated 1 day ago";
+  return `Last updated ${days} days ago`;
+}
 
 export default function AdminInventory() {
   const [categoryFilter, setCategoryFilter] = useState<string | undefined>(undefined);
@@ -38,7 +48,12 @@ export default function AdminInventory() {
   const [editingCost, setEditingCost] = useState<{ id: string; raw: string } | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [reviewItem, setReviewItem] = useState<InventoryRow | null>(null);
-  const [lookupBusyId, setLookupBusyId] = useState<string | null>(null);
+  const [wholesaleBusyId, setWholesaleBusyId] = useState<string | null>(null);
+  const [bulkWholesaleProgress, setBulkWholesaleProgress] = useState<{ current: number; total: number } | null>(
+    null
+  );
+  const [wholesaleFailId, setWholesaleFailId] = useState<string | null>(null);
+  const bulkWholesaleInProgress = useRef(false);
   const [newItem, setNewItem] = useState({
     productId: "",
     productName: "",
@@ -88,36 +103,30 @@ export default function AdminInventory() {
   const { data: catalogSkuInfo } = trpc.admin.siteCatalogSkuCount.useQuery();
   const { data: costLookupStatus } = trpc.admin.costLookupConfigured.useQuery();
 
-  const lookupCost = trpc.admin.lookupInventoryProductCost.useMutation({
-    onSuccess: data => {
+  const wholesaleLookup = trpc.admin.lookupWholesaleProductCost.useMutation({
+    onSuccess: (data, vars) => {
+      if (bulkWholesaleInProgress.current) return;
       if (data.skipped) {
         toast.message(data.reason ?? "Skipped");
+        void refetch();
         return;
       }
-      const r = data.result;
-      if (!r) return;
-      if (r.confidence === "exact" && r.costUsd != null) {
-        toast.success(`Cost filled: $${r.costUsd.toFixed(2)}`);
-      } else if (r.confidence === "likely" || r.confidence === "review") {
-        toast.message("Match needs review — check suggested cost", { duration: 5000 });
+      const w = data.wholesale;
+      if (w?.cost != null) {
+        toast.success(`Cost: $${w.cost.toFixed(2)} · ${w.source}`);
+        setWholesaleFailId(null);
       } else {
-        toast.message(r.note ?? "No match found");
+        toast.message("No match from wholesale lookup");
+        setWholesaleFailId(vars.productId);
       }
-      refetch();
+      void refetch();
     },
-    onError: err => toast.error(err.message),
-    onSettled: () => setLookupBusyId(null),
-  });
-
-  const bulkLookupCosts = trpc.admin.bulkLookupInventoryMissingCosts.useMutation({
-    onSuccess: ({ results }) => {
-      const processed = results.filter(x => x.ok && "confidence" in x && x.confidence).length;
-      const skipped = results.filter(x => x.skipped === true).length;
-      const fail = results.filter(x => !x.ok).length;
-      toast.success(`Lookup: ${processed} resolved, ${skipped} skipped, ${fail} failed`);
-      refetch();
+    onError: err => {
+      if (!bulkWholesaleInProgress.current) toast.error(err.message);
     },
-    onError: err => toast.error(err.message),
+    onSettled: () => {
+      if (!bulkWholesaleInProgress.current) setWholesaleBusyId(null);
+    },
   });
 
   const applySuggested = trpc.admin.applyInventorySuggestedCost.useMutation({
@@ -162,18 +171,21 @@ export default function AdminInventory() {
 
   const inventoryItems = inventoryData?.items ?? [];
 
-  const runFindCost = (productId: string) => {
+  const bulkRunning = bulkWholesaleProgress != null;
+
+  const runFindCost = (productId: string, forceRefresh = false) => {
     if (!costLookupStatus?.configured) {
-      toast.error("Set GOOGLE_CSE_API_KEY and GOOGLE_CSE_CX on the server (Programmable Search).");
+      toast.error("Add SERPAPI_KEY, BARCODE_LOOKUP_KEY, or COST_LOOKUP_SITES on the server.");
       return;
     }
-    setLookupBusyId(productId);
-    lookupCost.mutate({ productId });
+    setWholesaleFailId(null);
+    setWholesaleBusyId(productId);
+    wholesaleLookup.mutate({ productId, forceRefresh });
   };
 
-  const runBulkMissingCosts = () => {
+  const runBulkWholesaleMissing = async () => {
     if (!costLookupStatus?.configured) {
-      toast.error("Set GOOGLE_CSE_API_KEY and GOOGLE_CSE_CX on the server.");
+      toast.error("Add SERPAPI_KEY, BARCODE_LOOKUP_KEY, or COST_LOOKUP_SITES on the server.");
       return;
     }
     const ids = inventoryItems.filter(i => i.cost == null).map(i => i.id);
@@ -181,8 +193,28 @@ export default function AdminInventory() {
       toast.message("No products with missing cost on this page.");
       return;
     }
-    const slice = ids.slice(0, 20);
-    bulkLookupCosts.mutate({ productIds: slice });
+    const slice = ids.slice(0, 24);
+    bulkWholesaleInProgress.current = true;
+    setBulkWholesaleProgress({ current: 0, total: slice.length });
+    try {
+      for (let i = 0; i < slice.length; i++) {
+        const pid = slice[i]!;
+        setWholesaleBusyId(pid);
+        try {
+          await wholesaleLookup.mutateAsync({ productId: pid, forceRefresh: false });
+        } catch {
+          /* errors logged server-side */
+        }
+        setBulkWholesaleProgress({ current: i + 1, total: slice.length });
+        await new Promise(r => setTimeout(r, 500));
+      }
+    } finally {
+      bulkWholesaleInProgress.current = false;
+      setWholesaleBusyId(null);
+      setBulkWholesaleProgress(null);
+    }
+    await refetch();
+    toast.success("Bulk wholesale lookup finished");
   };
   const invTotal = inventoryData?.total ?? 0;
   const invPageSize = inventoryData?.pageSize ?? ADMIN_INVENTORY_PAGE_SIZE;
@@ -238,13 +270,18 @@ export default function AdminInventory() {
 
   const toolbar = (
     <div className="flex flex-wrap items-center gap-2 justify-end">
+      {bulkWholesaleProgress && (
+        <span className="text-[11px] text-zinc-400 order-first w-full sm:w-auto sm:order-none">
+          Looking up {bulkWholesaleProgress.current} of {bulkWholesaleProgress.total} products…
+        </span>
+      )}
       <Button
         type="button"
         variant="outline"
         size="sm"
         className="border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-[rgba(255,255,255,0.04)]"
-        disabled={!costLookupStatus?.configured || bulkLookupCosts.isPending}
-        onClick={runBulkMissingCosts}
+        disabled={!costLookupStatus?.configured || bulkRunning || wholesaleLookup.isPending}
+        onClick={() => void runBulkWholesaleMissing()}
       >
         Find missing costs
       </Button>
@@ -451,17 +488,33 @@ export default function AdminInventory() {
         </p>
         {costLookupStatus?.configured && costLookupStatus.sites.length > 0 && (
           <p className="text-[11px] text-emerald-400/90">
-            Cost lookup enabled — searching{" "}
+            5star fallback hosts:{" "}
             <code className="text-zinc-300">{costLookupStatus.sites.join(", ")}</code>.
           </p>
         )}
+        {costLookupStatus?.configured &&
+          costLookupStatus.sites.length === 0 &&
+          (costLookupStatus.serpApiConfigured || costLookupStatus.barcodeLookupConfigured) && (
+            <p className="text-[11px] text-emerald-400/90">
+              Wholesale lookup via SerpApi/Barcode only — add{" "}
+              <code className="text-zinc-300">COST_LOOKUP_SITES</code> for 5starhookah fallback.
+            </p>
+          )}
         {!costLookupStatus?.configured && (
           <p className="text-[11px] text-amber-200/80">
-            Cost lookup: add <code className="text-zinc-400">GOOGLE_CSE_API_KEY</code> and{" "}
-            <code className="text-zinc-400">GOOGLE_CSE_CX</code> (Programmable Search). Optional{" "}
-            <code className="text-zinc-400">COST_LOOKUP_SITES</code> — comma-separated hosts (default{" "}
-            <code className="text-zinc-400">5starhookah.com</code>). Run migration{" "}
-            <code className="text-zinc-400">009_bh_products_cost_lookup_meta.sql</code>.
+            Set at least one of{" "}
+            <code className="text-zinc-400">SERPAPI_KEY</code>, <code className="text-zinc-400">BARCODE_LOOKUP_KEY</code>, or{" "}
+            <code className="text-zinc-400">COST_LOOKUP_SITES</code> (default host{" "}
+            <code className="text-zinc-400">5starhookah.com</code> when CSE env is set). Run{" "}
+            <code className="text-zinc-400">009_bh_products_cost_lookup_meta.sql</code> and{" "}
+            <code className="text-zinc-400">010_product_cost_cache.sql</code>.
+          </p>
+        )}
+        {costLookupStatus?.configured && (
+          <p className="text-[11px] text-zinc-500">
+            Wholesale order: SerpApi → Barcode Lookup → 5star. Cache:{" "}
+            {costLookupStatus.serpApiConfigured ? "SerpApi on" : "SerpApi off"} ·{" "}
+            {costLookupStatus.barcodeLookupConfigured ? "Barcode on" : "Barcode off"}.
           </p>
         )}
 
@@ -556,6 +609,10 @@ export default function AdminInventory() {
                             />
                           ) : (
                             <div className="flex flex-col gap-1 items-start">
+                              {(wholesaleBusyId === item.id && wholesaleLookup.isPending) ||
+                              (bulkRunning && wholesaleBusyId === item.id) ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-zinc-400" aria-label="Loading cost" />
+                              ) : null}
                               <button
                                 type="button"
                                 onClick={() =>
@@ -568,8 +625,38 @@ export default function AdminInventory() {
                                   item.cost != null ? "text-[#bef264]" : "text-zinc-500"
                                 } hover:text-zinc-200 transition-colors`}
                               >
-                                {item.cost != null ? `$${item.cost.toFixed(2)}` : "Set cost"}
+                                {item.cost != null ? `$${item.cost.toFixed(2)}` : "—"}
                               </button>
+                              {item.cost != null && (item.costSourceName || item.costSourceUrl) && (
+                                <span className="text-[10px] text-zinc-500">
+                                  ·{" "}
+                                  {(item.costSourceUrl ?? "") !== "" ? (
+                                    <a
+                                      href={item.costSourceUrl!}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="hover:text-zinc-300 underline-offset-2 hover:underline"
+                                      onClick={e => e.stopPropagation()}
+                                    >
+                                      {item.costSourceName ?? "Source"}
+                                    </a>
+                                  ) : (
+                                    item.costSourceName
+                                  )}
+                                </span>
+                              )}
+                              {item.cost != null && item.costCacheFetchedAt && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="text-[9px] text-zinc-600 cursor-help border-b border-dotted border-zinc-600 w-fit">
+                                      Cached price
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right" className="max-w-xs text-xs">
+                                    {cacheAgeLabel(item.costCacheFetchedAt)}
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
                               {item.cost == null &&
                                 item.costNeedsReview &&
                                 item.costSuggestedUsd != null && (
@@ -583,58 +670,63 @@ export default function AdminInventory() {
                                 )}
                               {item.cost == null &&
                                 item.costMatchConfidence === "none" &&
-                                item.costLastCheckedAt && (
+                                item.costLastCheckedAt &&
+                                wholesaleFailId !== item.id && (
                                   <span className="text-[11px] text-zinc-600">No match</span>
                                 )}
-                              {(item.costSourceUrl ?? "") !== "" && (
-                                <a
-                                  href={item.costSourceUrl!}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors"
-                                  onClick={e => e.stopPropagation()}
-                                >
-                                  <ExternalLink className="w-3 h-3" />
-                                  Source
-                                </a>
+                              {item.cost == null && wholesaleFailId === item.id && (
+                                <span className="text-[11px] text-red-400">No match</span>
                               )}
                             </div>
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          {item.cost == null ? (
-                            <div className="flex flex-col gap-1">
+                          <div className="flex flex-col gap-1 items-start">
+                            {item.cost == null ? (
+                              <>
+                                <button
+                                  type="button"
+                                  disabled={
+                                    !costLookupStatus?.configured ||
+                                    bulkRunning ||
+                                    (wholesaleBusyId === item.id && wholesaleLookup.isPending)
+                                  }
+                                  onClick={() => runFindCost(item.id, false)}
+                                  className="text-[11px] text-left text-[#a3e635]/90 hover:text-[#bef264] disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                                >
+                                  {wholesaleBusyId === item.id && wholesaleLookup.isPending
+                                    ? "Searching…"
+                                    : "Find cost"}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={
+                                    !costLookupStatus?.configured ||
+                                    bulkRunning ||
+                                    (wholesaleBusyId === item.id && wholesaleLookup.isPending)
+                                  }
+                                  onClick={() => runFindCost(item.id, true)}
+                                  className="text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors text-left"
+                                >
+                                  Retry
+                                </button>
+                              </>
+                            ) : null}
+                            {item.cost != null ? (
                               <button
                                 type="button"
                                 disabled={
                                   !costLookupStatus?.configured ||
-                                  lookupBusyId === item.id ||
-                                  lookupCost.isPending
+                                  bulkRunning ||
+                                  (wholesaleBusyId === item.id && wholesaleLookup.isPending)
                                 }
-                                onClick={() => runFindCost(item.id)}
-                                className="text-[11px] text-left text-[#a3e635]/90 hover:text-[#bef264] disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                                onClick={() => runFindCost(item.id, true)}
+                                className="text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors text-left"
                               >
-                                {lookupBusyId === item.id ? "Searching…" : "Find cost"}
+                                Re-lookup (refresh)
                               </button>
-                              {(item.costNeedsReview || item.costMatchConfidence === "none") &&
-                                item.costLastCheckedAt && (
-                                  <button
-                                    type="button"
-                                    disabled={
-                                      !costLookupStatus?.configured ||
-                                      lookupBusyId === item.id ||
-                                      lookupCost.isPending
-                                    }
-                                    onClick={() => runFindCost(item.id)}
-                                    className="text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors text-left"
-                                  >
-                                    Retry
-                                  </button>
-                                )}
-                            </div>
-                          ) : (
-                            <span className="text-zinc-600">—</span>
-                          )}
+                            ) : null}
+                          </div>
                         </td>
                       </tr>
                     ))

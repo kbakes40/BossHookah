@@ -11,6 +11,7 @@ import {
   registerPayPalRoutes,
   handleAdminAnalyticsOverview,
   handleAdminAnalyticsTest,
+  registerProductsLookupRoutes,
 } from "./_server.mjs";
 
 const app = express();
@@ -47,6 +48,7 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 registerPayPalRoutes(app);
+registerProductsLookupRoutes(app);
 
 app.get("/api/admin/analytics/overview", (req, res) => {
   void handleAdminAnalyticsOverview(req, res);

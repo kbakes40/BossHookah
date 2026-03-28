@@ -5,3 +5,4 @@ export { stripe, handleWebhookEvent } from "./stripe";
 export { ENV } from "./_core/env";
 export { registerPayPalRoutes } from "./paypalRoutes";
 export { handleAdminAnalyticsOverview, handleAdminAnalyticsTest } from "./adminAnalyticsHttp";
+export { registerProductsLookupRoutes } from "./productsLookupHttp";

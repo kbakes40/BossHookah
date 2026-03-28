@@ -76,6 +76,9 @@ async function startServer() {
     void handleAdminAnalyticsTest(req, res);
   });
 
+  const { registerProductsLookupRoutes } = await import("../productsLookupHttp");
+  registerProductsLookupRoutes(app);
+
   // Manus OAuth removed - Supabase handles auth client-side
   // tRPC API
   app.use(

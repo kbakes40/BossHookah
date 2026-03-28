@@ -27,6 +27,7 @@ import {
   lookupProductCostOnline,
   type CostLookupResult,
 } from "./costLookupService";
+import { lookupProductCost, wholesaleCacheKey } from "../lib/priceLookup";
 
 function formatSupabaseErr(err: PostgrestError): string {
   return [err.message, err.details, err.hint, err.code ? `(${err.code})` : ""]
@@ -37,6 +38,10 @@ function formatSupabaseErr(err: PostgrestError): string {
 /** Strip characters that break PostgREST `or()` / `ilike` filters. */
 function sanitizeIlikeTerm(raw: string): string {
   return raw.trim().replace(/[%(),]/g, "").slice(0, 120);
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise(r => setTimeout(r, ms));
 }
 
 /** DBs that have not run `007_bh_products_cost.sql` (or core schema before `cost` was added). */
@@ -424,8 +429,33 @@ export const adminRouter = router({
       const { data, count, error } = await query;
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
 
+      const rows = data || [];
+      const cacheKeys = rows.map(r => {
+        const rec = r as { id: string; sku?: string | null };
+        return wholesaleCacheKey(rec.sku, String(rec.id));
+      });
+      const uniqueKeys = Array.from(new Set(cacheKeys));
+      let cacheFetchedMap = new Map<string, string>();
+      if (uniqueKeys.length > 0) {
+        const { data: cacheRows, error: ce } = await supabaseAdmin
+          .from("product_cost_cache")
+          .select("sku, fetched_at")
+          .in("sku", uniqueKeys);
+        if (!ce && cacheRows) {
+          cacheFetchedMap = new Map(cacheRows.map(c => [String((c as { sku: string }).sku), String((c as { fetched_at: string }).fetched_at)]));
+        }
+      }
+
       return {
-        items: (data || []).map(row => mapProductInventoryRow(row as Record<string, unknown>)),
+        items: rows.map(row => {
+          const rec = row as Record<string, unknown> & { id: string; sku?: string | null };
+          const key = wholesaleCacheKey(rec.sku, String(rec.id));
+          const fat = cacheFetchedMap.get(key);
+          return {
+            ...mapProductInventoryRow(rec),
+            costCacheFetchedAt: fat ?? null,
+          };
+        }),
         total: count || 0,
         page,
         pageSize,
@@ -506,12 +536,197 @@ export const adminRouter = router({
 
   costLookupConfigured: adminProcedure.query(() => {
     const sites = getCostLookupApprovedSites();
+    const serp = (process.env.SERPAPI_KEY ?? "").trim();
+    const barcode = (process.env.BARCODE_LOOKUP_KEY ?? "").trim();
     return {
-      configured: sites.length > 0,
+      configured: sites.length > 0 || serp.length > 0 || barcode.length > 0,
       /** Hosts used for direct lookup and `site:` CSE queries (from COST_LOOKUP_SITES or default). */
       sites,
+      serpApiConfigured: serp.length > 0,
+      barcodeLookupConfigured: barcode.length > 0,
     };
   }),
+
+  /**
+   * Multi-source wholesale lookup: SerpApi → Barcode Lookup → 5starhookah (see lib/priceLookup.ts).
+   */
+  lookupWholesaleProductCost: adminProcedure
+    .input(
+      z.object({
+        productId: z.string(),
+        forceRefresh: z.boolean().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { data: row, error: fe } = await supabaseAdmin
+        .from("bh_products")
+        .select("*")
+        .eq("id", input.productId)
+        .maybeSingle();
+
+      if (fe)
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: formatSupabaseErr(fe) });
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
+
+      const r = row as Record<string, unknown>;
+      const force = input.forceRefresh === true;
+      const existingCost = parseBhProductCost(r.cost);
+      if (existingCost != null && !force) {
+        return {
+          skipped: true as const,
+          reason:
+            "This product already has a unit cost. Use Retry (force refresh) to replace it, or edit manually.",
+          wholesale: null as null,
+        };
+      }
+
+      const productId = String(r.id ?? "");
+      const cacheSku = wholesaleCacheKey((r.sku as string | null) ?? null, productId);
+      const w = await lookupProductCost(
+        {
+          productName: String(r.name ?? ""),
+          sku: (r.sku as string | null) ?? null,
+          productId,
+          brand: String(r.brand ?? ""),
+          category: String(r.category ?? ""),
+          retailUsd: Number(r.price) || 0,
+          cacheSku,
+        },
+        force
+      );
+
+      if (w.cost != null) {
+        const now = new Date().toISOString();
+        const { error: ue } = await supabaseAdmin
+          .from("bh_products")
+          .update({
+            cost: w.cost,
+            cost_source_name: w.source,
+            cost_source_url: w.sourceUrl ?? null,
+            cost_is_auto_filled: true,
+            cost_match_confidence: "exact",
+            cost_needs_review: false,
+            cost_suggested_usd: null,
+            updated_at: now,
+          })
+          .eq("id", productId);
+        if (ue) {
+          console.error("[PriceLookup]", "bh_products_update", formatSupabaseErr(ue));
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: formatSupabaseErr(ue) });
+        }
+      }
+
+      return {
+        skipped: false as const,
+        reason: null as string | null,
+        wholesale: {
+          cost: w.cost,
+          source: w.source,
+          sourceUrl: w.sourceUrl,
+          cached: w.cached === true,
+          lookupSource: w.lookupSource ?? "none",
+        },
+      };
+    }),
+
+  bulkLookupWholesaleCosts: adminProcedure
+    .input(
+      z.object({
+        productIds: z.array(z.string()).min(1).max(30),
+        forceRefresh: z.boolean().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const force = input.forceRefresh === true;
+      const results: Array<{
+        productId: string;
+        ok: boolean;
+        skipped?: boolean;
+        note?: string;
+        cost?: number | null;
+        source?: string;
+        cached?: boolean;
+      }> = [];
+
+      for (const productId of input.productIds) {
+        try {
+          const { data: row, error: fe } = await supabaseAdmin
+            .from("bh_products")
+            .select("*")
+            .eq("id", productId)
+            .maybeSingle();
+          if (fe || !row) {
+            results.push({
+              productId,
+              ok: false,
+              note: fe ? formatSupabaseErr(fe) : "not found",
+            });
+            await delay(500);
+            continue;
+          }
+          const r = row as Record<string, unknown>;
+          const existingCost = parseBhProductCost(r.cost);
+          if (existingCost != null && !force) {
+            results.push({ productId, ok: true, skipped: true, note: "has cost" });
+            await delay(500);
+            continue;
+          }
+          const pid = String(r.id ?? "");
+          const cacheSku = wholesaleCacheKey((r.sku as string | null) ?? null, pid);
+          const w = await lookupProductCost(
+            {
+              productName: String(r.name ?? ""),
+              sku: (r.sku as string | null) ?? null,
+              productId: pid,
+              brand: String(r.brand ?? ""),
+              category: String(r.category ?? ""),
+              retailUsd: Number(r.price) || 0,
+              cacheSku,
+            },
+            force
+          );
+          if (w.cost != null) {
+            const now = new Date().toISOString();
+            const { error: ue } = await supabaseAdmin
+              .from("bh_products")
+              .update({
+                cost: w.cost,
+                cost_source_name: w.source,
+                cost_source_url: w.sourceUrl ?? null,
+                cost_is_auto_filled: true,
+                cost_match_confidence: "exact",
+                cost_needs_review: false,
+                cost_suggested_usd: null,
+                updated_at: now,
+              })
+              .eq("id", pid);
+            if (ue) {
+              results.push({ productId, ok: false, note: formatSupabaseErr(ue) });
+            } else {
+              results.push({
+                productId,
+                ok: true,
+                cost: w.cost,
+                source: w.source,
+                cached: w.cached === true,
+              });
+            }
+          } else {
+            results.push({ productId, ok: true, cost: null, source: w.source, note: "no match" });
+          }
+        } catch (e) {
+          console.error("[PriceLookup]", "bulk", productId, e);
+          results.push({
+            productId,
+            ok: false,
+            note: e instanceof Error ? e.message : String(e),
+          });
+        }
+        await delay(500);
+      }
+
+      return { results };
+    }),
 
   lookupInventoryProductCost: adminProcedure
     .input(z.object({ productId: z.string() }))
