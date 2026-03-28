@@ -19,6 +19,10 @@
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
+    "test:lookup-env": "node scripts/test-env.js",
+    "test:lookup-serpapi": "node scripts/test-serpapi.js",
+    "test:lookup-supabase": "node scripts/test-supabase.js",
+    "test:lookup-api": "node scripts/test-api-route.js",
     "db:push": "drizzle-kit generate && drizzle-kit migrate"
   },
   "dependencies": {
