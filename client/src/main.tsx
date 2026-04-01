@@ -7,18 +7,34 @@ import superjson from "superjson";
 import App from "./App";
 import "./index.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 10 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+let cachedToken: string | null = null;
+
+supabase.auth.getSession().then(({ data: { session } }) => {
+  cachedToken = session?.access_token ?? null;
+});
+supabase.auth.onAuthStateChange((_event, session) => {
+  cachedToken = session?.access_token ?? null;
+});
 
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
-      async headers() {
-        // Attach the Supabase access token so the backend can verify the user
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.access_token) {
-          return { Authorization: `Bearer ${session.access_token}` };
+      headers() {
+        if (cachedToken) {
+          return { Authorization: `Bearer ${cachedToken}` };
         }
         return {};
       },

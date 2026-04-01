@@ -1,18 +1,32 @@
-// Home Page - Neo-Brutalism meets Luxury Retail
-// Design Philosophy: Bold typography, stark contrasts, emerald green accents, asymmetric layouts
-
 import { useState, useEffect, useMemo } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import { useStorefrontCatalog } from "@/hooks/useStorefrontCatalog";
-import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+function ProductSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="bg-muted brutalist-border aspect-square mb-4" />
+      <div className="space-y-2">
+        <div className="h-3 w-16 bg-muted rounded" />
+        <div className="h-4 w-full bg-muted rounded" />
+        <div className="h-4 w-2/3 bg-muted rounded" />
+        <div className="h-4 w-20 bg-muted rounded" />
+      </div>
+    </div>
+  );
+}
+
+const TRENDING_SKELETON_COUNT = 6;
+const FEATURED_SKELETON_COUNT = 6;
+
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const { products: catalog } = useStorefrontCatalog();
+  const { products: catalog, query: catalogQuery } = useStorefrontCatalog();
+
   const trendingProducts = useMemo(
     () => catalog.filter(p => p.trending),
     [catalog]
@@ -22,9 +36,25 @@ export default function Home() {
     [catalog]
   );
 
-  // Set page title for SEO (30-60 characters)
+  const isFirstLoad = catalogQuery.isLoading && catalog.length === 0;
+
   useEffect(() => {
     document.title = "Boss Hookah Wholesale - Premium Shisha & Vapes";
+  }, []);
+
+  useEffect(() => {
+    const load = () => {
+      void import("@/pages/Collection");
+      void import("@/pages/ProductDetail");
+      void import("@/pages/SearchResults");
+    };
+    const ric = typeof window !== "undefined" ? window.requestIdleCallback : null;
+    if (ric) {
+      const id = ric(() => load(), { timeout: 2500 });
+      return () => window.cancelIdleCallback?.(id);
+    }
+    const t = window.setTimeout(load, 400);
+    return () => clearTimeout(t);
   }, []);
 
   const heroSlides = [
@@ -73,12 +103,10 @@ export default function Home() {
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
 
-  // Auto-cycle slides every 7 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       nextSlide();
     }, 7000);
-
     return () => clearInterval(interval);
   }, [currentSlide]);
 
@@ -113,7 +141,6 @@ export default function Home() {
             </Link>
           ))}
 
-          {/* Slider Controls */}
           <button
             onClick={prevSlide}
             className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white brutalist-border flex items-center justify-center hover:bg-primary hover:text-white transition-colors duration-150 z-20"
@@ -127,7 +154,6 @@ export default function Home() {
             <ChevronRight className="h-6 w-6" />
           </button>
 
-          {/* Slide Indicators */}
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-20">
             {heroSlides.map((_, index) => (
               <button
@@ -147,20 +173,30 @@ export default function Home() {
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-4xl font-display font-black">TRENDING</h2>
             </div>
-            
+
             <div className="overflow-x-auto pb-4 -mx-4 px-4">
               <div className="flex gap-6" style={{ width: 'max-content' }}>
-                {trendingProducts.map((product) => (
-                  <div key={product.id} className="w-64 flex-shrink-0">
-                    <ProductCard product={product} />
-                  </div>
-                ))}
-                {/* Duplicate for infinite scroll effect */}
-                {trendingProducts.map((product) => (
-                  <div key={`dup-${product.id}`} className="w-64 flex-shrink-0">
-                    <ProductCard product={product} />
-                  </div>
-                ))}
+                {isFirstLoad && trendingProducts.length === 0
+                  ? Array.from({ length: TRENDING_SKELETON_COUNT }, (_, i) => (
+                      <div key={`skel-t-${i}`} className="w-64 flex-shrink-0">
+                        <ProductSkeleton />
+                      </div>
+                    ))
+                  : (
+                    <>
+                      {trendingProducts.map((product, idx) => (
+                        <div key={product.id} className="w-64 flex-shrink-0">
+                          <ProductCard product={product} priority={idx < 4} />
+                        </div>
+                      ))}
+                      {trendingProducts.map((product) => (
+                        <div key={`dup-${product.id}`} className="w-64 flex-shrink-0">
+                          <ProductCard product={product} />
+                        </div>
+                      ))}
+                    </>
+                  )
+                }
               </div>
             </div>
           </div>
@@ -177,14 +213,17 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+              {isFirstLoad && featuredProducts.length === 0
+                ? Array.from({ length: FEATURED_SKELETON_COUNT }, (_, i) => (
+                    <ProductSkeleton key={`skel-f-${i}`} />
+                  ))
+                : featuredProducts.map((product, idx) => (
+                    <ProductCard key={product.id} product={product} priority={idx < 6} />
+                  ))
+              }
             </div>
           </div>
         </section>
-
-
       </main>
 
       <Footer />

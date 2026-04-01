@@ -1,29 +1,30 @@
-// ProductCard Component - Neo-Brutalism meets Luxury Retail
-// Features: Product image, price display
-
+import { memo } from "react";
 import { Product } from "@/lib/products";
 import { Link } from "wouter";
 import { useShopCurrency } from "@/contexts/CurrencyContext";
 
 interface ProductCardProps {
   product: Product;
+  /** Set true for above-the-fold cards so images load immediately. */
+  priority?: boolean;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+function ProductCardInner({ product, priority }: ProductCardProps) {
   const { formatUsd } = useShopCurrency();
 
   return (
     <div className="group relative">
       <Link href={`/product/${product.id}`} className="block">
-          {/* Product Image Container */}
           <div className="relative bg-secondary brutalist-border overflow-hidden aspect-square mb-4">
             <img
               src={product.image}
               alt={product.name}
+              loading={priority ? "eager" : "lazy"}
+              decoding="async"
+              fetchPriority={priority ? "high" : "auto"}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
 
-            {/* Out of Stock Overlay */}
             {!product.inStock && (
               <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
                 <span className="bg-foreground text-background px-4 py-2 font-bold text-sm">
@@ -33,12 +34,10 @@ export default function ProductCard({ product }: ProductCardProps) {
             )}
           </div>
 
-          {/* Product Info */}
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground uppercase tracking-wide">{product.brand}</p>
             <h3 className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
             
-            {/* Price */}
             <div className="flex items-center gap-2">
               {product.salePrice ? (
                 <>
@@ -58,3 +57,6 @@ export default function ProductCard({ product }: ProductCardProps) {
     </div>
   );
 }
+
+const ProductCard = memo(ProductCardInner);
+export default ProductCard;

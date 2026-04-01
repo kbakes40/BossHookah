@@ -1,0 +1,35 @@
+import { lazy } from "react";
+
+/** Code-split pages so the home route ships a smaller initial bundle. */
+export const Collection = lazy(() => import("./pages/Collection"));
+export const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+export const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess"));
+export const CheckoutCancel = lazy(() => import("./pages/CheckoutCancel"));
+export const CheckoutPayPalReturn = lazy(() => import("./pages/CheckoutPayPalReturn"));
+export const ZelleCheckout = lazy(() => import("./pages/ZelleCheckout"));
+export const SignIn = lazy(() => import("./pages/SignIn"));
+export const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+export const CreateAccount = lazy(() => import("./pages/CreateAccount"));
+export const MyAccount = lazy(() => import("./pages/MyAccount"));
+export const OrderHistory = lazy(() => import("./pages/OrderHistory"));
+export const MemberPerks = lazy(() => import("./pages/MemberPerks"));
+export const BrandCollection = lazy(() => import("./pages/BrandCollection"));
+export const Terms = lazy(() => import("./pages/Terms"));
+export const Blog = lazy(() => import("./pages/Blog"));
+export const Contact = lazy(() => import("./pages/Contact"));
+export const Military = lazy(() => import("./pages/Military"));
+export const Returns = lazy(() => import("./pages/Returns"));
+export const Wishlist = lazy(() => import("./pages/Wishlist"));
+export const AgeVerification = lazy(() => import("./pages/AgeVerification"));
+export const About = lazy(() => import("./pages/About"));
+export const SearchResults = lazy(() => import("./pages/SearchResults"));
+export const AdminLogin = lazy(() => import("./pages/AdminLogin"));
+export const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+export const AdminOrders = lazy(() => import("./pages/AdminOrders"));
+export const AdminCustomers = lazy(() => import("./pages/AdminCustomers"));
+export const AdminInventory = lazy(() => import("./pages/AdminInventory"));
+export const AdminStoreSettings = lazy(() => import("./pages/AdminStoreSettings"));
+export const AdminSales = lazy(() => import("./pages/AdminSales"));
+export const AdminPlaceholder = lazy(() => import("./pages/AdminPlaceholder"));
+export const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
+export const NotFound = lazy(() => import("./pages/NotFound"));
